@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="content-header">
+    <h2>Add Video Resource</h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            <div class="mb-3">
+                <label for="unit_id" class="form-label">Unit Number</label>
+                <input type="number" class="form-control" id="unit_id" name="unit_id" required>
+            </div>
+            <!-- NEW CAMP SELECTION FIELD -->
+            <div class="mb-3">
+                <label for="camp" class="form-label">Training Camp</label>
+                <select class="form-control" id="camp" name="camp" required>
+                    style="min-width: 100%; width: 100%; height: 45px; font-size: 16px; padding: 10px 12px; background-color: #fff; color: #333; border: 1px solid #ced4da;">
+                    <option value="">Select Camp</option>
+                    {% for camp_key, camp_name in camps.items() %}
+                        <option value="{{ camp_key }}">{{ camp_name }}</option>
+                    {% endfor %}
+                    <option value="both">Both Camps</option>
+                </select>
+                <div class="form-text">Choose which camp(s) can see this video</div>
+            </div>
+            <div class="mb-3">
+                <label for="title" class="form-label">Title</label>
+                <input type="text" class="form-control" id="title" name="title" required>
+            </div>
+            <div class="mb-3">
+                <label for="youtube_url" class="form-label">YouTube URL or ID</label>
+                <input type="text" class="form-control" id="youtube_url" name="youtube_url" required>
+                <div class="form-text">Enter full URL or just the video ID (e.g., dQw4w9WgXcQ)</div>
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Description</label>
+                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Video</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

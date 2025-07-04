@@ -1,0 +1,48 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>View Project</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Project Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">ID:</div>
+                <div class="col-md-10">{{ project.id }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Unit:</div>
+                <div class="col-md-10">{{ project.unit_id }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Title:</div>
+                <div class="col-md-10">{{ project.title }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Description:</div>
+                <div class="col-md-10">{{ project.description }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Resources:</div>
+                <div class="col-md-10">{{ project.resources }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="{{ url_for('admin_edit_project', project_id=project.id) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Content
+        </a>
+    </div>
+</div>
+{% endblock %}

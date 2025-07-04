@@ -1,0 +1,163 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>View AI Vocabulary Word</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Word Details</h5>
+        </div>
+        <div class="card-body">
+
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">ID:</div>
+                <div class="col-md-10">{{ word.id }}</div>
+            </div>
+            <hr>
+
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Unit:</div>
+                <div class="col-md-10">{{ word.unit_id }}</div>
+            </div>
+            <hr>
+
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Section:</div>
+                <div class="col-md-10">{{ word.section }}</div>
+            </div>
+            <hr>
+
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Word:</div>
+                <div class="col-md-10">{{ word.word }}</div>
+            </div>
+            <hr>
+
+            {% if word.definition %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Definition:</div>
+                <div class="col-md-10">{{ word.definition }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.example %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Example:</div>
+                <div class="col-md-10">{{ word.example }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.one_sentence_version %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">One Sentence Version:</div>
+                <div class="col-md-10">{{ word.one_sentence_version }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.daily_definition %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Daily Definition:</div>
+                <div class="col-md-10">{{ word.daily_definition }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.life_metaphor %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Life Metaphor:</div>
+                <div class="col-md-10">{{ word.life_metaphor }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.visual_explanation %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Visual Explanation:</div>
+                <div class="col-md-10">{{ word.visual_explanation }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Core Elements:</div>
+                <div class="col-md-10">
+                    {% if word.core_elements and word.core_elements|length > 0 %}
+                        <table class="table table-bordered table-sm">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Core Element</th>
+                                    <th>Everyday Object</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ce in word.core_elements %}
+                                    <tr>
+                                        <td><strong>{{ ce.core_element }}</strong></td>
+                                        <td>{{ ce.everyday_object }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        None
+                    {% endif %}
+                </div>
+            </div>
+            <hr>
+
+            {% if word.scenario_theater %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Scenario Theater:</div>
+                <div class="col-md-10">{{ word.scenario_theater }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.misunderstandings %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Misunderstandings:</div>
+                <div class="col-md-10">{{ word.misunderstandings }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.reality_connection %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Reality Connection:</div>
+                <div class="col-md-10">{{ word.reality_connection }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.thinking_bubble %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Thinking Bubble:</div>
+                <div class="col-md-10">{{ word.thinking_bubble }}</div>
+            </div>
+            <hr>
+            {% endif %}
+
+            {% if word.smiling_conclusion %}
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Smiling Conclusion:</div>
+                <div class="col-md-10">{{ word.smiling_conclusion }}</div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="{{ url_for('admin_edit_word', word_id=word.id) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Content
+        </a>
+    </div>
+</div>
+{% endblock %}

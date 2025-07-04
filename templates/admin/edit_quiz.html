@@ -1,0 +1,73 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Edit Quiz Question</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="unit_id">Unit ID:</label>
+                    <input type="number" class="form-control" id="unit_id" name="unit_id" value="{{ quiz.unit_id }}" required min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="camp">Training Camp:</label>
+                    <select class="form-control" id="camp" name="camp" required>
+                        <option value="">-- Select Training Camp --</option>
+                        <option value="Middle East" {% if quiz.camp == 'Middle East' %}selected{% endif %}>Middle East</option>
+                        <option value="Chinese" {% if quiz.camp == 'Chinese' %}selected{% endif %}>Chinese</option>
+                        <option value="both" {% if quiz.camp == 'both' %}selected{% endif %}>Both Camps</option>
+                    </select>
+                    <small class="text-muted">Select which training camp(s) can access this quiz</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question">Question:</label>
+                    <input type="text" class="form-control" id="question" name="question" value="{{ quiz.question }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Options (mark the correct answer):</label>
+                    
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <input type="radio" name="correct_answer" value="0" {% if quiz.correct_answer == 0 %}checked{% endif %} required>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" name="option1" value="{{ options[0] if options|length > 0 else '' }}" placeholder="Option 1" required>
+                    </div>
+                    
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <input type="radio" name="correct_answer" value="1" {% if quiz.correct_answer == 1 %}checked{% endif %}>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" name="option2" value="{{ options[1] if options|length > 1 else '' }}" placeholder="Option 2" required>
+                    </div>
+                    
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <input type="radio" name="correct_answer" value="2" {% if quiz.correct_answer == 2 %}checked{% endif %}>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" name="option3" value="{{ options[2] if options|length > 2 else '' }}" placeholder="Option 3" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="explanation">Explanation (shown after the quiz):</label>
+                    <textarea class="form-control" id="explanation" name="explanation" rows="3" required>{{ quiz.explanation }}</textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Update Question</button>
+                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

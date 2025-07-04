@@ -1,0 +1,83 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Add Quiz Question</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="unit_id">Unit ID:</label>
+                    <input type="number" class="form-control" id="unit_id" name="unit_id" required min="1">
+                </div>
+                
+                <div class="form-group">
+                    <label for="camp">Training Camp: <span class="text-danger">*</span></label>
+                    <select class="form-control" id="camp" name="camp" required
+                            style="min-width: 100%; width: 100%; height: 45px; font-size: 16px; padding: 10px 12px; background-color: #fff; color: #333; border: 1px solid #ced4da;">
+                        <option value="">-- Select Training Camp --</option>
+                        {% for camp_key, camp_name in camps.items() %}
+                            <option value="{{ camp_key }}">{{ camp_name }}</option>
+                        {% endfor %}
+                        <option value="both">Both Camps</option>
+                    </select>
+                    <small class="text-muted">Choose which camp(s) can see this content</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="question">Question:</label>
+                    <input type="text" class="form-control" id="question" name="question" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Options (mark the correct answer):</label>
+                    
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <input type="radio" name="correct_answer" value="0" required>
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" name="option1" placeholder="Option 1" required>
+                    </div>
+                    
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <input type="radio" name="correct_answer" value="1">
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" name="option2" placeholder="Option 2" required>
+                    </div>
+                    
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <input type="radio" name="correct_answer" value="2">
+                            </div>
+                        </div>
+                        <input type="text" class="form-control" name="option3" placeholder="Option 3" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="explanation">Explanation (shown after the quiz):</label>
+                    <textarea class="form-control" id="explanation" name="explanation" rows="3" required></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Add Question</button>
+                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

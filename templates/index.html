@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block content %}
+<div class="card animated">
+    <div class="card-header">
+        <h1 class="card-title">AI Learning Platform</h1>
+    </div>
+    <div class="card-body">
+        <p>Start your journey in artificial intelligence with our interactive learning modules.</p>
+        {% if not session.get('user_id') %}
+        <div class="text-center mt-4">
+            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg mr-3">
+                <i class="fas fa-sign-in-alt"></i> Login
+            </a>
+            <a href="{{ url_for('register') }}" class="btn btn-success btn-lg">
+                <i class="fas fa-user-plus"></i> Register
+            </a>
+        </div>
+        {% else %}
+        <div class="text-center mt-4">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card animated mt-4">
+    <div class="card-header">
+        <h2 class="card-title">Why Learn AI?</h2>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div class="feature-card">
+                <i class="fas fa-brain" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
+                <h3>Future Skills</h3>
+                <p>AI is transforming every industry. Gain skills for the jobs of tomorrow.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-project-diagram" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
+                <h3>Hands-on Projects</h3>
+                <p>Learn by doing with practical, real-world projects.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-chart-line" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 1rem;"></i>
+                <h3>Career Growth</h3>
+                <p>Boost your career with in-demand AI knowledge.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

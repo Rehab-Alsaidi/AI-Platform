@@ -1,0 +1,1314 @@
+/* Balanced Dark Theme - Purple Accents with Calming Palette */
+:root {
+    /* Main Background - Dark neutrals */
+    --primary-bg: #0f0f13;
+    --secondary-bg: #1a1a1f;
+    --card-bg: #20212b;
+    --text-color: #e8eaed;
+    
+    /* Purple Accents - Used sparingly for highlights */
+    --accent-purple: #8b5cf6;
+    --purple-light: #a78bfa;
+    --purple-glow: #c4b5fd;
+    
+    /* Supporting Colors - Blues and teals for balance */
+    --accent-blue: #3b82f6;
+    --accent-teal: #14b8a6;
+    --accent-cyan: #06b6d4;
+    
+    /* Neutral Accents */
+    --accent-gray: #6b7280;
+    --accent-slate: #64748b;
+    
+    /* Status Colors */
+    --danger-color: #ef4444;
+    --success-color: #10b981;
+    --warning-color: #f59e0b;
+    --info-color: #06b6d4;
+    
+    /* Subtle Gradients - Mix of colors */
+    --gradient-primary: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    --gradient-purple: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    --gradient-mixed: linear-gradient(135deg, #1e293b 0%, #3730a3 50%, #6366f1 100%);
+    --gradient-subtle: linear-gradient(45deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+    
+    /* Form Inputs */
+    --input-bg: rgba(32, 33, 43, 0.8);
+    --input-border: rgba(107, 114, 128, 0.3);
+    --input-text: #e8eaed;
+    
+    /* Vocabulary Section Colors */
+    --vocab-bg: rgba(26, 26, 31, 0.6);
+    --vocab-border: rgba(139, 92, 246, 0.2);
+    --vocab-header: rgba(99, 102, 241, 0.15);
+    --vocab-accent: #8b5cf6;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--primary-bg);
+    color: var(--text-color);
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* Very Subtle Background Pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.02) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(20, 184, 166, 0.02) 0%, transparent 50%);
+    z-index: -2;
+    animation: gentleFloat 40s ease-in-out infinite;
+}
+
+@keyframes gentleFloat {
+    0%, 100% { opacity: 1; transform: translateY(0); }
+    50% { opacity: 0.7; transform: translateY(-5px); }
+}
+
+/* Minimal dots pattern */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle, rgba(107, 114, 128, 0.05) 1px, transparent 1px);
+    background-size: 100px 100px;
+    background-position: 0 0;
+    z-index: -1;
+    animation: slowDrift 180s linear infinite;
+}
+
+@keyframes slowDrift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-50px, -50px); }
+}
+
+/* Headers - Mix of colors instead of all purple */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-color);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    color: var(--text-color);
+}
+
+h2 {
+    font-size: 2rem;
+    color: var(--accent-blue);
+}
+
+h3 {
+    font-size: 1.5rem;
+    color: var(--accent-teal);
+}
+
+/* Page Title - Purple accent but not overwhelming */
+.page-title {
+    background: linear-gradient(45deg, var(--accent-purple), var(--purple-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+/* Navigation - Neutral with purple accents */
+.navbar {
+    background: rgba(26, 26, 31, 0.95) !important;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--text-color) !important;
+}
+
+.navbar-nav .nav-link {
+    color: var(--text-color) !important;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--purple-glow) !important;
+}
+
+.navbar-nav .nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: 0;
+    height: 2px;
+    background: var(--accent-purple);
+    transition: all 0.3s ease;
+    transform: translateX(-50%);
+}
+
+.navbar-nav .nav-link:hover::after {
+    width: 80%;
+}
+
+/* Buttons - Different colors for variety */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 10px 20px;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(51, 65, 85, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(51, 65, 85, 0.4);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(107, 114, 128, 0.1);
+    border: 1px solid rgba(107, 114, 128, 0.3);
+    color: var(--accent-slate);
+}
+
+/* Camp Selection Dropdown Styling */
+.camp-select {
+    min-width: 100% !important;
+    width: 100% !important;
+    height: 45px !important;
+    font-size: 16px !important;
+    padding: 10px 12px !important;
+    background-color: #fff !important;
+    color: #333 !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 4px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 12px center !important;
+    background-size: 16px 12px !important;
+    cursor: pointer !important;
+}
+
+.camp-select:focus {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+    outline: 0 !important;
+}
+
+.camp-select option {
+    padding: 8px 12px !important;
+    font-size: 16px !important;
+    color: #333 !important;
+    background-color: #fff !important;
+}
+
+/* Dark theme adjustments if needed */
+.dark-theme .camp-select {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+    border-color: #444 !important;
+}
+
+.dark-theme .camp-select option {
+    background-color: #2a2a2a !important;
+    color: #fff !important;
+}
+
+/* Form group spacing */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+/* Required field indicator */
+.text-danger {
+    color: #dc3545 !important;
+    font-weight: bold;
+}
+
+.btn-secondary:hover {
+    background: rgba(107, 114, 128, 0.2);
+    border-color: var(--accent-slate);
+    color: var(--text-color);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+    color: white;
+}
+
+/* Special purple button for important actions */
+.btn-purple {
+    background: var(--gradient-purple);
+    color: white;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.btn-purple:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    color: white;
+}
+
+/* Cards - Neutral with subtle accents */
+.card {
+    background: rgba(32, 33, 43, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 10;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(107, 114, 128, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.card-header {
+    background: rgba(51, 65, 85, 0.3);
+    border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+    font-weight: 600;
+    padding: 1.25rem;
+    border-radius: 12px 12px 0 0;
+}
+
+.card-header h5 {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Form Controls - Neutral with purple focus */
+.form-control, 
+.form-control-file, 
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+input[type="number"], 
+textarea, 
+select {
+    background: var(--input-bg) !important;
+    border: 1px solid var(--input-border) !important;
+    color: var(--input-text) !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    transition: all 0.3s ease !important;
+    font-size: 0.95rem !important;
+    position: relative;
+    z-index: 10;
+    -webkit-text-fill-color: var(--input-text) !important;
+    caret-color: var(--accent-purple) !important;
+}
+
+.form-control::placeholder, 
+input::placeholder, 
+textarea::placeholder {
+    color: rgba(232, 234, 237, 0.5) !important;
+    opacity: 1 !important;
+}
+
+.form-control:focus, 
+input:focus, 
+textarea:focus, 
+select:focus {
+    background: rgba(32, 33, 43, 0.9) !important;
+    border-color: var(--accent-purple) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+    outline: none !important;
+    transform: none;
+}
+
+.form-label, label {
+    color: var(--text-color) !important;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+/* Progress Bars - Purple accent */
+.progress {
+    background: rgba(32, 33, 43, 0.6);
+    border-radius: 10px;
+    height: 12px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background: var(--gradient-purple);
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+/* Alerts - Different colors */
+.alert {
+    border-radius: 10px;
+    border: none;
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.alert-info {
+    background: rgba(6, 182, 212, 0.15);
+    color: #22d3ee;
+    border: 1px solid rgba(6, 182, 212, 0.2);
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alert-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+/* AI Vocabulary Section - Purple accents but not overwhelming */
+.vocab-section {
+    background: var(--vocab-bg);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.vocab-section:hover {
+    border-color: var(--vocab-border);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+}
+
+.vocab-section-header {
+    background: var(--vocab-header);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+    font-weight: 600;
+    color: var(--vocab-accent);
+    font-size: 1.1rem;
+}
+
+.vocab-words-container {
+    padding: 1.5rem;
+}
+
+.word-item {
+    background: rgba(26, 26, 31, 0.4);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.word-item:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(26, 26, 31, 0.6);
+}
+
+.word-item:last-child {
+    margin-bottom: 0;
+}
+
+.word-title {
+    color: var(--vocab-accent);
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.word-field {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: rgba(107, 114, 128, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-teal);
+}
+
+.word-field:last-child {
+    margin-bottom: 0;
+}
+
+.word-field-label {
+    color: var(--accent-teal);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.word-field-content {
+    color: var(--text-color);
+    line-height: 1.5;
+    font-size: 0.95rem;
+}
+
+/* Core Elements Table */
+.core-elements-table {
+    background: rgba(107, 114, 128, 0.05);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.core-elements-table .table {
+    margin: 0;
+    color: var(--text-color);
+}
+
+.core-elements-table .table th {
+    background: rgba(51, 65, 85, 0.3);
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.75rem;
+    border: none;
+}
+
+.core-elements-table .table td {
+    padding: 0.75rem;
+    border-color: rgba(107, 114, 128, 0.1);
+    font-size: 0.9rem;
+}
+
+/* List Groups - Neutral with purple hover */
+.list-group-item {
+    background: rgba(32, 33, 43, 0.6);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+}
+
+.list-group-item:hover {
+    background: rgba(32, 33, 43, 0.8);
+    border-color: rgba(139, 92, 246, 0.3);
+    transform: translateX(5px);
+}
+
+/* Badges - Purple for important, other colors for variety */
+.badge {
+    color: white;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+}
+
+.badge-primary {
+    background: var(--gradient-primary);
+}
+
+.badge-purple {
+    background: var(--gradient-purple);
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+
+/* Feature Cards */
+.feature-card {
+    background: rgba(32, 33, 43, 0.5);
+    border: 1px solid rgba(107, 114, 128, 0.1);
+    border-radius: 10px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(32, 33, 43, 0.7);
+}
+
+/* Checkboxes and Radio Buttons */
+.form-check-input {
+    background: rgba(32, 33, 43, 0.8) !important;
+    border: 1px solid rgba(107, 114, 128, 0.3) !important;
+    border-radius: 4px !important;
+}
+
+.form-check-input:checked {
+    background: var(--accent-purple) !important;
+    border-color: var(--accent-purple) !important;
+}
+
+.form-check-label {
+    color: var(--text-color) !important;
+    font-weight: 400;
+}
+
+/* Animations */
+.animate-fadeIn {
+    animation: fadeIn 0.8s ease-out;
+}
+
+.animate-slideUp {
+    animation: slideUp 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Tables */
+.table {
+    color: var(--text-color);
+    background: transparent;
+}
+
+.table thead th {
+    background: rgba(51, 65, 85, 0.3);
+    color: var(--text-color);
+    font-weight: 600;
+    border: none;
+    padding: 1rem;
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.table tbody td {
+    border-color: rgba(107, 114, 128, 0.1);
+    padding: 1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    h1 { 
+        font-size: 2rem; 
+    }
+    
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .word-item {
+        padding: 1rem;
+    }
+    
+    .vocab-section-header {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+    }
+    
+    .vocab-words-container {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .word-item {
+        padding: 0.75rem;
+    }
+    
+    .word-title {
+        font-size: 1.2rem;
+    }
+    
+    .form-control {
+        padding: 10px 12px !important;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--primary-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.5);
+}
+
+/* Focus Management */
+*:focus {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+}
+
+/* ========== SUBTLE ANIMATIONS ========== */
+
+/* Gentle floating animation for page titles */
+.page-title {
+    background: linear-gradient(45deg, var(--accent-purple), var(--purple-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 2rem;
+    animation: gentleTitleFloat 6s ease-in-out infinite;
+}
+
+@keyframes gentleTitleFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+/* Subtle glow animation for important buttons */
+.btn-purple {
+    background: var(--gradient-purple);
+    color: white;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    animation: subtleGlow 4s ease-in-out infinite;
+}
+
+.btn-purple:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    color: white;
+    animation: none; /* Stop glow on hover */
+}
+
+@keyframes subtleGlow {
+    0%, 100% { box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3); }
+    50% { box-shadow: 0 4px 20px rgba(139, 92, 246, 0.5); }
+}
+
+/* Smooth progress bar animation */
+.progress-bar {
+    background: var(--gradient-purple);
+    border-radius: 10px;
+    transition: width 0.6s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.2), 
+        transparent
+    );
+    animation: progressShine 3s linear infinite;
+}
+
+@keyframes progressShine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Gentle card entrance animation */
+.card {
+    background: rgba(32, 33, 43, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 10;
+    animation: cardSlideIn 0.6s ease-out;
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Vocabulary section gentle reveal */
+.vocab-section {
+    background: var(--vocab-bg);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    animation: vocabReveal 0.8s ease-out;
+}
+
+@keyframes vocabReveal {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Word items stagger animation */
+.word-item {
+    background: rgba(26, 26, 31, 0.4);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    animation: wordItemFade 0.6s ease-out;
+}
+
+.word-item:nth-child(1) { animation-delay: 0.1s; }
+.word-item:nth-child(2) { animation-delay: 0.2s; }
+.word-item:nth-child(3) { animation-delay: 0.3s; }
+.word-item:nth-child(4) { animation-delay: 0.4s; }
+.word-item:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes wordItemFade {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Subtle typing animation for form focus */
+.form-control:focus, 
+input:focus, 
+textarea:focus, 
+select:focus {
+    background: rgba(32, 33, 43, 0.9) !important;
+    border-color: var(--accent-purple) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+    outline: none !important;
+    transform: none;
+    animation: focusPulse 2s ease-in-out infinite;
+}
+
+@keyframes focusPulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); }
+    50% { box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2); }
+}
+
+/* Gentle navbar brand animation */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--text-color) !important;
+    animation: brandFloat 8s ease-in-out infinite;
+}
+
+@keyframes brandFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-2px); }
+}
+
+/* List item slide-in animation */
+.list-group-item {
+    background: rgba(32, 33, 43, 0.6);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    animation: listSlideIn 0.5s ease-out;
+}
+
+.list-group-item:nth-child(1) { animation-delay: 0.1s; }
+.list-group-item:nth-child(2) { animation-delay: 0.2s; }
+.list-group-item:nth-child(3) { animation-delay: 0.3s; }
+.list-group-item:nth-child(4) { animation-delay: 0.4s; }
+.list-group-item:nth-child(5) { animation-delay: 0.5s; }
+
+@keyframes listSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Badge gentle pulse */
+.badge-purple {
+    background: var(--gradient-purple);
+    animation: badgePulse 3s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Alert slide down animation */
+.alert {
+    border-radius: 10px;
+    border: none;
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+    animation: alertSlideDown 0.5s ease-out;
+}
+
+@keyframes alertSlideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Smooth page load animation */
+body {
+    background: var(--primary-bg);
+    color: var(--text-color);
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+    position: relative;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    line-height: 1.6;
+    animation: pageLoad 1s ease-out;
+}
+
+@keyframes pageLoad {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Table row gentle highlight */
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background: rgba(139, 92, 246, 0.1);
+    animation: rowHighlight 0.3s ease-out;
+}
+
+@keyframes rowHighlight {
+    from {
+        transform: translateX(0);
+        background: rgba(139, 92, 246, 0.05);
+    }
+    to {
+        transform: translateX(3px);
+        background: rgba(139, 92, 246, 0.1);
+    }
+}
+
+/* Disable animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .page-title,
+    .btn-purple,
+    .navbar-brand,
+    .badge-purple,
+    .creative-text-wave {
+        animation: none !important;
+    }
+}
+
+/* ========== CREATIVE ANIMATED TEXT WAVE ========== */
+
+/* Creative animated text wave effect for special headings */
+.creative-text-wave {
+    display: inline-block;
+    background: linear-gradient(45deg, 
+        var(--accent-purple), 
+        var(--accent-blue), 
+        var(--accent-teal), 
+        var(--purple-light),
+        var(--accent-purple)
+    );
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: waveGradient 4s ease-in-out infinite, textWave 2s ease-in-out infinite;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}
+
+/* Gradient wave animation */
+@keyframes waveGradient {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Text wave animation - letters move in wave pattern */
+@keyframes textWave {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    25% {
+        transform: translateY(-2px);
+    }
+    50% {
+        transform: translateY(0px);
+    }
+    75% {
+        transform: translateY(2px);
+    }
+}
+
+/* Individual letter wave effect */
+.creative-text-wave .wave-letter {
+    display: inline-block;
+    animation: letterWave 3s ease-in-out infinite;
+}
+
+.creative-text-wave .wave-letter:nth-child(1) { animation-delay: 0s; }
+.creative-text-wave .wave-letter:nth-child(2) { animation-delay: 0.1s; }
+.creative-text-wave .wave-letter:nth-child(3) { animation-delay: 0.2s; }
+.creative-text-wave .wave-letter:nth-child(4) { animation-delay: 0.3s; }
+.creative-text-wave .wave-letter:nth-child(5) { animation-delay: 0.4s; }
+.creative-text-wave .wave-letter:nth-child(6) { animation-delay: 0.5s; }
+.creative-text-wave .wave-letter:nth-child(7) { animation-delay: 0.6s; }
+.creative-text-wave .wave-letter:nth-child(8) { animation-delay: 0.7s; }
+.creative-text-wave .wave-letter:nth-child(9) { animation-delay: 0.8s; }
+.creative-text-wave .wave-letter:nth-child(10) { animation-delay: 0.9s; }
+.creative-text-wave .wave-letter:nth-child(11) { animation-delay: 1s; }
+.creative-text-wave .wave-letter:nth-child(12) { animation-delay: 1.1s; }
+
+@keyframes letterWave {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    25% {
+        transform: translateY(-4px) rotate(1deg);
+    }
+    50% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    75% {
+        transform: translateY(4px) rotate(-1deg);
+    }
+}
+
+/* Creative floating particles effect around special elements */
+.creative-particles {
+    position: relative;
+    overflow: visible;
+}
+
+.creative-particles::before,
+.creative-particles::after {
+    content: '';
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.creative-particles::before {
+    background: var(--accent-purple);
+    top: -10px;
+    left: -10px;
+    animation: floatParticle1 6s ease-in-out infinite;
+    box-shadow: 
+        20px 30px 0 var(--accent-teal),
+        40px -10px 0 var(--accent-blue),
+        -20px 50px 0 var(--purple-light);
+}
+
+.creative-particles::after {
+    background: var(--accent-blue);
+    top: -15px;
+    right: -15px;
+    animation: floatParticle2 8s ease-in-out infinite reverse;
+    box-shadow: 
+        -30px 40px 0 var(--accent-purple),
+        -50px -20px 0 var(--accent-teal),
+        30px 60px 0 var(--purple-light);
+}
+
+@keyframes floatParticle1 {
+    0%, 100% {
+        transform: translate(0px, 0px) rotate(0deg);
+        opacity: 0.6;
+    }
+    33% {
+        transform: translate(15px, -20px) rotate(120deg);
+        opacity: 0.8;
+    }
+    66% {
+        transform: translate(-10px, 15px) rotate(240deg);
+        opacity: 0.4;
+    }
+}
+
+@keyframes floatParticle2 {
+    0%, 100% {
+        transform: translate(0px, 0px) rotate(0deg);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translate(-20px, -15px) rotate(180deg);
+        opacity: 0.9;
+    }
+}
+
+/* Creative shimmer effect for important cards */
+.creative-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.creative-shimmer::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(139, 92, 246, 0.1),
+        rgba(59, 130, 246, 0.1),
+        rgba(20, 184, 166, 0.1),
+        transparent
+    );
+    transform: rotate(45deg);
+    animation: shimmerMove 8s linear infinite;
+    pointer-events: none;
+    z-index: 1;
+}
+
+@keyframes shimmerMove {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+}
+
+/* Creative loading dots for dynamic content */
+.creative-loading {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.creative-loading .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-purple);
+    animation: creativeDotBounce 1.5s ease-in-out infinite;
+}
+
+.creative-loading .dot:nth-child(1) {
+    background: var(--accent-purple);
+    animation-delay: 0s;
+}
+
+.creative-loading .dot:nth-child(2) {
+    background: var(--accent-blue);
+    animation-delay: 0.2s;
+}
+
+.creative-loading .dot:nth-child(3) {
+    background: var(--accent-teal);
+    animation-delay: 0.4s;
+}
+
+@keyframes creativeDotBounce {
+    0%, 100% {
+        transform: translateY(0px) scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translateY(-10px) scale(1.2);
+        opacity: 1;
+    }
+}
+
+/* Usage examples in comments:
+   
+   For wave text effect:
+   <h1 class="creative-text-wave">
+     <span class="wave-letter">A</span>
+     <span class="wave-letter">I</span>
+     <span class="wave-letter"> </span>
+     <span class="wave-letter">L</span>
+     <span class="wave-letter">e</span>
+     <span class="wave-letter">a</span>
+     <span class="wave-letter">r</span>
+     <span class="wave-letter">n</span>
+     <span class="wave-letter">i</span>
+     <span class="wave-letter">n</span>
+     <span class="wave-letter">g</span>
+   </h1>
+   
+   For particles effect:
+   <div class="card creative-particles">
+     <!-- card content -->
+   </div>
+   
+   For shimmer effect:
+   <div class="card creative-shimmer">
+     <!-- card content -->
+   </div>
+   
+   For loading dots:
+   <div class="creative-loading">
+     <div class="dot"></div>
+     <div class="dot"></div>
+     <div class="dot"></div>
+   </div>
+*/
+
+/* Special highlighting classes */
+.highlight-purple {
+    color: var(--accent-purple);
+}
+
+.highlight-teal {
+    color: var(--accent-teal);
+}
+
+.highlight-blue {
+    color: var(--accent-blue);
+}
+
+/* Gradient text utilities */
+.text-gradient-purple {
+    background: var(--gradient-purple);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.text-gradient-mixed {
+    background: var(--gradient-mixed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}

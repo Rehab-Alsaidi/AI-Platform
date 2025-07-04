@@ -1,0 +1,123 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Team Management</h1>
+    
+    <div class="mb-4">
+        <a href="{{ url_for('admin_add_team') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Add New Team
+        </a>
+    </div>
+    
+    <!-- Middle East Teams -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title">Middle East Camp Teams</h3>
+        </div>
+        <div class="card-body">
+            {% if teams|selectattr('camp', 'equalto', 'Middle East')|list %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Team Name</th>
+                                <th>Team Lead</th>
+                                <th>Members</th>
+                                <th>Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for team in teams %}
+                                {% if team.camp == 'Middle East' %}
+                                <tr>
+                                    <td>{{ team.name }}</td>
+                                    <td>{{ team.team_lead_name }}</td>
+                                    <td>{{ team.member_count }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('admin_update_team_score', team_id=team.id) }}" class="form-inline">
+                                            <input type="number" class="form-control form-control-sm" name="score" value="{{ team.team_score }}" min="0">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary ml-2">Update</button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('admin_team_members', team_id=team.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-users"></i> Manage Members
+                                        </a>
+                                        <a href="{{ url_for('admin_edit_team', team_id=team.id) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <a href="{{ url_for('admin_delete_team', team_id=team.id) }}" class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Are you sure you want to delete this team?')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No Middle East teams found.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Chinese Teams -->
+    <div class="card mb-4">
+        <div class="card-header bg-danger text-white">
+            <h3 class="card-title">Chinese Camp Teams</h3>
+        </div>
+        <div class="card-body">
+            {% if teams|selectattr('camp', 'equalto', 'Chinese')|list %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Team Name</th>
+                                <th>Team Lead</th>
+                                <th>Members</th>
+                                <th>Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for team in teams %}
+                                {% if team.camp == 'Chinese' %}
+                                <tr>
+                                    <td>{{ team.name }}</td>
+                                    <td>{{ team.team_lead_name }}</td>
+                                    <td>{{ team.member_count }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('admin_update_team_score', team_id=team.id) }}" class="form-inline">
+                                            <input type="number" class="form-control form-control-sm" name="score" value="{{ team.team_score }}" min="0">
+                                            <button type="submit" class="btn btn-sm btn-outline-primary ml-2">Update</button>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('admin_team_members', team_id=team.id) }}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-users"></i> Manage Members
+                                        </a>
+                                        <a href="{{ url_for('admin_edit_team', team_id=team.id) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <a href="{{ url_for('admin_delete_team', team_id=team.id) }}" class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Are you sure you want to delete this team?')">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No Chinese teams found.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

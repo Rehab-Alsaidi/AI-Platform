@@ -1,0 +1,19 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1>Reset Database</h1>
+    <div class="alert alert-danger">
+        <strong>Warning!</strong> This will delete ALL data in the database. This action cannot be undone.
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label>Type RESET to confirm:</label>
+            <input type="text" name="confirmation" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-danger">Reset Database</button>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

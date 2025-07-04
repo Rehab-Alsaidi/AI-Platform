@@ -1,0 +1,86 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Team Members: {{ team.name }}</h1>
+    <h3>Camp: {{ team.camp }} | Team Lead: {{ team.team_lead_name }}</h3>
+    
+    <!-- Current Members -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title">Current Team Members</h3>
+        </div>
+        <div class="card-body">
+            {% if members %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Joined Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for member in members %}
+                            <tr>
+                                <td>{{ member.username }}</td>
+                                <td>{{ member.email }}</td>
+                                <td>{{ member.joined_at }}</td>
+                                <td>
+                                    {% if member.user_id != team.team_lead_id %}
+                                    <a href="{{ url_for('admin_remove_team_member', member_id=member.id) }}" class="btn btn-sm btn-danger"
+                                       onclick="return confirm('Are you sure you want to remove this member?')">
+                                        <i class="fas fa-user-minus"></i> Remove
+                                    </a>
+                                    {% else %}
+                                    <span class="badge badge-info">Team Lead</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p>No members in this team.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Add Member -->
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h3 class="card-title">Add Team Member</h3>
+        </div>
+        <div class="card-body">
+            {% if non_members %}
+                <form method="POST" action="{{ url_for('admin_add_team_member', team_id=team.id) }}">
+                    <div class="form-group">
+                        <label for="user_id">Select User to Add:</label>
+                        <select class="form-control" id="user_id" name="user_id" required>
+                            <option value="">-- Select User --</option>
+                            {% for user in non_members %}
+                            <option value="{{ user.id }}">{{ user.username }} ({{ user.email }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-user-plus"></i> Add to Team
+                    </button>
+                </form>
+            {% else %}
+                <p>No available users to add to this team.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="{{ url_for('admin_teams') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Teams
+        </a>
+    </div>
+</div>
+{% endblock %}

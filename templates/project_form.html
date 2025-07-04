@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Unit {{ unit_id }} Project{% endblock %}
+
+{% block content %}
+<div class="card animated">
+    <div class="card-header">
+        <h1 class="card-title">Unit {{ unit_id }} Project</h1>
+    </div>
+    <div class="card-body">
+        <h3>{{ project.title }}</h3>
+        <p>{{ project.description }}</p>
+        
+        {% if project.resources %}
+        <div class="project-resources">
+            <h4>Resources:</h4>
+            <p>{{ project.resources }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="alert alert-info mt-3">
+            <i class="fas fa-info-circle"></i> Complete and submit your project to mark this unit as complete
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data" class="mt-4">
+            <div class="form-group">
+                <label for="project_file" class="form-label">Upload your project:</label>
+                <input type="file" class="form-control-file" id="project_file" name="project_file" required>
+                <small class="form-text text-muted">Accepted formats: PDF, PNG, JPG, GIF,ppt</small>
+            </div>
+            
+            <button type="submit" class="btn btn-primary mt-3">
+                <i class="fas fa-upload"></i> Submit Project
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

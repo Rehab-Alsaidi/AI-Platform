@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz Review - Unit {{ unit_id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="badge bg-secondary mb-3">
+                <i class="fas fa-eye"></i> {{ get_text('quiz_review_mode') or 'Quiz Review Mode' }}
+            </div>
+            
+            <h1 class="mb-4">
+                <i class="fas fa-clipboard-check"></i> 
+                {{ get_text('unit') }} {{ unit_id }} {{ get_text('quiz_review') or 'Quiz Review' }}
+            </h1>
+
+            <!-- Updated Status Section -->
+            <div class="alert {{ 'alert-success' if passed else 'alert-warning' }} text-center">
+                <h2 class="mb-3">
+                    {% if passed %}
+                        <i class="fas fa-trophy"></i> Quiz Completed Successfully!
+                    {% else %}
+                        <i class="fas fa-info-circle"></i> Quiz Attempted
+                    {% endif %}
+                </h2>
+                <h3>{{ overall_result }}</h3>
+                <p class="mb-0">{{ motivation }}</p>
+                {% if attempted_at %}
+                <small class="d-block mt-2">
+                    <i class="fas fa-clock"></i> 
+                    Completed on: {{ attempted_at.strftime('%B %d, %Y at %I:%M %p') }}
+                </small>
+                {% endif %}
+            </div>
+
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>{{ get_text('note') or 'Note' }}:</strong> {{ get_text('quiz_one_attempt_note') or 'This quiz can only be taken once. Below is your review showing your answers, the correct answers, and explanations.' }}
+            </div>
+
+            <!-- Updated Question Cards -->
+            {% for result in results %}
+                <div class="card mb-4 {{ 'border-success' if result.correct else 'border-danger' }}">
+                    <div class="card-header d-flex justify-content-between align-items-start">
+                        <h5 class="mb-0">
+                            <span class="badge bg-primary me-2">{{ loop.index }}</span>
+                            {{ result.question }}
+                        </h5>
+                        {% if result.correct %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check"></i> Correct
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times"></i> Incorrect
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-body">
+                        <div class="options-container">
+                            {% for option in result.options %}
+                                {% set is_user_selected = (result.user_answer == loop.index0) %}
+                                {% set is_correct_answer = (result.correct_index == loop.index0) %}
+
+                                <div class="alert mb-2 
+                                    {% if is_correct_answer %}alert-success
+                                    {% elif is_user_selected and not is_correct_answer %}alert-danger
+                                    {% else %}alert-light{% endif %}">
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span>{{ option }}</span>
+                                        <div>
+                                            {% if is_user_selected %}
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-user"></i> Your Answer
+                                                </span>
+                                            {% endif %}
+                                            {% if is_correct_answer %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check-circle"></i> Correct Answer
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        {% if result.explanation %}
+                            <div class="alert alert-warning mt-3">
+                                <strong><i class="fas fa-lightbulb"></i> Explanation:</strong>
+                                <p class="mb-0 mt-2">{{ result.explanation }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+
+            <div class="text-center mt-4">
+                <a href="{{ url_for('unit', unit_id=unit_id) }}" class="btn btn-secondary me-3">
+                    <i class="fas fa-arrow-left"></i> {{ get_text('back_to_unit') or 'Back to Unit' }} {{ unit_id }}
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-home"></i> {{ get_text('dashboard') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Optional Styling Block -->
+<style>
+.quiz-review-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.question-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 5px solid #007bff;
+}
+
+.question-card.correct {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+.question-card.incorrect {
+    border-left-color: #dc3545;
+    background: #f8d7da;
+}
+
+.option {
+    background: #fff;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin: 8px 0;
+    cursor: default;
+}
+
+.option.user-selected {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.option.correct-answer {
+    border-color: #28a745;
+    background: #d4edda;
+}
+
+.option.user-selected.incorrect {
+    border-color: #dc3545;
+    background: #f8d7da;
+}
+
+.explanation {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.score-summary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.score-summary.passed {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.score-summary.failed {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+}
+
+.review-badge {
+    background: #6c757d;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+</style>
+{% endblock %}

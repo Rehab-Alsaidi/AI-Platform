@@ -1,0 +1,50 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.so
+.Python
+*.egg
+*.egg-info/
+*.pyo
+*.pyd
+*.pdb
+
+# --- Environments ---
+.env
+.env.*
+.venv/
+venv/
+ENV/
+env/
+
+# --- Logs & Temp Files ---
+*.log
+*.tmp
+*.temp
+
+# --- IDEs and Editors ---
+.vscode/
+.idea/
+*.swp
+
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+
+# --- Flask/Project Specific ---
+static/uploads/*
+!static/uploads/.gitkeep
+documents/*
+!documents/.gitkeep
+vector_db/*
+!vector_db/.gitkeep
+
+# --- Database Dumps ---
+*.db
+*.sqlite
+*.sqlite3
+backup_*.sql
+
+# --- Railway/Deployment ---
+.railway/
+Procfile

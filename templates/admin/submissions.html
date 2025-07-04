@@ -1,0 +1,152 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>User Project Submissions</h1>
+    
+    <!-- Camp Filter Buttons -->
+    <div class="mb-4">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="btn-group" role="group" aria-label="Camp filter">
+                    <a href="{{ url_for('admin_submissions', camp='all') }}" 
+                       class="btn btn-{{ 'primary' if current_camp == 'all' else 'outline-primary' }}">
+                        All Camps
+                    </a>
+                    {% for camp_key, camp_name in camps.items() %}
+                    <a href="{{ url_for('admin_submissions', camp=camp_key) }}" 
+                       class="btn btn-{{ 'primary' if current_camp == camp_key else 'outline-primary' }}">
+                        {{ camp_name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="col-md-4 text-right">
+                <div class="dropdown">
+                    <button class="btn btn-success dropdown-toggle" type="button" id="downloadDropdown" data-toggle="dropdown">
+                        <i class="fas fa-download mr-1"></i> Download Submissions
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ url_for('admin_download_submissions_by_camp', camp='all') }}">
+                            <i class="fas fa-globe mr-2"></i> All Camps
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        {% for camp_key, camp_name in camps.items() %}
+                        <a class="dropdown-item" href="{{ url_for('admin_download_submissions_by_camp', camp=camp_key) }}">
+                            <i class="fas fa-flag mr-2"></i> {{ camp_name }}
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if submissions %}
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Student</th>
+                    <th>Camp</th>
+                    <th>Unit</th>
+                    <th>File</th>
+                    <th>Submitted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for submission in submissions %}
+                <tr>
+                    <td>{{ submission.id }}</td>
+                    <td>{{ submission.username }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if submission.camp == 'Middle East' else 'info' if submission.camp == 'Chinese' else 'secondary' }}">
+                            {{ submission.camp }}
+                        </span>
+                    </td>
+                    <td>Unit {{ submission.unit_id }}</td>
+                    <td>
+                        {% if submission.file_path %}
+                            <span class="text-truncate d-inline-block" style="max-width: 200px;" title="{{ submission.file_path }}">
+                                {{ submission.file_path }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted">No file</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ submission.submitted_at.strftime('%Y-%m-%d %H:%M') if submission.submitted_at else 'Unknown' }}</td>
+                    <td>
+                        {% if submission.file_path %}
+                        <a href="{{ url_for('view_submission', submission_id=submission.id) }}" 
+                           class="btn btn-sm btn-primary mr-1" title="Download File">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        <a href="{{ url_for('debug_submission', submission_id=submission.id) }}" 
+                           class="btn btn-sm btn-info" title="Debug Submission">
+                            <i class="fas fa-bug"></i>
+                        </a>
+                        {% else %}
+                        <span class="text-muted">No actions</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-3">
+        <p class="text-muted">
+            <i class="fas fa-info-circle mr-1"></i>
+            Showing {{ submissions|length }} submission(s) 
+            {% if current_camp != 'all' %}
+                from {{ camps[current_camp] }} camp
+            {% else %}
+                from all camps
+            {% endif %}
+        </p>
+    </div>
+    
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+        <h5>No Submissions Found</h5>
+        <p class="text-muted">
+            {% if current_camp != 'all' %}
+                No submissions have been made by students in the {{ camps[current_camp] }} camp yet.
+            {% else %}
+                No submissions have been made by any students yet.
+            {% endif %}
+        </p>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Add confirmation for downloads
+    $('.dropdown-item[href*="download_submissions"]').click(function(e) {
+        const campName = $(this).text().trim();
+        if (!confirm(`Download all submissions for ${campName}?`)) {
+            e.preventDefault();
+        }
+    });
+    
+    // Add row highlighting on hover
+    $('tbody tr').hover(
+        function() { $(this).addClass('table-active'); },
+        function() { $(this).removeClass('table-active'); }
+    );
+});
+</script>
+{% endblock %}

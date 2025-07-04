@@ -1,0 +1,928 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Assistant{% endblock %}
+
+{% block additional_css %}
+<style>
+/* AI Assistant styles that match the purple dark theme */
+
+/* Override any conflicting styles and match the main theme exactly */
+.ai-assistant-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    background: transparent;
+}
+
+/* Header Section - Matching main theme */
+.ai-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.ai-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: var(--gradient-purple);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.ai-title i {
+    color: var(--accent-purple);
+    font-size: 2.5rem;
+    -webkit-text-fill-color: var(--accent-purple);
+}
+
+.ai-subtitle {
+    font-size: 1.25rem;
+    color: var(--purple-glow);
+    margin-bottom: 0;
+}
+
+/* Chat Section - Using exact card styling from main theme */
+.chat-section {
+    background: rgba(32, 33, 43, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    transition: all 0.3s ease;
+}
+
+.chat-section:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(107, 114, 128, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.chat-header {
+    background: rgba(51, 65, 85, 0.3);
+    border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+    font-weight: 600;
+    padding: 1.25rem;
+    border-radius: 12px 12px 0 0;
+}
+
+.chat-header h5 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chat-container {
+    min-height: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 2rem;
+    background: rgba(32, 33, 43, 0.5);
+}
+
+/* Messages - Matching theme colors */
+.message {
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.user-message {
+    align-items: flex-end;
+}
+
+.ai-message {
+    align-items: flex-start;
+}
+
+.message-bubble {
+    max-width: 80%;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    word-wrap: break-word;
+    line-height: 1.6;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.user-message .message-bubble {
+    background: var(--gradient-primary);
+    color: white;
+    border-bottom-right-radius: 0.25rem;
+    box-shadow: 0 4px 15px rgba(30, 13, 59, 0.3);
+}
+
+.ai-message .message-bubble {
+    background: rgba(26, 26, 31, 0.6);
+    color: var(--text-color);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+    border-bottom-left-radius: 0.25rem;
+}
+
+.message-time {
+    font-size: 0.875rem;
+    color: var(--accent-gray);
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+.user-message .message-time {
+    text-align: right;
+}
+
+/* Sources - Matching vocabulary section styling */
+.sources-list {
+    margin-top: 1rem;
+    padding: 1.25rem;
+    background: var(--vocab-bg);
+    border-radius: 12px;
+    border: 1px solid var(--vocab-border);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.1);
+}
+
+.sources-list h6 {
+    margin-bottom: 1rem;
+    color: var(--vocab-accent);
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.source-item {
+    background: rgba(26, 26, 31, 0.4);
+    color: var(--text-color);
+    padding: 0.875rem 1rem;
+    margin: 0.5rem 0;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: 1px solid rgba(139, 92, 246, 0.15);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.source-item:hover {
+    border-color: rgba(139, 92, 246, 0.3);
+    background: rgba(26, 26, 31, 0.6);
+    transform: translateX(5px);
+}
+
+.source-item i {
+    color: var(--accent-purple);
+    font-size: 1rem;
+    min-width: 1rem;
+}
+
+.source-item small {
+    color: var(--accent-gray);
+    font-weight: 400;
+}
+
+/* Form Section - Matching main theme form styles */
+.question-form {
+    padding: 1.5rem;
+    background: rgba(32, 33, 43, 0.5);
+    border-top: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.question-input {
+    width: 100%;
+    min-height: 100px;
+    background: var(--input-bg) !important;
+    border: 1px solid var(--input-border) !important;
+    color: var(--input-text) !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    font-size: 0.95rem !important;
+    line-height: 1.5;
+    resize: vertical;
+    transition: all 0.3s ease;
+    -webkit-text-fill-color: var(--input-text) !important;
+    caret-color: var(--accent-purple) !important;
+}
+
+.question-input:focus {
+    background: rgba(32, 33, 43, 0.9) !important;
+    border-color: var(--accent-purple) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+    outline: none !important;
+}
+
+.question-input::placeholder {
+    color: rgba(232, 234, 237, 0.5) !important;
+}
+
+.char-count {
+    font-size: 0.875rem;
+    color: var(--accent-gray);
+    text-align: right;
+    margin-top: 0.5rem;
+}
+
+.char-count.warning {
+    color: var(--warning-color);
+}
+
+.char-count.danger {
+    color: var(--danger-color);
+}
+
+.send-btn {
+    width: 100%;
+    background: var(--gradient-purple);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.send-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+.send-btn:disabled {
+    background: rgba(32, 33, 43, 0.5);
+    color: rgba(232, 234, 237, 0.5);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Sidebar - Matching main theme card styling */
+.sidebar {
+    background: rgba(32, 33, 43, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(107, 114, 128, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+
+.sidebar-tabs {
+    border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.sidebar-tabs .nav-link {
+    color: rgba(232, 234, 237, 0.7);
+    border: none;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background: transparent;
+    border-radius: 0;
+    font-size: 0.9rem;
+}
+
+.sidebar-tabs .nav-link.active {
+    color: var(--purple-light);
+    background: rgba(32, 33, 43, 0.7);
+    border-bottom: 2px solid var(--accent-purple);
+}
+
+.sidebar-tabs .nav-link:hover:not(.active) {
+    color: var(--purple-glow);
+    background: rgba(32, 33, 43, 0.5);
+}
+
+.sidebar-content {
+    padding: 1.5rem;
+}
+
+/* History styling - matching list items */
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.history-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.clear-history-btn {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.clear-history-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.history-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.history-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.history-container::-webkit-scrollbar-track {
+    background: var(--primary-bg);
+}
+
+.history-container::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 4px;
+}
+
+.history-item {
+    background: rgba(26, 26, 31, 0.6);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.history-item:hover {
+    background: rgba(26, 26, 31, 0.8);
+    border-color: rgba(139, 92, 246, 0.3);
+    transform: translateX(5px);
+}
+
+.history-question {
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.history-answer {
+    color: rgba(232, 234, 237, 0.8);
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.history-time {
+    font-size: 0.75rem;
+    color: var(--accent-gray);
+    font-style: italic;
+}
+
+/* Example Questions - matching button styling */
+.example-questions h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.example-question {
+    display: block;
+    padding: 1rem;
+    background: rgba(26, 26, 31, 0.6);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+    border-radius: 8px;
+    color: var(--text-color);
+    text-decoration: none;
+    margin-bottom: 0.75rem;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.example-question:hover {
+    background: var(--gradient-purple);
+    color: white;
+    text-decoration: none;
+    border-color: var(--accent-purple);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.example-question i {
+    margin-right: 0.5rem;
+    width: 1rem;
+    color: var(--accent-purple);
+}
+
+.example-question:hover i {
+    color: white;
+}
+
+/* Tips section */
+.tips-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.tips-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.tips-list {
+    background: rgba(26, 26, 31, 0.6);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-purple);
+    border: 1px solid rgba(107, 114, 128, 0.15);
+}
+
+.tips-list ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    list-style: none;
+}
+
+.tips-list li {
+    color: rgba(232, 234, 237, 0.8);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.tips-list li::before {
+    content: '💡';
+    position: absolute;
+    left: -1.5rem;
+    top: 0;
+}
+
+/* Loading indicator */
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    color: rgba(232, 234, 237, 0.7);
+}
+
+.loading-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(139, 92, 246, 0.3);
+    border-radius: 50%;
+    border-top: 2px solid var(--accent-purple);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--accent-gray);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    color: var(--accent-purple);
+}
+
+/* Welcome message styling */
+.ai-welcome-card {
+    background: rgba(139, 92, 246, 0.05);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.ai-welcome-card strong {
+    color: var(--accent-purple);
+}
+
+.ai-welcome-card ul {
+    margin: 0.5rem 0 0 1rem;
+    padding: 0;
+    color: rgba(232, 234, 237, 0.8);
+}
+
+.ai-welcome-card li {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .ai-assistant-container {
+        padding: 1rem;
+    }
+    
+    .ai-title {
+        font-size: 2rem;
+    }
+    
+    .chat-container {
+        padding: 1rem;
+        min-height: 300px;
+    }
+    
+    .message-bubble {
+        max-width: 95%;
+        padding: 0.75rem 1rem;
+    }
+    
+    .question-form {
+        padding: 1rem;
+    }
+    
+    .sidebar-content {
+        padding: 1rem;
+    }
+    
+    .sources-list {
+        padding: 1rem;
+    }
+    
+    .source-item {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Focus states for accessibility */
+.send-btn:focus,
+.question-input:focus,
+.example-question:focus,
+.clear-history-btn:focus {
+    outline: 2px solid var(--accent-purple);
+    outline-offset: 2px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ai-assistant-container animate-fadeIn">
+    <!-- Header -->
+    <div class="ai-header">
+        <h1 class="ai-title">
+            <i class="fas fa-robot"></i>
+            {{ get_text('ai_learning_assistant') if get_text else 'AI Learning Assistant' }}
+        </h1>
+        <p class="ai-subtitle">{{ get_text('ask_course_question') if get_text else 'Ask any question about your course materials' }}</p>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }}" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <!-- Chat Section -->
+            <div class="chat-section animate-slideUp">
+                <div class="chat-header">
+                    <h5>
+                        <i class="fas fa-comments"></i>
+                        Chat with AI Assistant
+                    </h5>
+                </div>
+                
+                <div class="chat-container">
+                    <!-- Welcome Message -->
+                    <div class="message ai-message">
+                        <div class="message-bubble">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                                <i class="fas fa-robot" style="color: var(--accent-purple); font-size: 1.25rem;"></i>
+                                <strong>AI Assistant</strong>
+                            </div>
+                            <p>Hello! I'm your AI learning assistant. Ask me anything about the course materials and I'll help you understand the concepts better. 🚀</p>
+                            
+                            <div class="ai-welcome-card">
+                                <strong>💡 Tips for better results:</strong>
+                                <ul>
+                                    <li>Ask specific questions about course topics</li>
+                                    <li>Use keywords from your materials</li>
+                                    <li>Request examples or explanations</li>
+                                    <li>Ask for clarification on complex concepts</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="message-time">Assistant</div>
+                    </div>
+
+                    <!-- Current Question -->
+                    {% if current_question %}
+                    <div class="message user-message">
+                        <div class="message-bubble">
+                            {{ current_question }}
+                        </div>
+                        <div class="message-time">You • just now</div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Current Answer -->
+                    {% if current_answer %}
+                    <div class="message ai-message">
+                        <div class="message-bubble">
+                            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                                <i class="fas fa-robot" style="color: var(--accent-purple); font-size: 1.25rem;"></i>
+                                <strong>AI Assistant</strong>
+                            </div>
+                            {{ current_answer|nl2br|safe }}
+                        </div>
+                        <div class="message-time">Assistant • just now</div>
+                        
+                        {% if current_sources and current_sources|length > 0 %}
+                        <div class="sources-list">
+                            <h6>
+                                <i class="fas fa-book"></i>
+                                📚 Sources
+                            </h6>
+                            {% for source in current_sources %}
+                            <div class="source-item">
+                                <i class="fas fa-file-alt"></i>
+                                <span>
+                                    {{ source.file }}
+                                    {% if source.page != 'Unknown' %}
+                                        <small>(Page/Slide: {{ source.page }})</small>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Loading State -->
+                    {% if is_processing %}
+                    <div class="message ai-message">
+                        <div class="message-bubble">
+                            <div class="loading-indicator">
+                                <div class="loading-spinner"></div>
+                                <span>Processing your question...</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Question Form -->
+                <div class="question-form">
+                    <form method="POST" action="{{ url_for('ai_assistant') }}">
+                        <div class="form-group">
+                            <label for="question" class="sr-only">Your Question</label>
+                            <textarea 
+                                id="question"
+                                name="question" 
+                                class="question-input" 
+                                placeholder="{{ get_text('ask_ai_placeholder') if get_text else 'Ask me anything about your course materials...' }}" 
+                                maxlength="1000"
+                                rows="4"
+                                required>{{ request.form.get('question', '') if request.method == 'POST' else '' }}</textarea>
+                            <div class="char-count">1000 characters remaining</div>
+                        </div>
+                        <button type="submit" class="send-btn">
+                            <i class="fas fa-paper-plane"></i>
+                            Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Sidebar -->
+            <div class="sidebar animate-slideUp" style="animation-delay: 0.1s;">
+                <!-- Tabs -->
+                <ul class="nav nav-tabs sidebar-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-toggle="tab" href="#history" role="tab">
+                            <i class="fas fa-history"></i> History
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-toggle="tab" href="#help" role="tab">
+                            <i class="fas fa-question-circle"></i> Help
+                        </a>
+                    </li>
+                </ul>
+
+                <div class="sidebar-content">
+                    <div class="tab-content">
+                        <!-- History Tab -->
+                        <div class="tab-pane fade show active" id="history" role="tabpanel">
+                            <div class="history-header">
+                                <h6 class="history-title">Recent Questions</h6>
+                                {% if history and history|length > 0 %}
+                                <a href="{{ url_for('clear_history') }}" 
+                                   class="clear-history-btn" 
+                                   onclick="return confirm('Are you sure you want to clear your chat history?')"
+                                   title="Clear History">
+                                    <i class="fas fa-trash"></i> Clear
+                                </a>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="history-container">
+                                {% if history and history|length > 0 %}
+                                    {% for item in history %}
+                                    <div class="history-item">
+                                        <div class="history-question">{{ item.question }}</div>
+                                        <div class="history-answer">
+                                            {% if item.answer|length > 120 %}
+                                                {{ item.answer[:120] }}...
+                                            {% else %}
+                                                {{ item.answer }}
+                                            {% endif %}
+                                        </div>
+                                        <div class="history-time">
+                                            {{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else 'Recently' }}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                <div class="empty-state">
+                                    <i class="fas fa-comments"></i>
+                                    <p>No questions asked yet.</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Help Tab -->
+                        <div class="tab-pane fade" id="help" role="tabpanel">
+                            <div class="example-questions">
+                                <h6>Example Questions:</h6>
+                                <a href="{{ url_for('ai_assistant', question='What is artificial intelligence?') }}" class="example-question">
+                                    <i class="fas fa-brain"></i>
+                                    What is artificial intelligence?
+                                </a>
+                                <a href="{{ url_for('ai_assistant', question='Explain machine learning concepts') }}" class="example-question">
+                                    <i class="fas fa-cogs"></i>
+                                    Explain machine learning concepts
+                                </a>
+                                <a href="{{ url_for('ai_assistant', question='What are neural networks?') }}" class="example-question">
+                                    <i class="fas fa-project-diagram"></i>
+                                    What are neural networks?
+                                </a>
+                                <a href="{{ url_for('ai_assistant', question='How does deep learning work?') }}" class="example-question">
+                                    <i class="fas fa-layer-group"></i>
+                                    How does deep learning work?
+                                </a>
+                                <a href="{{ url_for('ai_assistant', question='Give me examples of supervised learning') }}" class="example-question">
+                                    <i class="fas fa-lightbulb"></i>
+                                    Give me examples of supervised learning
+                                </a>
+                            </div>
+                            
+                            <div class="tips-section">
+                                <h6 class="tips-title">💡 Tips:</h6>
+                                <div class="tips-list">
+                                    <ul>
+                                        <li>Ask specific questions about course topics</li>
+                                        <li>Use keywords from your materials</li>
+                                        <li>Ask for explanations or examples</li>
+                                        <li>Request clarification on complex concepts</li>
+                                        <li>Be specific for better answers</li>
+                                    </ul>
+                                </div>
+                                
+                                <div style="text-align: center; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(107, 114, 128, 0.2);">
+                                    <small style="color: var(--accent-gray);">
+                                        <i class="fas fa-info-circle"></i>
+                                        Powered by advanced AI technology
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Enhanced character counter and form interactions
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.querySelector('.question-input');
+    const charCount = document.querySelector('.char-count');
+    const form = document.querySelector('form');
+    const submitBtn = document.querySelector('.send-btn');
+    
+    // Character counter
+    if (textarea && charCount) {
+        function updateCharCount() {
+            const remaining = 1000 - textarea.value.length;
+            charCount.textContent = remaining + ' characters remaining';
+            
+            // Update styling based on remaining characters
+            charCount.className = 'char-count';
+            if (remaining < 50) {
+                charCount.classList.add('danger');
+            } else if (remaining < 100) {
+                charCount.classList.add('warning');
+            }
+        }
+        
+        textarea.addEventListener('input', updateCharCount);
+        updateCharCount(); // Initial update
+    }
+    
+    // Form submission handling
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            if (textarea.value.trim().length === 0) {
+                e.preventDefault();
+                alert('Please enter a question before submitting.');
+                textarea.focus();
+                return;
+            }
+            
+            // Disable submit button and show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        });
+    }
+    
+    // Auto-resize textarea
+    if (textarea) {
+        function autoResize() {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+        }
+        
+        textarea.addEventListener('input', autoResize);
+        autoResize(); // Initial resize
+    }
+    
+    // Close alert messages
+    document.querySelectorAll('.alert .close').forEach(function(closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            this.parentElement.style.display = 'none';
+        });
+    });
+    
+    // Smooth scroll to new messages
+    const chatContainer = document.querySelector('.chat-container');
+    if (chatContainer) {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+});
+</script>
+{% endblock %}

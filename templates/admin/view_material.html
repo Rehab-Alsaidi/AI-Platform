@@ -1,0 +1,56 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>View Learning Material</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Material Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">ID:</div>
+                <div class="col-md-10">{{ material.id }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Unit:</div>
+                <div class="col-md-10">{{ material.unit_id }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Title:</div>
+                <div class="col-md-10">{{ material.title }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Content:</div>
+                <div class="col-md-10">{{ material.content }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">File:</div>
+                <div class="col-md-10">
+                    {% if material.file_path %}
+                        <a href="{{ url_for('static', filename='uploads/' + material.file_path) }}" target="_blank" class="btn btn-sm btn-primary">
+                            <i class="fas fa-download"></i> Download {{ material.file_path }}
+                        </a>
+                    {% else %}
+                        <span class="text-muted">No file attached</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="{{ url_for('admin_edit_material', material_id=material.id) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Content
+        </a>
+    </div>
+</div>
+{% endblock %}

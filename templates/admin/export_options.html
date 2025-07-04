@@ -1,0 +1,46 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Export {{ export_type.title() }}</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <h5>Select Camp for Export:</h5>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">All Camps</h6>
+                            <p class="card-text">Export data from both training camps</p>
+                            <a href="{{ url_for('admin_export_' + export_type + '_by_camp', camp='all') }}" class="btn btn-primary">
+                                <i class="fas fa-download mr-1"></i> Export All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                {% for camp_key, camp_name in [('Middle East', 'Middle East'), ('Chinese', 'Chinese')] %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">{{ camp_name }}</h6>
+                            <p class="card-text">Export data from {{ camp_name }} camp only</p>
+                            <a href="{{ url_for('admin_export_' + export_type + '_by_camp', camp=camp_key) }}" class="btn btn-success">
+                                <i class="fas fa-download mr-1"></i> Export {{ camp_name }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>View Quiz Question</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Question Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">ID:</div>
+                <div class="col-md-10">{{ quiz.id }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Unit:</div>
+                <div class="col-md-10">{{ quiz.unit_id }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Question:</div>
+                <div class="col-md-10">{{ quiz.question }}</div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Options:</div>
+                <div class="col-md-10">
+                    <ol>
+                        {% for option in options %}
+                        <li {% if loop.index0 == quiz.correct_answer %}class="text-success font-weight-bold"{% endif %}>
+                            {{ option }}
+                            {% if loop.index0 == quiz.correct_answer %}
+                            <span class="badge badge-success">Correct</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ol>
+                </div>
+            </div>
+            <hr>
+            <div class="row">
+                <div class="col-md-2 font-weight-bold">Explanation:</div>
+                <div class="col-md-10">{{ quiz.explanation }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="{{ url_for('admin_edit_quiz', quiz_id=quiz.id) }}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> Edit
+        </a>
+        <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Content
+        </a>
+    </div>
+</div>
+{% endblock %}

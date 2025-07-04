@@ -1,0 +1,160 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Edit AI Vocabulary Word</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+
+                <div class="form-group">
+                    <label for="unit_id">Unit ID:</label>
+                    <input type="number" class="form-control" id="unit_id" name="unit_id" value="{{ word.unit_id }}" required min="1">
+                </div>
+
+                <div class="form-group">
+                    <label for="camp">Training Camp:</label>
+                    <select class="form-control" id="camp" name="camp" required>
+                        <option value="">-- Select Training Camp --</option>
+                        <option value="Middle East" {% if word.camp == 'Middle East' %}selected{% endif %}>Middle East</option>
+                        <option value="Chinese" {% if word.camp == 'Chinese' %}selected{% endif %}>Chinese</option>
+                        <option value="both" {% if word.camp == 'both' %}selected{% endif %}>Both Camps</option>
+                    </select>
+                    <small class="text-muted">Select which training camp(s) can access this word</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="section">Section:</label>
+                    <input type="number" class="form-control" id="section" name="section" value="{{ word.section }}" required min="1">
+                    <small class="text-muted">Words can be grouped into sections within a unit</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="word">Word:</label>
+                    <input type="text" class="form-control" id="word" name="word" value="{{ word.word }}" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="one_sentence_version">One Sentence Version:</label>
+                    <textarea class="form-control" id="one_sentence_version" name="one_sentence_version" rows="2">{{ word.one_sentence_version }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="daily_definition">Daily Definition:</label>
+                    <textarea class="form-control" id="daily_definition" name="daily_definition" rows="3">{{ word.daily_definition }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="life_metaphor">Life Metaphor:</label>
+                    <textarea class="form-control" id="life_metaphor" name="life_metaphor" rows="3">{{ word.life_metaphor }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="visual_explanation">Visual Explanation:</label>
+                    <textarea class="form-control" id="visual_explanation" name="visual_explanation" rows="3">{{ word.visual_explanation }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="core_elements">Core Elements:</label>
+                    <small class="form-text text-muted">Edit core elements with their everyday object comparisons.</small>
+                    <div id="core-elements-container">
+                        {% if word.core_elements %}
+                            {% for item in word.core_elements %}
+                            <div class="core-element-row mb-2">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="core_elements[{{ loop.index0 }}][core_element]" 
+                                               value="{{ item.core_element }}" placeholder="Core Element">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="core_elements[{{ loop.index0 }}][everyday_object]" 
+                                               value="{{ item.everyday_object }}" placeholder="Everyday Object">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-danger btn-sm remove-core-element" onclick="removeRow(this)">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="core-element-row mb-2">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="core_elements[0][core_element]" placeholder="Core Element">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <input type="text" class="form-control" name="core_elements[0][everyday_object]" placeholder="Everyday Object">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="button" class="btn btn-danger btn-sm remove-core-element" onclick="removeRow(this)">Remove</button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addCoreElement()">Add Another Core Element</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="scenario_theater">Scenario Theater:</label>
+                    <textarea class="form-control" id="scenario_theater" name="scenario_theater" rows="3">{{ word.scenario_theater }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="misunderstandings">Common Misunderstandings:</label>
+                    <textarea class="form-control" id="misunderstandings" name="misunderstandings" rows="3">{{ word.misunderstandings }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="reality_connection">Reality Connection:</label>
+                    <textarea class="form-control" id="reality_connection" name="reality_connection" rows="3">{{ word.reality_connection }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="thinking_bubble">Thinking Bubble:</label>
+                    <textarea class="form-control" id="thinking_bubble" name="thinking_bubble" rows="3">{{ word.thinking_bubble }}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="smiling_conclusion">Smiling Conclusion:</label>
+                    <textarea class="form-control" id="smiling_conclusion" name="smiling_conclusion" rows="3">{{ word.smiling_conclusion }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Update Word</button>
+                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let coreElementIndex = {% if word.core_elements %}{{ word.core_elements|length }}{% else %}1{% endif %};
+
+function addCoreElement() {
+    const container = document.getElementById('core-elements-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'core-element-row mb-2';
+    newRow.innerHTML = `
+        <div class="row">
+            <div class="col-md-5">
+                <input type="text" class="form-control" name="core_elements[${coreElementIndex}][core_element]" placeholder="Core Element">
+            </div>
+            <div class="col-md-5">
+                <input type="text" class="form-control" name="core_elements[${coreElementIndex}][everyday_object]" placeholder="Everyday Object">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-core-element" onclick="removeRow(this)">Remove</button>
+            </div>
+        </div>
+    `;
+    container.appendChild(newRow);
+    coreElementIndex++;
+}
+
+function removeRow(button) {
+    const row = button.closest('.core-element-row');
+    row.remove();
+}
+</script>
+{% endblock %}

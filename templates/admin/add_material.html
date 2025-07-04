@@ -1,0 +1,80 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<style>
+    input[type="file"] {
+        color: #ccc;
+        background-color: #2a2a2a;
+        border: 1px solid #444;
+        padding: 6px;
+        border-radius: 6px;
+    }
+
+    input[type="file"]::file-selector-button {
+        background-color: #444;
+        color: #fff;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+        background-color: #666;
+    }
+</style>
+
+<div class="container mt-4">
+    <h1>Add Learning Material</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="alert alert-info">
+        <strong>Simplified Upload:</strong> Just select a unit, choose the training camp, and upload your file. The title will be automatically generated from the filename.
+    </div>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="unit_id">Unit ID:</label>
+                    <input type="number" class="form-control" id="unit_id" name="unit_id" required min="1">
+                </div>
+                
+                <!-- CAMP SELECTION - Required field -->
+                <div class="form-group">
+                    <label for="camp">Training Camp: <span class="text-danger">*</span></label>
+                    <select class="form-control" id="camp" name="camp" required>
+                        <option value="">-- Select Training Camp --</option>
+                        {% for camp_key, camp_name in camps.items() %}
+                            <option value="{{ camp_key }}">{{ camp_name }}</option>
+                        {% endfor %}
+                        <option value="both">Both Camps</option>
+                    </select>
+                    <small class="text-muted">Choose which camp(s) can see this material</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="file">File Upload (required):</label>
+                    <input type="file" class="form-control-file" id="file" name="file" required>
+                    <small class="text-muted">Allowed file types: PDF, PPT, PPTX, DOC, DOCX, PNG, JPG, JPEG, GIF</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="content">Additional Notes (optional):</label>
+                    <textarea class="form-control" id="content" name="content" rows="3" placeholder="Optional: Add any notes or description for this material"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="display:block !important; visibility:visible !important; opacity:1 !important; position:relative !important; z-index:9999;">Upload Material</button>
+                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

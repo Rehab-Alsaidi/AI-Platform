@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>System Settings</h1>
+
+<form method="post">
+    <div>
+        <label for="key">Setting Key:</label>
+        <input type="text" id="key" name="key" required>
+    </div>
+    <div>
+        <label for="value">Setting Value:</label>
+        <input type="text" id="value" name="value" required>
+    </div>
+    <button type="submit">Save Setting</button>
+</form>
+
+<h2>Current Settings</h2>
+<ul>
+    {% for key, value in settings.items() %}
+    <li><strong>{{ key }}</strong>: {{ value }}</li>
+    {% else %}
+    <li>No settings configured</li>
+    {% endfor %}
+</ul>
+{% endblock %}

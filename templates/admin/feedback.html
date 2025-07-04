@@ -1,0 +1,39 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="content-header">
+    <h2>User Feedback</h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Feedback</th>
+                    <th>Rating</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in feedback %}
+                <tr>
+                    <td>{{ item.id }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.feedback_text }}</td>
+                    <td>{{ item.rating }}/5</td>
+                    <td>{{ item.created_at }}</td>
+                </tr>
+                {% endfor %}
+                {% if not feedback %}
+                <tr>
+                    <td colspan="5" class="text-center">No feedback submitted yet</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

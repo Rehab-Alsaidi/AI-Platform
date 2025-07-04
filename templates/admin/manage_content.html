@@ -1,0 +1,256 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h1>Manage Content</h1>
+    
+    <div class="mb-4">
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary" onclick="filterByCamp('all')">All Camps</button>
+            <button type="button" class="btn btn-outline-primary" onclick="filterByCamp('Middle East')">Middle East</button>
+            <button type="button" class="btn btn-outline-primary" onclick="filterByCamp('Chinese')">Chinese</button>
+            <button type="button" class="btn btn-outline-primary" onclick="filterByCamp('both')">Both Camps</button>
+        </div>
+    </div>
+    
+    <!-- Quizzes Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Quiz Questions</h3>
+            <a href="{{ url_for('admin_add_quiz') }}" class="btn btn-sm btn-primary float-right">Add Quiz</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Unit</th>
+                            <th>Camp</th>
+                            <th>Question</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for quiz in quizzes %}
+                        <tr data-camp="{{ quiz.camp }}">
+                            <td>{{ quiz.id }}</td>
+                            <td>{{ quiz.unit_id }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if quiz.camp == 'Middle East' else 'info' if quiz.camp == 'Chinese' else 'secondary' }}">
+                                    {{ quiz.camp }}
+                                </span>
+                            </td>
+                            <td>{{ quiz.question[:50] }}{% if quiz.question|length > 50 %}...{% endif %}</td>
+                            <td>
+                                <a href="{{ url_for('admin_view_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-info">View</a>
+                                <a href="{{ url_for('admin_edit_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{{ url_for('admin_delete_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Materials Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Learning Materials</h3>
+            <a href="{{ url_for('admin_add_material') }}" class="btn btn-sm btn-primary float-right">Add Material</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Unit</th>
+                            <th>Camp</th>
+                            <th>Title</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for material in materials %}
+                        <tr data-camp="{{ material.camp }}">
+                            <td>{{ material.id }}</td>
+                            <td>{{ material.unit_id }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if material.camp == 'Middle East' else 'info' if material.camp == 'Chinese' else 'secondary' }}">
+                                    {{ material.camp }}
+                                </span>
+                            </td>
+                            <td>{{ material.title }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_view_material', material_id=material.id) }}" class="btn btn-sm btn-info">View</a>
+                                <a href="{{ url_for('admin_edit_material', material_id=material.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{{ url_for('admin_delete_material', material_id=material.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Videos Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Videos</h3>
+            <a href="{{ url_for('admin_add_video') }}" class="btn btn-sm btn-primary float-right">Add Video</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Unit</th>
+                            <th>Camp</th>
+                            <th>Title</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for video in videos %}
+                        <tr data-camp="{{ video.camp }}">
+                            <td>{{ video.id }}</td>
+                            <td>{{ video.unit_id }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if video.camp == 'Middle East' else 'info' if video.camp == 'Chinese' else 'secondary' }}">
+                                    {{ video.camp }}
+                                </span>
+                            </td>
+                            <td>{{ video.title }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_view_video', video_id=video.id) }}" class="btn btn-sm btn-info">View</a>
+                                <a href="{{ url_for('admin_edit_video', video_id=video.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{{ url_for('admin_delete_video', video_id=video.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Words Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>AI Vocabulary Words</h3>
+            <a href="{{ url_for('admin_add_word') }}" class="btn btn-sm btn-primary float-right">Add Word</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Unit</th>
+                            <th>Camp</th>
+                            <th>Section</th>
+                            <th>Word</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for word in words %}
+                        <tr data-camp="{{ word.camp }}">
+                            <td>{{ word.id }}</td>
+                            <td>{{ word.unit_id }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if word.camp == 'Middle East' else 'info' if word.camp == 'Chinese' else 'secondary' }}">
+                                    {{ word.camp }}
+                                </span>
+                            </td>
+                            <td>{{ word.section }}</td>
+                            <td>{{ word.word }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_view_word', word_id=word.id) }}" class="btn btn-sm btn-info">View</a>
+                                <a href="{{ url_for('admin_edit_word', word_id=word.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{{ url_for('admin_delete_word', word_id=word.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Section -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Projects</h3>
+            <a href="{{ url_for('admin_add_project') }}" class="btn btn-sm btn-primary float-right">Add Project</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Unit</th>
+                            <th>Camp</th>
+                            <th>Title</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for project in projects %}
+                        <tr data-camp="{{ project.camp }}">
+                            <td>{{ project.id }}</td>
+                            <td>{{ project.unit_id }}</td>
+                            <td>
+                                <span class="badge badge-{{ 'success' if project.camp == 'Middle East' else 'info' if project.camp == 'Chinese' else 'secondary' }}">
+                                    {{ project.camp }}
+                                </span>
+                            </td>
+                            <td>{{ project.title }}</td>
+                            <td>
+                                <a href="{{ url_for('admin_view_project', project_id=project.id) }}" class="btn btn-sm btn-info">View</a>
+                                <a href="{{ url_for('admin_edit_project', project_id=project.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{{ url_for('admin_delete_project', project_id=project.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterByCamp(camp) {
+    const rows = document.querySelectorAll('tbody tr[data-camp]');
+    const buttons = document.querySelectorAll('.btn-group .btn');
+    
+    // Reset button states
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    // Set active button
+    event.target.classList.add('active');
+    
+    rows.forEach(row => {
+        const rowCamp = row.getAttribute('data-camp');
+        if (camp === 'all' || rowCamp === camp) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+// Set 'All Camps' as default active
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('.btn-group .btn').classList.add('active');
+});
+</script>
+{% endblock %}

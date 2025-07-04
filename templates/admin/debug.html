@@ -1,0 +1,30 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Submission Download Diagnostics</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">Debug Information</div>
+        <div class="card-body">
+            <pre>{% for line in debug_info %}{{ line }}
+{% endfor %}</pre>
+        </div>
+    </div>
+    
+    {% if direct_link %}
+    <div class="card mb-4">
+        <div class="card-header">Direct Download</div>
+        <div class="card-body">
+            <p>Try downloading directly:</p>
+            <a href="{{ direct_link }}" class="btn btn-primary">Download File</a>
+            
+            <hr>
+            <p>File path: {{ file_path }}</p>
+        </div>
+    </div>
+    {% endif %}
+    
+    <a href="{{ url_for('admin_submissions') }}" class="btn btn-secondary">Back to Submissions</a>
+</div>
+{% endblock %}

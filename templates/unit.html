@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4 animate-fadeIn">
+    <h1 class="page-title">Unit {{ unit_id }}</h1>
+    
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="progress" style="height: 30px;">
+                {% set progress = 0 %}
+                {% if quiz_attempted %}
+                    {% set progress = progress + 50 %}
+                {% endif %}
+                {% if project_completed %}
+                    {% set progress = progress + 50 %}
+                {% endif %}
+                {% set progress = progress if progress is not none and progress|int is number else 0 %}
+                <div class="progress-bar" role="progressbar" style="width: {{ progress }}%;" 
+                     aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ progress }}% Complete
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 text-right">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Units
+            </a>
+        </div>
+    </div>
+
+    <!-- Materials Section -->
+    <div class="card mb-4 animate-slideUp" style="animation-delay: 0.1s;">
+        <div class="card-header">
+            <h5><i class="fas fa-book-open mr-2"></i>Learning Materials</h5>
+        </div>
+        <div class="card-body">
+            {% if materials %}
+                <div class="list-group">
+                    {% for material in materials %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1">{{ material[0] }}</h6>
+                                {% if material[2] %}
+                                    <a href="{{ url_for('download_material', filename=material[2]) }}" class="btn btn-sm btn-primary" target="_blank" rel="noopener">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                {% endif %}
+                            </div>
+                            {% if material[1] %}
+                                <p class="mb-1 text-muted">{{ material[1] }}</p>
+                            {% endif %}
+
+                            {% if material[2] %}
+                                {% set ext = material[2].split('.')[-1].lower() %}
+                                <div class="mt-3">
+                                    {% if ext == 'pdf' %}
+                                        <div class="embed-responsive embed-responsive-4by3" style="height: 500px;">
+                                            <iframe class="embed-responsive-item" src="{{ url_for('static', filename='uploads/' + material[2]) }}"></iframe>
+                                        </div>
+                                    {% elif ext in ['ppt', 'pptx'] %}
+                                        <div class="mt-3" style="height: 500px;">
+                                            <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.url_root|replace('http://', 'https://') }}static/uploads/{{ material[2] }}" 
+                                                    width="100%" height="500" frameborder="0" allowfullscreen></iframe>
+                                        </div>
+                                    {% elif ext in ['jpg', 'jpeg', 'png', 'gif'] %}
+                                        <img src="{{ url_for('static', filename='uploads/' + material[2]) }}" class="img-fluid mt-2 rounded" alt="{{ material[0] }}">
+                                    {% elif ext in ['doc', 'docx'] %}
+                                        <div class="mt-2 p-3 feature-card text-center">
+                                            <i class="fas fa-file-word fa-5x text-primary mb-3"></i>
+                                            <p>Word document: {{ material[2] }}</p>
+                                        </div>
+                                    {% else %}
+                                        <div class="mt-2 p-3 feature-card text-center">
+                                            <i class="fas fa-file fa-5x text-secondary mb-3"></i>
+                                            <p>File: {{ material[2] }}</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No materials available for this unit.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Videos Section -->
+    <div class="card mb-4 animate-slideUp" style="animation-delay: 0.2s;">
+        <div class="card-header">
+            <h5><i class="fas fa-video mr-2"></i>Video Lessons</h5>
+        </div>
+        <div class="card-body">
+            {% if videos %}
+                <div class="row">
+                    {% for video in videos %}
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ video[0] }}</h5>
+                                    {% if video[2] %}
+                                        <p class="card-text text-muted">{{ video[2] }}</p>
+                                    {% endif %}
+                                    <a href="https://www.youtube.com/watch?v={{ video[1].split('v=')[1] if 'v=' in video[1] else video[1] }}" 
+                                       target="_blank" rel="noopener" class="btn btn-primary">
+                                        <i class="fas fa-external-link-alt"></i> Watch on YouTube
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-video-slash fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No videos available for this unit.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Vocabulary Words Section -->
+    <div class="card mb-4 animate-slideUp" style="animation-delay: 0.3s;">
+        <div class="card-header">
+            <h5><i class="fas fa-brain mr-2"></i>AI Vocabulary</h5>
+        </div>
+        <div class="card-body">
+            {% if words %}
+                {% set current_section = None %}
+                {% for word in words %}
+                    {% if word.section != current_section %}
+                        {% if current_section is not none %}
+                            </div> 
+                        {% endif %}
+                        {% set current_section = word.section %}
+                        <h6 class="mt-4 mb-3"><span class="badge badge-primary">Section {{ current_section }}</span></h6>
+                        <div class="ml-3 mb-4">
+                    {% endif %}
+
+                    <div class="word-item mb-4 border rounded p-4 feature-card">
+                        <h4 class="mb-3"><strong style="color: var(--accent-color);">🎯 {{ word.word }}</strong></h4>
+
+                        {% if word.one_sentence_version %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">📝 One-sentence:</strong> 
+                            <span class="ml-2">{{ word.one_sentence_version }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if word.daily_definition %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">🏠 Daily Definition:</strong> 
+                            <span class="ml-2">{{ word.daily_definition }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if word.life_metaphor %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">🎭 Life Metaphor:</strong> 
+                            <span class="ml-2">{{ word.life_metaphor }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if word.visual_explanation %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">🎨 Visual Explanation:</strong> 
+                            <span class="ml-2">{{ word.visual_explanation }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if word.core_elements and word.core_elements|length > 0 %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">🧩 Core Elements:</strong>
+                            <div class="mt-2">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>🔧 Core Element</th>
+                                                <th>🏠 Everyday Object</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in word.core_elements %}
+                                            <tr>
+                                                <td>{{ item.core_element }}</td>
+                                                <td>{{ item.everyday_object }}</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if word.scenario_theater %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">🎭 Scenario Theater:</strong> 
+                            <span class="ml-2">{{ word.scenario_theater }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if word.misunderstandings %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">🚫 Common Misunderstandings:</strong> 
+                            <span class="ml-2">{{ word.misunderstandings }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if word.reality_connection %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">🌍 Reality Connection:</strong> 
+                            <span class="ml-2">{{ word.reality_connection }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if word.thinking_bubble %}
+                        <div class="mb-3">
+                            <strong style="color: var(--accent-light);">💭 Thinking Bubble:</strong> 
+                            <span class="ml-2">{{ word.thinking_bubble }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if word.smiling_conclusion %}
+                        <div class="mb-0">
+                            <strong style="color: var(--accent-light);">😄 Smiling Conclusion:</strong> 
+                            <span class="ml-2">{{ word.smiling_conclusion }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if loop.last %}
+                        </div> <!-- Close last section -->
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-book-open fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No AI vocabulary words available for this unit.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Project Section -->
+    <div class="card mb-4 animate-slideUp" style="animation-delay: 0.4s;">
+        <div class="card-header">
+            <h5><i class="fas fa-project-diagram mr-2"></i>Project Challenge</h5>
+        </div>
+        <div class="card-body">
+            {% if project %}
+                <h5>{{ project[0] }}</h5>
+                <p class="text-muted">{{ project[1] }}</p>
+                {% if project[2] %}
+                    <h6>Resources:</h6>
+                    <p class="text-muted">{{ project[2] }}</p>
+                {% endif %}
+
+                {% if project_completed %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-check-circle"></i> You have completed this project!
+                    </div>
+                {% else %}
+                    <form method="POST" action="{{ url_for('unit', unit_id=unit_id) }}" enctype="multipart/form-data">
+                        <input type="hidden" name="submit_project" value="1">
+                        <div class="form-group mb-3">
+                            <label for="project_file">Upload your project file (optional):</label>
+                            <input type="file" class="form-control" id="project_file" name="project_file">
+                            <small class="form-text text-muted">Upload your project files or screenshots if available.</small>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="project_notes">Project Notes:</label>
+                            <textarea class="form-control" id="project_notes" name="project_notes" rows="3" placeholder="Share your thoughts..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-circle"></i> Submit Project
+                        </button>
+                    </form>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No project available for this unit.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+   <!-- Quiz Section in Unit Template - Replace the existing quiz section with this -->
+<div class="card mb-4">
+    <div class="card-header bg-warning text-dark">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-question-circle"></i> {{ get_text('unit') }} {{ unit_id }} {{ get_text('quizzes') }}
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if quiz_id %}
+            {% if quiz_attempted %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>{{ get_text('quiz_completed') or 'Quiz Completed' }}</strong>
+                    {% if quiz_attempt_info %}
+                        <br>{{ get_text('score') }}: {{ quiz_attempt_info.score }} ({{ get_text('passed') if quiz_attempt_info.passed else get_text('not_passed') or 'Not Passed' }})
+                        <br>{{ get_text('completed') }}: {{ quiz_attempt_info.attempted_at.strftime('%B %d, %Y') if quiz_attempt_info.attempted_at else get_text('unknown_date') or 'Unknown date' }}
+                    {% endif %}
+                </div>
+                <p>{{ get_text('quiz_already_taken') or 'You have already taken this quiz. Click below to review your answers and explanations.' }}</p>
+                <a href="{{ url_for('quiz', unit_id=unit_id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-eye"></i> {{ get_text('review_quiz_results') or 'Review Quiz Results' }}
+                </a>
+            {% else %}
+                <p>{{ get_text('test_knowledge') or 'Test your knowledge with this unit quiz. You can only take this quiz once, so make sure you are ready!' }}</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>{{ get_text('important') or 'Important' }}:</strong> {{ get_text('quiz_one_attempt_warning') or 'This quiz can only be taken once. Make sure you have studied the material before proceeding.' }}
+                </div>
+                <a href="{{ url_for('quiz', unit_id=unit_id) }}" class="btn btn-warning text-dark">
+                    <i class="fas fa-play"></i> {{ get_text('take_quiz_one_attempt') or 'Take Quiz (One Attempt Only)' }}
+                </a>
+            {% endif %}
+        {% else %}
+            <p class="text-muted">{{ get_text('no_quiz_available') or 'No quiz available for this unit yet.' }}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

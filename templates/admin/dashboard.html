@@ -1,0 +1,254 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Admin Dashboard</h1>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Users</h5>
+                    <h2 class="text-primary">{{ stats.total_users }}</h2>
+                    <div class="btn-group-vertical w-100">
+                        <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-primary mb-1">Manage Users</a>
+                        <a href="{{ url_for('admin_export_users') }}" class="btn btn-sm btn-success">Export CSV</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Quizzes</h5>
+                    <h2 class="text-info">{{ stats.total_quizzes }}</h2>
+                    <a href="{{ url_for('admin_add_quiz') }}" class="btn btn-sm btn-primary">Add Quiz</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Materials</h5>
+                    <h2 class="text-warning">{{ stats.total_materials }}</h2>
+                    <a href="{{ url_for('admin_add_material') }}" class="btn btn-sm btn-primary">Add Material</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Videos</h5>
+                    <h2 class="text-danger">{{ stats.total_videos }}</h2>
+                    <a href="{{ url_for('admin_add_video') }}" class="btn btn-sm btn-primary">Add Video</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Projects</h5>
+                    <h2 class="text-success">{{ stats.total_projects }}</h2>
+                    <a href="{{ url_for('admin_add_project') }}" class="btn btn-sm btn-primary">Add Project</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Submissions</h5>
+                    <h2 class="text-secondary">{{ stats.total_submissions }}</h2>
+                    <div class="btn-group-vertical w-100">
+                        <a href="{{ url_for('admin_submissions', camp='all') }}" class="btn btn-sm btn-primary mb-1">
+                            <i class="fas fa-eye mr-1"></i> View All
+                        </a>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-success dropdown-toggle w-100" type="button" id="submissionDownloadDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-download mr-1"></i> Download ZIP
+                            </button>
+                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="submissionDownloadDropdown">
+                                <h6 class="dropdown-header">Download by Camp</h6>
+                                <a class="dropdown-item" href="{{ url_for('admin_download_submissions_by_camp', camp='all') }}">
+                                    <i class="fas fa-globe mr-2"></i> All Camps
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ url_for('admin_download_submissions_by_camp', camp='Middle East') }}">
+                                    <i class="fas fa-flag mr-2 text-success"></i> Middle East
+                                </a>
+                                <a class="dropdown-item" href="{{ url_for('admin_download_submissions_by_camp', camp='Chinese') }}">
+                                    <i class="fas fa-flag mr-2 text-info"></i> Chinese
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Today's Activity</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">Q&A</small>
+                            <h4 class="text-primary">{{ stats.today_qa }}</h4>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">Quiz Attempts</small>
+                            <h4 class="text-info">{{ stats.today_quiz_attempts }}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">User Progress</h5>
+                    <div class="mt-3">
+                        <a href="{{ url_for('admin_export_progress') }}" class="btn btn-success">
+                            <i class="fas fa-chart-line mr-1"></i> Export CSV
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Camp-based Export Options -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="bg-dark text-white p-4 rounded">
+                <h4 class="mb-3 text-white">
+                    <i class="fas fa-download mr-2"></i>
+                    Export Data by Training Camp
+                </h4>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="border-left border-success pl-3">
+                            <h6 class="text-success"><i class="fas fa-users mr-1"></i> User Data</h6>
+                            <a href="{{ url_for('admin_export_users_by_camp', camp='Middle East') }}" class="btn btn-sm btn-success mb-2 d-block">
+                                <i class="fas fa-flag mr-1"></i> ME Users CSV
+                            </a>
+                            <a href="{{ url_for('admin_export_users_by_camp', camp='Chinese') }}" class="btn btn-sm btn-info mb-2 d-block">
+                                <i class="fas fa-flag mr-1"></i> Chinese Users CSV
+                            </a>
+                            <a href="{{ url_for('admin_export_users_by_camp', camp='all') }}" class="btn btn-sm btn-light mb-2 d-block">
+                                <i class="fas fa-globe mr-1"></i> All Users CSV
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border-left border-info pl-3">
+                            <h6 class="text-info"><i class="fas fa-chart-line mr-1"></i> Progress Data</h6>
+                            <a href="{{ url_for('admin_export_progress_by_camp', camp='Middle East') }}" class="btn btn-sm btn-success mb-2 d-block">
+                                <i class="fas fa-flag mr-1"></i> ME Progress CSV
+                            </a>
+                            <a href="{{ url_for('admin_export_progress_by_camp', camp='Chinese') }}" class="btn btn-sm btn-info mb-2 d-block">
+                                <i class="fas fa-flag mr-1"></i> Chinese Progress CSV
+                            </a>
+                            <a href="{{ url_for('admin_export_progress_by_camp', camp='all') }}" class="btn btn-sm btn-light mb-2 d-block">
+                                <i class="fas fa-globe mr-1"></i> All Progress CSV
+                            </a>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border-left border-warning pl-3">
+                            <h6 class="text-warning"><i class="fas fa-comments mr-1"></i> Feedback Data</h6>
+                            <a href="{{ url_for('admin_export_feedback_by_camp', camp='Middle East') }}" class="btn btn-sm btn-success mb-2 d-block">
+                                <i class="fas fa-flag mr-1"></i> ME Feedback CSV
+                            </a>
+                            <a href="{{ url_for('admin_export_feedback_by_camp', camp='Chinese') }}" class="btn btn-sm btn-info mb-2 d-block">
+                                <i class="fas fa-flag mr-1"></i> Chinese Feedback CSV
+                            </a>
+                            <a href="{{ url_for('admin_export_feedback_by_camp', camp='all') }}" class="btn btn-sm btn-light mb-2 d-block">
+                                <i class="fas fa-globe mr-1"></i> All Feedback CSV
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="bg-primary text-white p-4 rounded">
+                <h5>
+                    <i class="fas fa-cogs mr-2"></i>Content Management
+                </h5>
+                <p class="mb-3">Manage quizzes, materials, videos, and projects across all camps.</p>
+                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-light">
+                    <i class="fas fa-edit mr-1"></i> Manage All Content
+                </a>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="bg-danger text-white p-4 rounded">
+                <h5>
+                    <i class="fas fa-database mr-2"></i>Database Management
+                </h5>
+                <p class="mb-3">Reset the entire database. <strong>This action cannot be undone!</strong></p>
+                <a href="{{ url_for('admin_reset_db') }}" class="btn btn-light" onclick="return confirm('Are you sure you want to reset the database? This will delete ALL data!')">
+                    <i class="fas fa-exclamation-triangle mr-1"></i> Reset Database
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Ensure Bootstrap dropdowns work properly
+    $('.dropdown-toggle').dropdown();
+    
+    // Add confirmation for download actions
+    $('[href*="download_submissions"]').click(function(e) {
+        const text = $(this).text().trim();
+        if (!confirm(`Download submissions for ${text}?`)) {
+            e.preventDefault();
+        }
+    });
+    
+    // Add confirmation for export actions
+    $('[href*="export_"]').click(function(e) {
+        const text = $(this).text().trim();
+        if (!confirm(`Export ${text}?`)) {
+            e.preventDefault();
+        }
+    });
+    
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+    
+    // Fix dropdown positioning
+    $('.dropdown').on('show.bs.dropdown', function() {
+        $(this).find('.dropdown-menu').css({
+            'position': 'absolute',
+            'z-index': '1050'
+        });
+    });
+});
+</script>
+{% endblock %}

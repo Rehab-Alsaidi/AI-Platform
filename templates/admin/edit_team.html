@@ -1,0 +1,41 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Edit Team</h1>
+    
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="team_name">Team Name:</label>
+                    <input type="text" class="form-control" id="team_name" name="team_name" value="{{ team.name }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="camp">Camp:</label>
+                    <select class="form-control" id="camp" name="camp" required>
+                        <option value="Middle East" {% if team.camp == 'Middle East' %}selected{% endif %}>Middle East</option>
+                        <option value="Chinese" {% if team.camp == 'Chinese' %}selected{% endif %}>Chinese</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="team_lead_id">Team Lead:</label>
+                    <select class="form-control" id="team_lead_id" name="team_lead_id" required>
+                        <option value="">-- Select Team Lead --</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if user.id == team.team_lead_id %}selected{% endif %}>
+                            {{ user.username }} ({{ user.email }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Update Team</button>
+                <a href="{{ url_for('admin_teams') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

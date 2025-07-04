@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Select Training Camp - 51Talk AI Learning{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Select Your Training Camp</h3>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Please select your training camp to access the appropriate learning materials and join your team.
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('select_camp') }}">
+                        <div class="form-group mb-4">
+                            <label for="camp" class="form-label">Training Camp</label>
+                            <div class="row">
+                                {% for camp_key, camp_name in camps.items() %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="card h-100 camp-option">
+                                        <div class="card-body text-center">
+                                            <input type="radio" class="form-check-input" id="camp_{{ camp_key }}" name="camp" value="{{ camp_key }}" required>
+                                            <label class="form-check-label w-100" for="camp_{{ camp_key }}">
+                                                <h5 class="mt-2">{{ camp_name }}</h5>
+                                                {% if camp_key == 'Middle East' %}
+                                                    <p class="text-muted">For learners in the Middle East region</p>
+                                                {% elif camp_key == 'Chinese' %}
+                                                    <p class="text-muted">For Chinese-speaking learners</p>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">Join Training Camp</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.camp-option {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.camp-option:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+
+.camp-option input[type="radio"]:checked + label .card-body {
+    background-color: #e3f2fd;
+}
+
+.camp-option input[type="radio"] {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+</style>
+{% endblock %}

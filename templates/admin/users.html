@@ -1,0 +1,79 @@
+{% extends "admin/base.html" %}
+
+{% block content %}
+<div class="content-header">
+    <h2>User Management</h2>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Email</th>
+                    <th>Username</th>
+                    <th>Language</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>
+                        <strong>{{ user.email or 'N/A' }}</strong>
+                        {% if user.email %}
+                        <small class="text-muted d-block">{{ user.email.split('@')[0] }}</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ user.name or user.username or 'N/A' }}</td>
+                    <td>{{ LANGUAGES.get(user.language, user.language) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% block additional_css %}
+<style>
+.table th {
+    background-color: #f8f9fa;
+    border-top: none;
+    font-weight: 600;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.content-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.content-header h2 {
+    margin: 0;
+    color: #495057;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.btn-group-sm > .btn, .btn-sm {
+    margin-right: 5px;
+}
+
+.btn-sm:last-child {
+    margin-right: 0;
+}
+
+.text-muted {
+    font-size: 0.875em;
+}
+</style>
+{% endblock %}
+{% endblock %}

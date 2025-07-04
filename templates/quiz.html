@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Quiz for Unit {{ unit_id }} | 51Talk AI Learning{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card mb-4 quiz-card">
+            <div class="card-header bg-primary text-white">
+                <h3><i class="fas fa-question-circle mr-2"></i>Quiz for Unit {{ unit_id }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="motivation-card mb-4">
+                    <i class="fas fa-lightbulb mr-2"></i>
+                    <h5 class="mb-2">Tip of the Day</h5>
+                    <p class="mb-0">{{ motivation }}</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Instructions:</strong> Answer all questions and click submit. You need to get at least 3 out of 5 questions correct to pass.
+                </div>
+                
+                <form method="POST">
+                    {% for question in questions %}
+                    <div class="card mb-4 question-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <span class="badge badge-primary mr-2">{{ loop.index }}</span>
+                                {{ question.question }}
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="options-container">
+                                {% for option in question.options %}
+                                <div class="custom-control custom-radio mb-3">
+                                    <input type="radio" id="q{{ question.id }}_option{{ loop.index0 }}" name="q{{ question.id }}" value="{{ loop.index0 }}" class="custom-control-input" required>
+                                    <label class="custom-control-label" for="q{{ question.id }}_option{{ loop.index0 }}">
+                                        {{ option }}
+                                    </label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 animate-pulse">
+                            <i class="fas fa-check-circle mr-2"></i>Submit Answers
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_css %}
+<style>
+.custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+.custom-radio .custom-control-label::before {
+    border-radius: 50%;
+}
+
+.custom-control-label {
+    padding: 8px;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+    cursor: pointer;
+}
+
+.custom-control-input:checked ~ .custom-control-label {
+    background-color: rgba(187, 134, 252, 0.1);
+}
+
+.options-container {
+    padding: 10px;
+}
+
+.badge-primary {
+    background-color: var(--accent-color);
+}
+
+.motivation-card {
+    background: linear-gradient(135deg, #673ab7, #9c27b0);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+}
+
+.motivation-card h5 {
+    color: white;
+}
+
+.quiz-card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.question-card {
+    border-left: 4px solid var(--accent-color);
+}
+
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+</style>
+{% endblock %}

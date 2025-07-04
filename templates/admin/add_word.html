@@ -1,0 +1,149 @@
+{% extends 'admin/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Add AI Vocabulary Word</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="card">
+        <div class="card-body">
+            <form method="POST">
+                <div class="form-group">
+                    <label for="unit_id">Unit ID:</label>
+                    <input type="number" class="form-control" id="unit_id" name="unit_id" required min="1">
+                </div>
+
+                <!-- NEW CAMP SELECTION FIELD -->
+                <div class="form-group">
+                    <label for="camp">Training Camp:</label>
+                    <select class="form-control" id="camp" name="camp" required>
+                        style="min-width: 100%; width: 100%; height: 45px; font-size: 16px; padding: 10px 12px; background-color: #fff; color: #333; border: 1px solid #ced4da;">
+                        <option value="">Select Camp</option>
+                        {% for camp_key, camp_name in camps.items() %}
+                            <option value="{{ camp_key }}">{{ camp_name }}</option>
+                        {% endfor %}
+                        <option value="both">Both Camps</option>
+                    </select>
+                    <small class="text-muted">Choose which camp(s) can see this word</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="section">Section (1-5):</label>
+                    <input type="number" class="form-control" id="section" name="section" min="1" max="5" value="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="word">AI Word:</label>
+                    <input type="text" class="form-control" id="word" name="word" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="one_sentence_version">One-sentence version:</label>
+                    <textarea class="form-control" id="one_sentence_version" name="one_sentence_version" rows="2" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="daily_definition">Daily Definition:</label>
+                    <textarea class="form-control" id="daily_definition" name="daily_definition" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="life_metaphor">Life Metaphor:</label>
+                    <textarea class="form-control" id="life_metaphor" name="life_metaphor" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="visual_explanation">Visual Explanation:</label>
+                    <textarea class="form-control" id="visual_explanation" name="visual_explanation" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="core_elements">Core Elements:</label>
+                    <small class="form-text text-muted">Add core elements with their everyday object comparisons.</small>
+                    <div id="core-elements-container">
+                        <div class="core-element-row mb-2">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" name="core_elements[0][core_element]" placeholder="Core Element">
+                                </div>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" name="core_elements[0][everyday_object]" placeholder="Everyday Object">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-danger btn-sm remove-core-element" onclick="removeRow(this)">Remove</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addCoreElement()">Add Another Core Element</button>
+                </div>
+
+                <div class="form-group">
+                    <label for="scenario_theater">Scenario Theater:</label>
+                    <textarea class="form-control" id="scenario_theater" name="scenario_theater" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="misunderstandings">Common Misunderstandings:</label>
+                    <textarea class="form-control" id="misunderstandings" name="misunderstandings" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="reality_connection">Reality Connection:</label>
+                    <textarea class="form-control" id="reality_connection" name="reality_connection" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="thinking_bubble">Thinking Bubble:</label>
+                    <textarea class="form-control" id="thinking_bubble" name="thinking_bubble" rows="2"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="smiling_conclusion">Smiling Conclusion:</label>
+                    <textarea class="form-control" id="smiling_conclusion" name="smiling_conclusion" rows="2"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Add Word</button>
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let coreElementIndex = 1;
+
+function addCoreElement() {
+    const container = document.getElementById('core-elements-container');
+    const newRow = document.createElement('div');
+    newRow.className = 'core-element-row mb-2';
+    newRow.innerHTML = `
+        <div class="row">
+            <div class="col-md-5">
+                <input type="text" class="form-control" name="core_elements[${coreElementIndex}][core_element]" placeholder="Core Element">
+            </div>
+            <div class="col-md-5">
+                <input type="text" class="form-control" name="core_elements[${coreElementIndex}][everyday_object]" placeholder="Everyday Object">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm remove-core-element" onclick="removeRow(this)">Remove</button>
+            </div>
+        </div>
+    `;
+    container.appendChild(newRow);
+    coreElementIndex++;
+}
+
+function removeRow(button) {
+    const row = button.closest('.core-element-row');
+    row.remove();
+}
+</script>
+{% endblock %}
