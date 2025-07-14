@@ -7726,141 +7726,366 @@ def view_submission(submission_id: int) -> Any:
             release_db_connection(conn)
 
 
-# New routes for documents management
 @app.route("/admin/manage_documents")
 @admin_required
 def admin_manage_documents() -> Any:
-    """Manage documents for Q&A system."""
-    documents = get_document_list()
+    """FIXED: Manage documents stored in database."""
+    documents = get_documents_from_database_admin()
+    logger.info(f"📋 Admin viewing {len(documents)} documents")
     return render_template("admin/manage_documents.html", documents=documents)
 
 
+
+
+def store_document_in_database(filename: str, content: bytes, content_type: str) -> bool:
+    """Store document content in database - FIXED VERSION."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # First ensure the table exists
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stored_documents (
+                id SERIAL PRIMARY KEY,
+                filename VARCHAR(255) NOT NULL,
+                content BYTEA NOT NULL,
+                content_type VARCHAR(100),
+                upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(filename)
+            )
+        """)
+        
+        # Insert or update document
+        cursor.execute("""
+            INSERT INTO stored_documents (filename, content, content_type)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (filename) 
+            DO UPDATE SET 
+                content = EXCLUDED.content, 
+                content_type = EXCLUDED.content_type,
+                upload_date = CURRENT_TIMESTAMP
+            RETURNING id
+        """, (filename, content, content_type))
+        
+        doc_id = cursor.fetchone()[0]
+        conn.commit()
+        cursor.close()
+        
+        logger.info(f"✅ Document {filename} stored in database with ID: {doc_id}")
+        return True
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.error(f"❌ Error storing document in database: {str(e)}")
+        return False
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+def get_documents_from_database_admin() -> List[Dict[str, Any]]:
+    """Get all documents from database for admin display."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Ensure table exists first
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stored_documents (
+                id SERIAL PRIMARY KEY,
+                filename VARCHAR(255) NOT NULL,
+                content BYTEA NOT NULL,
+                content_type VARCHAR(100),
+                upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(filename)
+            )
+        """)
+        
+        cursor.execute("""
+            SELECT id, filename, content_type, upload_date, length(content) as size_bytes
+            FROM stored_documents
+            ORDER BY upload_date DESC
+        """)
+        
+        documents = cursor.fetchall()
+        cursor.close()
+        
+        # Format for display
+        result = []
+        for doc in documents:
+            result.append({
+                "id": doc[0],
+                "name": doc[1],
+                "type": doc[2] or "Unknown",
+                "added": doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else "Unknown",
+                "size": f"{doc[4] / 1024 / 1024:.2f} MB" if doc[4] else "Unknown"
+            })
+        
+        logger.info(f"📄 Retrieved {len(result)} documents for admin display")
+        return result
+        
+    except Exception as e:
+        logger.error(f"❌ Error getting documents from database: {str(e)}")
+        return []
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+# FIXED ADMIN UPLOAD ROUTE
 @app.route("/admin/upload_document", methods=["GET", "POST"])
 @admin_required
 def admin_upload_document() -> Any:
-    """Upload documents for the simplified Q&A system."""
+    """FIXED: Upload documents and store in database properly."""
     if request.method == "POST":
         # Check if file was uploaded
         if "document" not in request.files:
-            flash("No file selected", "danger")
+            flash("No file selected", "error")
             return redirect(request.url)
 
         file = request.files["document"]
 
         # Check if file was selected
         if file.filename == "":
-            flash("No file selected", "danger")
+            flash("No file selected", "error")
             return redirect(request.url)
 
         # Check file extension
-        if file and (
-            file.filename.endswith(".pdf")
-            or file.filename.endswith(".ppt")
-            or file.filename.endswith(".pptx")
-            or file.filename.endswith(".txt")
-        ):
-            try:
-                # Save file
-                filename = secure_filename(file.filename)
-                file_path = os.path.join(DOCUMENTS_DIR, filename)
-                file.save(file_path)
+        allowed_extensions = ['.pdf', '.ppt', '.pptx', '.txt', '.doc', '.docx']
+        if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
+            flash(f"Invalid file type. Allowed: {', '.join(allowed_extensions)}", "error")
+            return redirect(request.url)
 
-                # Reinitialize the simplified Q&A system
-                from qa import initialize_qa
-
+        try:
+            # Read file content
+            filename = secure_filename(file.filename)
+            file_content = file.read()
+            content_type = file.content_type or "application/octet-stream"
+            
+            logger.info(f"📤 Uploading: {filename} ({len(file_content)} bytes, {content_type})")
+            
+            # Store in database
+            if store_document_in_database(filename, file_content, content_type):
+                # Reset QA system to reload documents
                 global _qa_instance
-
-                class QASystemManager:
-                    def __enter__(self):
-                        return self.qa_system
-
-                    def __exit__(self, exc_type, exc_val, exc_tb):
-                        self.cleanup()
-
-                qa_system = initialize_qa(
-                    documents_dir=DOCUMENTS_DIR,
-                    llama_model_path=(
-                        LLAMA_MODEL_PATH if "LLAMA_MODEL_PATH" in globals() else None
-                    ),
-                )
-
-                flash(
-                    "Document uploaded and Q&A system updated successfully", "success"
-                )
-            except Exception as e:
-                logger.error(f"Error uploading document: {str(e)}")
-                flash(f"Error uploading document: {str(e)}", "danger")
-        else:
-            flash(
-                "Invalid file type. Only PDF, PPT, PPTX, and TXT files are allowed",
-                "danger",
-            )
+                _qa_instance = None
+                
+                flash(f"✅ Document '{filename}' uploaded successfully! QA system will reload.", "success")
+                logger.info(f"✅ Successfully uploaded {filename}")
+            else:
+                flash("❌ Failed to store document in database.", "error")
+                logger.error(f"❌ Failed to store {filename}")
+                
+        except Exception as e:
+            logger.error(f"❌ Upload error: {str(e)}")
+            flash(f"Error uploading document: {str(e)}", "error")
 
         return redirect(url_for("admin_manage_documents"))
 
-    # Get documents list for display
-    documents = get_document_list()
+    # GET request - show upload form with current documents
+    documents = get_documents_from_database_admin()
     return render_template("admin/upload_document.html", documents=documents)
 
 
-@app.route("/admin/delete_document/<path:filename>")
+@app.route("/admin/delete_document/<filename>")
 @admin_required
 def admin_delete_document(filename: str) -> Any:
-    """Delete a document from the simplified Q&A system."""
+    """FIXED: Delete a document from database."""
     try:
-        # Security check to prevent directory traversal
+        # Security check
         safe_filename = secure_filename(filename)
-        file_path = os.path.join(DOCUMENTS_DIR, safe_filename)
-
-        if os.path.exists(file_path):
-            os.remove(file_path)
-
-            # Reset and reinitialize the QA system
-            from qa import initialize_qa
-
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Delete from database
+        cursor.execute("DELETE FROM stored_documents WHERE filename = %s RETURNING id", (safe_filename,))
+        deleted = cursor.fetchone()
+        
+        if deleted:
+            conn.commit()
+            
+            # Reset QA system
             global _qa_instance
-
-            # Check if there are still documents
-            remaining_files = []
-            for root, dirs, files in os.walk(DOCUMENTS_DIR):
-                for file in files:
-                    if file.lower().endswith((".pdf", ".pptx", ".ppt", ".txt")):
-                        remaining_files.append(file)
-
-            if remaining_files:
-                # Reinitialize with remaining documents
-                qa_system = initialize_qa(
-                    documents_dir=DOCUMENTS_DIR,
-                    llama_model_path=(
-                        LLAMA_MODEL_PATH if "LLAMA_MODEL_PATH" in globals() else None
-                    ),
-                )
-                flash(
-                    f"Document '{safe_filename}' deleted. Q&A system updated with {len(remaining_files)} remaining documents.",
-                    "success",
-                )
-            else:
-                # Remove vector db folder if it exists
-                vector_db_path = os.path.join(os.getcwd(), "vector_db")
-                if os.path.exists(vector_db_path):
-                    import shutil
-
-                    shutil.rmtree(vector_db_path)
-                flash(
-                    "Document deleted. No documents remaining - Q&A system reset.",
-                    "success",
-                )
-
+            _qa_instance = None
+            
+            flash(f"✅ Document '{safe_filename}' deleted successfully.", "success")
+            logger.info(f"🗑️ Deleted document: {safe_filename}")
         else:
-            flash("Document not found", "error")
+            flash(f"❌ Document '{safe_filename}' not found.", "error")
+        
+        cursor.close()
+        release_db_connection(conn)
 
     except Exception as e:
-        logger.error(f"Error deleting document: {str(e)}")
-        flash(f"Error deleting document: {str(e)}", "danger")
+        logger.error(f"❌ Error deleting document: {str(e)}")
+        flash(f"Error deleting document: {str(e)}", "error")
 
     return redirect(url_for("admin_manage_documents"))
 
+# ADD THIS TEST ROUTE TO VERIFY DATABASE STORAGE
+@app.route("/admin/test_database_storage")
+@admin_required
+def admin_test_database_storage():
+    """Test route to verify database document storage."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if table exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'stored_documents'
+            );
+        """)
+        table_exists = cursor.fetchone()[0]
+        
+        if not table_exists:
+            # Create table
+            cursor.execute("""
+                CREATE TABLE stored_documents (
+                    id SERIAL PRIMARY KEY,
+                    filename VARCHAR(255) NOT NULL,
+                    content BYTEA NOT NULL,
+                    content_type VARCHAR(100),
+                    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(filename)
+                )
+            """)
+            conn.commit()
+            
+        # Test insert
+        test_content = "This is a test document for verifying database storage works properly."
+        cursor.execute("""
+            INSERT INTO stored_documents (filename, content, content_type)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (filename) DO UPDATE SET upload_date = CURRENT_TIMESTAMP
+            RETURNING id
+        """, ("test_document.txt", test_content.encode('utf-8'), "text/plain"))
+        
+        doc_id = cursor.fetchone()[0]
+        conn.commit()
+        
+        # Verify it was stored
+        cursor.execute("SELECT filename, length(content) FROM stored_documents WHERE id = %s", (doc_id,))
+        result = cursor.fetchone()
+        
+        cursor.close()
+        release_db_connection(conn)
+        
+        if result:
+            return f"""
+            <div style="font-family: monospace; padding: 20px; background: #d4edda;">
+                <h2>✅ Database Storage Test PASSED!</h2>
+                <p>Table exists: {table_exists}</p>
+                <p>Test document stored with ID: {doc_id}</p>
+                <p>Filename: {result[0]}</p>
+                <p>Content size: {result[1]} bytes</p>
+                <p><strong>Database storage is working properly!</strong></p>
+                <p><a href="/admin/manage_documents">📄 Manage Documents</a></p>
+                <p><a href="/admin/upload_document">📤 Upload Document</a></p>
+            </div>
+            """
+        else:
+            return """
+            <div style="font-family: monospace; padding: 20px; background: #f8d7da;">
+                <h2>❌ Database Storage Test FAILED!</h2>
+                <p>Could not verify document storage.</p>
+            </div>
+            """
+            
+    except Exception as e:
+        return f"""
+        <div style="font-family: monospace; padding: 20px; background: #f8d7da;">
+            <h2>❌ Database Storage Test ERROR!</h2>
+            <p>Error: {str(e)}</p>
+            <p>Check your database connection and permissions.</p>
+        </div>
+        """
 
+# ADD THIS ROUTE TO CHECK WHAT'S IN THE DATABASE
+@app.route("/admin/check_database_documents")
+@admin_required
+def admin_check_database_documents():
+    """Check what documents are actually in the database."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Check if table exists
+        cursor.execute("""
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'stored_documents'
+            );
+        """)
+        table_exists = cursor.fetchone()[0]
+        
+        if not table_exists:
+            return """
+            <div style="font-family: monospace; padding: 20px; background: #fff3cd;">
+                <h2>⚠️ Table Does Not Exist!</h2>
+                <p>The stored_documents table has not been created yet.</p>
+                <p><a href="/admin/test_database_storage">🔧 Create Table & Test</a></p>
+            </div>
+            """
+        
+        # Get all documents
+        cursor.execute("""
+            SELECT id, filename, content_type, upload_date, length(content) as size_bytes
+            FROM stored_documents
+            ORDER BY upload_date DESC
+        """)
+        documents = cursor.fetchall()
+        
+        cursor.close()
+        release_db_connection(conn)
+        
+        html = f"""
+        <div style="font-family: monospace; padding: 20px; background: #f8f9fa;">
+            <h2>📋 Database Documents Report</h2>
+            <p><strong>Table exists:</strong> ✅ Yes</p>
+            <p><strong>Document count:</strong> {len(documents)}</p>
+            
+            {f'''
+            <h3>📄 Documents in Database:</h3>
+            <table style="border-collapse: collapse; width: 100%;">
+                <tr style="background: #e9ecef;">
+                    <th style="border: 1px solid #dee2e6; padding: 8px;">ID</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px;">Filename</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px;">Type</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px;">Size</th>
+                    <th style="border: 1px solid #dee2e6; padding: 8px;">Upload Date</th>
+                </tr>
+                {"".join(f'''
+                <tr>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[0]}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[1]}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[2] or "Unknown"}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[4] / 1024:.1f} KB</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else "Unknown"}</td>
+                </tr>
+                ''' for doc in documents)}
+            </table>
+            ''' if documents else '<p style="color: orange;">⚠️ No documents found in database!</p>'}
+            
+            <br>
+            <p><a href="/admin/upload_document" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">📤 Upload Document</a></p>
+            <p><a href="/debug/qa_system" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🔍 Check QA Status</a></p>
+        </div>
+        """
+        
+        return html
+        
+    except Exception as e:
+        return f"""
+        <div style="font-family: monospace; padding: 20px; background: #f8d7da;">
+            <h2>❌ Database Check Error!</h2>
+            <p>Error: {str(e)}</p>
+        </div>
+        """
 @app.route("/admin/rebuild_qa_system")
 @admin_required
 def admin_rebuild_qa() -> Any:
