@@ -1884,7 +1884,9 @@ def get_content_with_tag_filtering(content_type: str, unit_id: int, user_id: int
         logger.info(f"FIXED FILTERING: User {user_id} has camp: {user_camp}")
 
         if not user_camp:
-            logger.warning(f"FIXED FILTERING: User {user_id} has no camp - returning empty")
+            logger.warning(
+                f"FIXED FILTERING: User {user_id} has no camp - returning empty"
+            )
             return []
 
         table_name = f"{content_type}s" if content_type != "quiz" else "quizzes"
@@ -1911,13 +1913,15 @@ def get_content_with_tag_filtering(content_type: str, unit_id: int, user_id: int
             )
             ORDER BY c.id
             """,
-            (unit_id, user_camp, content_type, user_camp)
+            (unit_id, user_camp, content_type, user_camp),
         )
-        
+
         content = cursor.fetchall()
-        
-        logger.info(f"FIXED FILTERING: Found {len(content)} {content_type}s for {user_camp} camp in unit {unit_id}")
-        
+
+        logger.info(
+            f"FIXED FILTERING: Found {len(content)} {content_type}s for {user_camp} camp in unit {unit_id}"
+        )
+
         cursor.close()
         return content
 
@@ -1927,7 +1931,6 @@ def get_content_with_tag_filtering(content_type: str, unit_id: int, user_id: int
     finally:
         if conn:
             release_db_connection(conn)
-
 
 
 # Emergency route to fix quiz route temporarily
@@ -2477,7 +2480,9 @@ def unit(unit_id: int) -> Any:
             flash("Please contact admin to set your camp.", "error")
             return redirect(url_for("dashboard"))
 
-        logger.info(f"UNIT PAGE: User {username} (camp: {user_camp}) accessing unit {unit_id}")
+        logger.info(
+            f"UNIT PAGE: User {username} (camp: {user_camp}) accessing unit {unit_id}"
+        )
 
         # Handle project submission
         if request.method == "POST" and request.form.get("submit_project"):
@@ -2623,13 +2628,17 @@ def quiz(unit_id: int) -> Any:
 
         # If user has already attempted, redirect to PROPER review
         if attempt and attempt[1] is not None:
-            logger.info(f"User {user_id} has already attempted quiz for unit {unit_id}, redirecting to review")
+            logger.info(
+                f"User {user_id} has already attempted quiz for unit {unit_id}, redirecting to review"
+            )
             return redirect(url_for("quiz_review", unit_id=unit_id))
 
         # Get available quiz questions using FIXED filtering
         available_quizzes = get_content_with_tag_filtering("quiz", unit_id, user_id)
 
-        logger.info(f"Quiz filtering for user {user_id}, unit {unit_id}: found {len(available_quizzes)} questions")
+        logger.info(
+            f"Quiz filtering for user {user_id}, unit {unit_id}: found {len(available_quizzes)} questions"
+        )
 
         if not available_quizzes:
             flash("No quiz questions available for your camp in this unit.", "error")
@@ -2768,15 +2777,15 @@ def quiz_review(unit_id: int) -> Any:
         """,
             (user_id, unit_id),
         )
-        
+
         attempt = cursor.fetchone()
-        
+
         if not attempt:
             flash("No quiz attempt found for this unit.", "error")
             return redirect(url_for("unit", unit_id=unit_id))
 
         attempt_id = attempt["attempt_id"]
-        
+
         # Get all quiz questions that were part of this attempt
         cursor.execute(
             """
@@ -2789,55 +2798,69 @@ def quiz_review(unit_id: int) -> Any:
         """,
             (attempt_id,),
         )
-        
+
         quiz_data = cursor.fetchall()
-        
+
         if not quiz_data:
             # Fallback: get quiz questions for this unit using our filtering
             available_quizzes = get_content_with_tag_filtering("quiz", unit_id, user_id)
-            
+
             if not available_quizzes:
                 flash("No quiz questions found for this unit.", "error")
                 return redirect(url_for("unit", unit_id=unit_id))
-            
+
             # If no quiz_responses found, create a basic structure
             quiz_data = []
             for quiz in available_quizzes:
-                quiz_data.append({
-                    'id': quiz['id'],
-                    'question': quiz['question'],
-                    'options': quiz['options'],
-                    'correct_answer': quiz['correct_answer'],
-                    'explanation': quiz.get('explanation', 'No explanation available'),
-                    'user_answer': None,  # User didn't answer this question
-                    'is_correct': False
-                })
+                quiz_data.append(
+                    {
+                        "id": quiz["id"],
+                        "question": quiz["question"],
+                        "options": quiz["options"],
+                        "correct_answer": quiz["correct_answer"],
+                        "explanation": quiz.get(
+                            "explanation", "No explanation available"
+                        ),
+                        "user_answer": None,  # User didn't answer this question
+                        "is_correct": False,
+                    }
+                )
 
         # Process the quiz data to make it template-friendly
         processed_questions = []
         for q in quiz_data:
-            options = safely_parse_options(q['options'])
-            
+            options = safely_parse_options(q["options"])
+
             # Get user answer text and correct answer text
-            user_answer_text = "No answer" if q['user_answer'] is None else (
-                options[q['user_answer']] if q['user_answer'] < len(options) else "Invalid answer"
+            user_answer_text = (
+                "No answer"
+                if q["user_answer"] is None
+                else (
+                    options[q["user_answer"]]
+                    if q["user_answer"] < len(options)
+                    else "Invalid answer"
+                )
             )
-            
+
             correct_answer_text = (
-                options[q['correct_answer']] if q['correct_answer'] < len(options) else "Invalid correct answer"
+                options[q["correct_answer"]]
+                if q["correct_answer"] < len(options)
+                else "Invalid correct answer"
             )
-            
-            processed_questions.append({
-                'id': q['id'],
-                'question': q['question'],
-                'options': options,
-                'user_answer': q['user_answer'],
-                'user_answer_text': user_answer_text,
-                'correct_answer': q['correct_answer'],
-                'correct_answer_text': correct_answer_text,
-                'is_correct': q['is_correct'],
-                'explanation': q['explanation'] or "No explanation provided"
-            })
+
+            processed_questions.append(
+                {
+                    "id": q["id"],
+                    "question": q["question"],
+                    "options": options,
+                    "user_answer": q["user_answer"],
+                    "user_answer_text": user_answer_text,
+                    "correct_answer": q["correct_answer"],
+                    "correct_answer_text": correct_answer_text,
+                    "is_correct": q["is_correct"],
+                    "explanation": q["explanation"] or "No explanation provided",
+                }
+            )
 
         cursor.close()
 
@@ -2868,8 +2891,8 @@ def debug_force_quiz_review(unit_id: int):
     return redirect(url_for("quiz_review", unit_id=unit_id))
 
 
-
 # Add this debug route to test quiz review functionality
+
 
 @app.route("/debug/quiz_review_test/<int:unit_id>")
 @login_required
@@ -2877,15 +2900,15 @@ def debug_quiz_review_test(unit_id: int):
     """Debug route to test quiz review functionality"""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
-    
+
     user_id = session["user_id"]
     username = session["username"]
-    
+
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
+
         # Check if user has any quiz attempts
         cursor.execute(
             """
@@ -2897,20 +2920,20 @@ def debug_quiz_review_test(unit_id: int):
             (user_id, unit_id),
         )
         attempts = cursor.fetchall()
-        
+
         # Get quiz questions for this unit
         cursor.execute(
             "SELECT id, question, camp FROM quizzes WHERE unit_id = %s",
             (unit_id,),
         )
         quiz_questions = cursor.fetchall()
-        
+
         # Get user's camp
         cursor.execute("SELECT camp FROM users WHERE id = %s", (user_id,))
         user_camp = cursor.fetchone()["camp"] if cursor.fetchone() else "Unknown"
-        
+
         cursor.close()
-        
+
         # Generate HTML report
         html_output = f"""
         <div style="font-family: Arial, sans-serif; padding: 20px; background: #f8f9fa;">
@@ -2979,9 +3002,9 @@ def debug_quiz_review_test(unit_id: int):
             </div>
         </div>
         """
-        
+
         return html_output
-        
+
     except Exception as e:
         return f"""
         <div style="font-family: Arial, sans-serif; padding: 20px; background: #f8d7da;">
@@ -2994,7 +3017,6 @@ def debug_quiz_review_test(unit_id: int):
         if conn:
             release_db_connection(conn)
 
-            
 
 @app.route("/admin/fix_all_user_tags")
 @admin_required
@@ -7493,6 +7515,7 @@ def admin_edit_word(word_id: int) -> Any:
         if not word:
             flash("Word not found", "danger")
             return redirect(url_for("admin_manage_content"))
+
         cursor.execute(
             "SELECT tag_id FROM content_tags WHERE content_type = %s AND content_id = %s",
             ("word", word_id),
@@ -7500,7 +7523,6 @@ def admin_edit_word(word_id: int) -> Any:
         tag_ids = [row["tag_id"] for row in cursor.fetchall()]
         available_tags = get_available_tags_grouped()
 
-        # Get all bootcamp types assigned to this word (from tags)
         selected_bootcamp_types = []
         if tag_ids:
             cursor.execute(
@@ -7510,9 +7532,9 @@ def admin_edit_word(word_id: int) -> Any:
             bootcamp_tags = [row["name"] for row in cursor.fetchall()]
             selected_bootcamp_types = bootcamp_tags
 
-        # If no bootcamp tags found, use the main camp field as fallback
         if not selected_bootcamp_types and word.get("camp"):
             selected_bootcamp_types = [word["camp"]]
+
         if request.method == "POST":
             unit_id = request.form["unit_id"]
             word_text = request.form["word"]
@@ -7530,6 +7552,7 @@ def admin_edit_word(word_id: int) -> Any:
             core_elements = parse_core_elements(request.form)
             selected_tags = [int(tag_id) for tag_id in request.form.getlist("tags")]
 
+            # ✅ Must select at least one bootcamp type
             if not selected_bootcamp_types:
                 flash("Please select at least one bootcamp type.", "error")
                 return render_template(
@@ -7537,18 +7560,10 @@ def admin_edit_word(word_id: int) -> Any:
                     word=word,
                     available_tags=available_tags,
                     tag_ids=tag_ids,
+                    selected_bootcamp_types=selected_bootcamp_types,
                 )
 
-            if len(selected_bootcamp_types) > 2:
-                flash("You can only select up to 2 bootcamp types.", "error")
-                return render_template(
-                    "admin/edit_word.html",
-                    word=word,
-                    available_tags=available_tags,
-                    tag_ids=tag_ids,
-                )
-
-            # Validate all selected bootcamp types
+            # ✅ Validate all selected bootcamp types
             for bootcamp_type in selected_bootcamp_types:
                 if not validate_bootcamp_type(bootcamp_type):
                     flash(f"Invalid bootcamp type: {bootcamp_type}", "danger")
@@ -7557,10 +7572,10 @@ def admin_edit_word(word_id: int) -> Any:
                         word=word,
                         available_tags=available_tags,
                         tag_ids=tag_ids,
+                        selected_bootcamp_types=selected_bootcamp_types,
                     )
 
-            # Use first selected bootcamp type for the main camp field (backward compatibility)
-            primary_camp = selected_bootcamp_types[0]
+            primary_camp = selected_bootcamp_types[0]  # Use first as main camp
 
             cursor.execute(
                 """
@@ -7570,7 +7585,7 @@ def admin_edit_word(word_id: int) -> Any:
                     core_elements=%s, scenario_theater=%s, misunderstandings=%s, reality_connection=%s,
                     thinking_bubble=%s, smiling_conclusion=%s
                 WHERE id=%s
-            """,
+                """,
                 (
                     unit_id,
                     word_text,
@@ -7591,18 +7606,16 @@ def admin_edit_word(word_id: int) -> Any:
             )
             conn.commit()
 
-            # Auto-assign bootcamp type tags for all selected bootcamp types
+            # Handle bootcamp tags
             bootcamp_tags_to_assign = []
             for bootcamp_type in selected_bootcamp_types:
                 cursor.execute("SELECT id FROM tags WHERE name = %s", (bootcamp_type,))
                 bootcamp_tag = cursor.fetchone()
                 if bootcamp_tag:
-                    bootcamp_tags_to_assign.append(bootcamp_tag[0])
+                    bootcamp_tags_to_assign.append(bootcamp_tag["id"])
 
-            # Combine with selected additional tags
             all_tags = bootcamp_tags_to_assign + selected_tags
 
-            # Assign all tags
             if all_tags:
                 assign_content_tags("word", word_id, all_tags)
 
@@ -7616,6 +7629,7 @@ def admin_edit_word(word_id: int) -> Any:
     finally:
         if conn:
             release_db_connection(conn)
+
     return render_template(
         "admin/edit_word.html",
         word=word,
