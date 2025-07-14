@@ -1,80 +1,436 @@
-{% extends 'admin/base.html' %}
+{% extends "admin/base.html" %}
+
+{% block title %}Add Learning Material{% endblock %}
 
 {% block content %}
-<style>
-    input[type="file"] {
-        color: #ccc;
-        background-color: #2a2a2a;
-        border: 1px solid #444;
-        padding: 6px;
-        border-radius: 6px;
-    }
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-file-upload me-2"></i>Add New Learning Material</h4>
+                </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
 
-    input[type="file"]::file-selector-button {
-        background-color: #444;
-        color: #fff;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-    }
+                    <form method="POST" enctype="multipart/form-data" id="materialForm">
+                        <div class="mb-3">
+                            <label for="unit_id" class="form-label">
+                                <i class="fas fa-book me-1"></i>Unit Number *
+                            </label>
+                            <input type="number" class="form-control" id="unit_id" name="unit_id" 
+                                   min="1" max="20" required placeholder="e.g., 1, 2, 3...">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="title" class="form-label">
+                                <i class="fas fa-heading me-1"></i>Material Title *
+                            </label>
+                            <input type="text" class="form-control" id="title" name="title" required
+                                   placeholder="Enter a descriptive title for this material">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="file" class="form-label">
+                                <i class="fas fa-paperclip me-1"></i>Upload File *
+                            </label>
+                            <input type="file" class="form-control" id="file" name="file" required
+                                   accept=".pdf,.png,.jpg,.jpeg,.gif,.ppt,.pptx,.doc,.docx">
+                            <div class="form-text">
+                                Allowed file types: PDF, Images (PNG, JPG, GIF), PowerPoint (PPT, PPTX), Word (DOC, DOCX)
+                            </div>
+                        </div>
 
-    input[type="file"]::file-selector-button:hover {
-        background-color: #666;
-    }
-</style>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">
+                                <i class="fas fa-align-left me-1"></i>Description (Optional)
+                            </label>
+                            <textarea class="form-control" id="content" name="content" rows="3"
+                                      placeholder="Add a description or notes about this material..."></textarea>
+                        </div>
 
-<div class="container mt-4">
-    <h1>Add Learning Material</h1>
-    
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    <div class="alert alert-info">
-        <strong>Simplified Upload:</strong> Just select a unit, choose the training camp, and upload your file. The title will be automatically generated from the filename.
-    </div>
-    
-    <div class="card">
-        <div class="card-body">
-            <form method="POST" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="unit_id">Unit ID:</label>
-                    <input type="number" class="form-control" id="unit_id" name="unit_id" required min="1">
+                        <!-- Improved Bootcamp Type Selection -->
+                        <div class="mb-4">
+                            <label class="form-label mb-3">
+                                <i class="fas fa-globe me-2"></i>
+                                <strong>Bootcamp Types *</strong>
+                                <small class="text-muted d-block">Select one or more bootcamp types (no limit)</small>
+                            </label>
+                            
+                            <div class="bootcamp-grid">
+                                <!-- Chinese Bootcamp -->
+                                <div class="bootcamp-card" data-camp="Chinese">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-dragon"></i>
+                                    </div>
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">Chinese</h6>
+                                        <p class="bootcamp-subtitle">中文训练营</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="Chinese" id="chinese">
+                                            <label class="form-check-label" for="chinese">
+                                                Select Chinese Bootcamp
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- English Bootcamp -->
+                                <div class="bootcamp-card" data-camp="English">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-flag-usa"></i>
+                                    </div>
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">English</h6>
+                                        <p class="bootcamp-subtitle">English Bootcamp</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="English" id="english">
+                                            <label class="form-check-label" for="english">
+                                                Select English Bootcamp
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Middle East Bootcamp -->
+                                <div class="bootcamp-card" data-camp="Middle East">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-mosque"></i>
+                                    </div>
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">Middle East</h6>
+                                        <p class="bootcamp-subtitle">الشرق الأوسط</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="Middle East" id="middle_east">
+                                            <label class="form-check-label" for="middle_east">
+                                                Select Middle East Bootcamp
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Pro tip:</strong> Select multiple bootcamp types to make this material available to students from different regions. You can select all three if the content is universal!
+                            </div>
+                        </div>
+
+                        <!-- Additional Tags (Optional) -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-tags me-1"></i>Additional Tags (Optional)
+                            </label>
+                            <small class="text-muted d-block mb-2">Select additional tags to further categorize this content</small>
+                            {% if available_tags %}
+                                {% for group_name, tags in available_tags.items() %}
+                                    {% if group_name != 'Bootcamp Type' and group_name != 'Bootcamp Types' %}
+                                    <div class="border rounded p-2 mb-2">
+                                        <strong class="text-primary">{{ group_name }}</strong><br>
+                                        {% for tag in tags %}
+                                        <div class="form-check form-check-inline mt-1">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="{{ tag.id }}" id="tag_{{ tag.id }}">
+                                            <label class="form-check-label" for="tag_{{ tag.id }}">{{ tag.name }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-success">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Material Guidelines:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>✅ Select one or more bootcamp types so users can see this material</li>
+                                <li>✅ Use clear, descriptive titles</li>
+                                <li>✅ Ensure files are accessible and readable</li>
+                                <li>✅ Add descriptions to help students understand the content</li>
+                                <li>✅ No limit on bootcamp type selection - choose what makes sense!</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success" id="submitBtn">
+                                <i class="fas fa-upload me-2"></i>Upload Material
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                
-                <!-- CAMP SELECTION - Required field -->
-                <div class="form-group">
-                    <label for="camp">Training Camp: <span class="text-danger">*</span></label>
-                    <select class="form-control" id="camp" name="camp" required>
-                        <option value="">-- Select Training Camp --</option>
-                        {% for camp_key, camp_name in camps.items() %}
-                            <option value="{{ camp_key }}">{{ camp_name }}</option>
-                        {% endfor %}
-                        <option value="both">Both Camps</option>
-                    </select>
-                    <small class="text-muted">Choose which camp(s) can see this material</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="file">File Upload (required):</label>
-                    <input type="file" class="form-control-file" id="file" name="file" required>
-                    <small class="text-muted">Allowed file types: PDF, PPT, PPTX, DOC, DOCX, PNG, JPG, JPEG, GIF</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="content">Additional Notes (optional):</label>
-                    <textarea class="form-control" id="content" name="content" rows="3" placeholder="Optional: Add any notes or description for this material"></textarea>
-                </div>
-                
-                <button type="submit" class="btn btn-primary" style="display:block !important; visibility:visible !important; opacity:1 !important; position:relative !important; z-index:9999;">Upload Material</button>
-                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">Cancel</a>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('materialForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Enhanced bootcamp card interactions
+    const bootcampCards = document.querySelectorAll('.bootcamp-card');
+    const bootcampCheckboxes = document.querySelectorAll('.bootcamp-checkbox');
+    
+    // Add click interaction for entire card
+    bootcampCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't trigger if clicking on the checkbox itself
+            if (e.target.type !== 'checkbox') {
+                const checkbox = this.querySelector('.bootcamp-checkbox');
+                checkbox.checked = !checkbox.checked;
+                updateCardSelection(this, checkbox.checked);
+                updateSelectionCounter();
+            }
+        });
+    });
+    
+    // Handle checkbox changes
+    bootcampCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const card = this.closest('.bootcamp-card');
+            updateCardSelection(card, this.checked);
+            updateSelectionCounter();
+        });
+    });
+    
+    function updateCardSelection(card, isSelected) {
+        if (isSelected) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    }
+    
+    function updateSelectionCounter() {
+        const selectedCount = document.querySelectorAll('.bootcamp-checkbox:checked').length;
+        const info = document.querySelector('.alert-info');
+        
+        if (selectedCount === 0) {
+            info.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i><strong>Please select at least one bootcamp type!</strong>';
+            info.className = 'alert alert-warning mt-3';
+        } else if (selectedCount === 3) {
+            info.innerHTML = '<i class="fas fa-globe me-2"></i><strong>Great!</strong> This material will be available to all bootcamp types worldwide!';
+            info.className = 'alert alert-success mt-3';
+        } else {
+            info.innerHTML = `<i class="fas fa-check me-2"></i><strong>Perfect!</strong> Selected ${selectedCount} bootcamp type${selectedCount > 1 ? 's' : ''}.`;
+            info.className = 'alert alert-info mt-3';
+        }
+    }
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const selectedBootcampTypes = document.querySelectorAll('input[name="bootcamp_types"]:checked');
+        if (selectedBootcampTypes.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one bootcamp type.');
+            return false;
+        }
+        
+        // Check file
+        const fileInput = document.getElementById('file');
+        if (!fileInput.files || !fileInput.files[0]) {
+            e.preventDefault();
+            alert('Please select a file to upload.');
+            return false;
+        }
+        
+        // Check title
+        const title = document.getElementById('title').value.trim();
+        if (!title) {
+            e.preventDefault();
+            alert('Please enter a title for the material.');
+            return false;
+        }
+        
+        // Disable submit button to prevent double submission
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Uploading...';
+    });
+
+    // File size validation
+    document.getElementById('file').addEventListener('change', function() {
+        const maxSize = 50 * 1024 * 1024; // 50MB
+        if (this.files[0] && this.files[0].size > maxSize) {
+            alert('File size must be less than 50MB');
+            this.value = '';
+        }
+    });
+    
+    // Initial update
+    updateSelectionCounter();
+});
+</script>
+
+<style>
+/* Enhanced Bootcamp Selection Design */
+.bootcamp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.bootcamp-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.bootcamp-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.bootcamp-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: #007bff;
+}
+
+.bootcamp-card:hover::before {
+    transform: scaleX(1);
+}
+
+.bootcamp-card.selected {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #007bff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,123,255,0.2);
+}
+
+.bootcamp-card.selected::before {
+    transform: scaleX(1);
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.bootcamp-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.bootcamp-card:hover .bootcamp-icon,
+.bootcamp-card.selected .bootcamp-icon {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+.bootcamp-card[data-camp="Chinese"] .bootcamp-icon {
+    color: #dc3545;
+}
+
+.bootcamp-card[data-camp="English"] .bootcamp-icon {
+    color: #0066cc;
+}
+
+.bootcamp-card[data-camp="Middle East"] .bootcamp-icon {
+    color: #28a745;
+}
+
+.bootcamp-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #212529;
+}
+
+.bootcamp-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.bootcamp-card .form-check {
+    margin: 0;
+}
+
+.bootcamp-card .form-check-input {
+    transform: scale(1.2);
+    margin: 0;
+}
+
+.bootcamp-card .form-check-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.bootcamp-card.selected .form-check-label {
+    color: #007bff;
+    font-weight: 500;
+}
+
+/* Enhanced form styling */
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .bootcamp-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bootcamp-card {
+        padding: 15px;
+    }
+    
+    .bootcamp-icon {
+        font-size: 2rem;
+    }
+}
+
+/* Loading animation */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.bootcamp-card.loading {
+    animation: pulse 2s infinite;
+}
+</style>
 {% endblock %}

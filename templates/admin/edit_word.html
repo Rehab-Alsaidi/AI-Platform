@@ -1,160 +1,592 @@
 {% extends 'admin/base.html' %}
 
+{% block title %}Edit AI Vocabulary Word{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h1>Edit AI Vocabulary Word</h1>
-    
-    <div class="card">
-        <div class="card-body">
-            <form method="POST">
-
-                <div class="form-group">
-                    <label for="unit_id">Unit ID:</label>
-                    <input type="number" class="form-control" id="unit_id" name="unit_id" value="{{ word.unit_id }}" required min="1">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Edit AI Vocabulary Word</h4>
                 </div>
-
-                <div class="form-group">
-                    <label for="camp">Training Camp:</label>
-                    <select class="form-control" id="camp" name="camp" required>
-                        <option value="">-- Select Training Camp --</option>
-                        <option value="Middle East" {% if word.camp == 'Middle East' %}selected{% endif %}>Middle East</option>
-                        <option value="Chinese" {% if word.camp == 'Chinese' %}selected{% endif %}>Chinese</option>
-                        <option value="both" {% if word.camp == 'both' %}selected{% endif %}>Both Camps</option>
-                    </select>
-                    <small class="text-muted">Select which training camp(s) can access this word</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="section">Section:</label>
-                    <input type="number" class="form-control" id="section" name="section" value="{{ word.section }}" required min="1">
-                    <small class="text-muted">Words can be grouped into sections within a unit</small>
-                </div>
-
-                <div class="form-group">
-                    <label for="word">Word:</label>
-                    <input type="text" class="form-control" id="word" name="word" value="{{ word.word }}" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="one_sentence_version">One Sentence Version:</label>
-                    <textarea class="form-control" id="one_sentence_version" name="one_sentence_version" rows="2">{{ word.one_sentence_version }}</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="daily_definition">Daily Definition:</label>
-                    <textarea class="form-control" id="daily_definition" name="daily_definition" rows="3">{{ word.daily_definition }}</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="life_metaphor">Life Metaphor:</label>
-                    <textarea class="form-control" id="life_metaphor" name="life_metaphor" rows="3">{{ word.life_metaphor }}</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="visual_explanation">Visual Explanation:</label>
-                    <textarea class="form-control" id="visual_explanation" name="visual_explanation" rows="3">{{ word.visual_explanation }}</textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="core_elements">Core Elements:</label>
-                    <small class="form-text text-muted">Edit core elements with their everyday object comparisons.</small>
-                    <div id="core-elements-container">
-                        {% if word.core_elements %}
-                            {% for item in word.core_elements %}
-                            <div class="core-element-row mb-2">
-                                <div class="row">
-                                    <div class="col-md-5">
-                                        <input type="text" class="form-control" name="core_elements[{{ loop.index0 }}][core_element]" 
-                                               value="{{ item.core_element }}" placeholder="Core Element">
-                                    </div>
-                                    <div class="col-md-5">
-                                        <input type="text" class="form-control" name="core_elements[{{ loop.index0 }}][everyday_object]" 
-                                               value="{{ item.everyday_object }}" placeholder="Everyday Object">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <button type="button" class="btn btn-danger btn-sm remove-core-element" onclick="removeRow(this)">Remove</button>
-                                    </div>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                 </div>
-                            </div>
                             {% endfor %}
-                        {% else %}
-                            <div class="core-element-row mb-2">
-                                <div class="row">
-                                    <div class="col-md-5">
-                                        <input type="text" class="form-control" name="core_elements[0][core_element]" placeholder="Core Element">
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" id="wordForm">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="unit_id" class="form-label">
+                                        <i class="fas fa-book me-1"></i>Unit Number *
+                                    </label>
+                                    <input type="number" class="form-control" id="unit_id" name="unit_id" 
+                                           value="{{ word.unit_id }}" min="1" max="20" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="word" class="form-label">
+                                        <i class="fas fa-font me-1"></i>Word *
+                                    </label>
+                                    <input type="text" class="form-control" id="word" name="word" 
+                                           value="{{ word.word }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="section" class="form-label">
+                                        <i class="fas fa-list-ol me-1"></i>Section
+                                    </label>
+                                    <input type="number" class="form-control" id="section" name="section" 
+                                           value="{{ word.section }}" min="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Improved Bootcamp Type Selection -->
+                        <div class="mb-4">
+                            <label class="form-label mb-3">
+                                <i class="fas fa-globe me-2"></i>
+                                <strong>Bootcamp Types *</strong>
+                                <small class="text-muted d-block">Select one or more bootcamp types (no limit)</small>
+                            </label>
+                            
+                            <div class="bootcamp-grid">
+                                <!-- Chinese Bootcamp -->
+                                <div class="bootcamp-card" data-camp="Chinese">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-dragon"></i>
                                     </div>
-                                    <div class="col-md-5">
-                                        <input type="text" class="form-control" name="core_elements[0][everyday_object]" placeholder="Everyday Object">
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">Chinese</h6>
+                                        <p class="bootcamp-subtitle">中文训练营</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="Chinese" id="chinese"
+                                                   {% if 'Chinese' in selected_bootcamp_types %}checked{% endif %}>
+                                            <label class="form-check-label" for="chinese">
+                                                Include for Chinese students
+                                            </label>
+                                        </div>
                                     </div>
-                                    <div class="col-md-2">
-                                        <button type="button" class="btn btn-danger btn-sm remove-core-element" onclick="removeRow(this)">Remove</button>
+                                </div>
+
+                                <!-- English Bootcamp -->
+                                <div class="bootcamp-card" data-camp="English">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-flag-usa"></i>
+                                    </div>
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">English</h6>
+                                        <p class="bootcamp-subtitle">English Bootcamp</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="English" id="english"
+                                                   {% if 'English' in selected_bootcamp_types %}checked{% endif %}>
+                                            <label class="form-check-label" for="english">
+                                                Include for English students
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Middle East Bootcamp -->
+                                <div class="bootcamp-card" data-camp="Middle East">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-mosque"></i>
+                                    </div>
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">Middle East</h6>
+                                        <p class="bootcamp-subtitle">الشرق الأوسط</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="Middle East" id="middle_east"
+                                                   {% if 'Middle East' in selected_bootcamp_types %}checked{% endif %}>
+                                            <label class="form-check-label" for="middle_east">
+                                                Include for Middle East students
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        {% endif %}
-                    </div>
-                    <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="addCoreElement()">Add Another Core Element</button>
-                </div>
+                            
+                            <div class="alert alert-info mt-3" id="selection-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Select bootcamp types:</strong> Choose which students should see this vocabulary word.
+                            </div>
+                        </div>
 
-                <div class="form-group">
-                    <label for="scenario_theater">Scenario Theater:</label>
-                    <textarea class="form-control" id="scenario_theater" name="scenario_theater" rows="3">{{ word.scenario_theater }}</textarea>
-                </div>
+                        <!-- AI Enhanced Fields -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="one_sentence_version" class="form-label">
+                                        <i class="fas fa-comment me-1"></i>One Sentence Version
+                                    </label>
+                                    <textarea class="form-control" id="one_sentence_version" name="one_sentence_version" rows="2">{{ word.one_sentence_version or '' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="daily_definition" class="form-label">
+                                        <i class="fas fa-calendar-day me-1"></i>Daily Definition
+                                    </label>
+                                    <textarea class="form-control" id="daily_definition" name="daily_definition" rows="2">{{ word.daily_definition or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
 
-                <div class="form-group">
-                    <label for="misunderstandings">Common Misunderstandings:</label>
-                    <textarea class="form-control" id="misunderstandings" name="misunderstandings" rows="3">{{ word.misunderstandings }}</textarea>
-                </div>
+                        <div class="mb-3">
+                            <label for="life_metaphor" class="form-label">
+                                <i class="fas fa-lightbulb me-1"></i>Life Metaphor
+                            </label>
+                            <textarea class="form-control" id="life_metaphor" name="life_metaphor" rows="2">{{ word.life_metaphor or '' }}</textarea>
+                        </div>
 
-                <div class="form-group">
-                    <label for="reality_connection">Reality Connection:</label>
-                    <textarea class="form-control" id="reality_connection" name="reality_connection" rows="3">{{ word.reality_connection }}</textarea>
-                </div>
+                        <div class="mb-3">
+                            <label for="visual_explanation" class="form-label">
+                                <i class="fas fa-eye me-1"></i>Visual Explanation
+                            </label>
+                            <textarea class="form-control" id="visual_explanation" name="visual_explanation" rows="2">{{ word.visual_explanation or '' }}</textarea>
+                        </div>
 
-                <div class="form-group">
-                    <label for="thinking_bubble">Thinking Bubble:</label>
-                    <textarea class="form-control" id="thinking_bubble" name="thinking_bubble" rows="3">{{ word.thinking_bubble }}</textarea>
-                </div>
+                        <!-- Core Elements -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-cogs me-1"></i>Core Elements
+                            </label>
+                            <div id="core-elements-container">
+                                {% if word.core_elements %}
+                                    {% for element in word.core_elements %}
+                                    <div class="core-element-pair mb-2">
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" name="core_elements[{{ loop.index0 }}][core_element]" 
+                                                       value="{{ element.core_element }}" placeholder="Core Element">
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" name="core_elements[{{ loop.index0 }}][everyday_object]" 
+                                                       value="{{ element.everyday_object }}" placeholder="Everyday Object">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeElement(this)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="core-element-pair mb-2">
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" name="core_elements[0][core_element]" 
+                                                       placeholder="Core Element">
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" name="core_elements[0][everyday_object]" 
+                                                       placeholder="Everyday Object">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeElement(this)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="addCoreElement()">
+                                <i class="fas fa-plus me-1"></i>Add Core Element
+                            </button>
+                        </div>
 
-                <div class="form-group">
-                    <label for="smiling_conclusion">Smiling Conclusion:</label>
-                    <textarea class="form-control" id="smiling_conclusion" name="smiling_conclusion" rows="3">{{ word.smiling_conclusion }}</textarea>
-                </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="scenario_theater" class="form-label">
+                                        <i class="fas fa-theater-masks me-1"></i>Scenario Theater
+                                    </label>
+                                    <textarea class="form-control" id="scenario_theater" name="scenario_theater" rows="3">{{ word.scenario_theater or '' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="misunderstandings" class="form-label">
+                                        <i class="fas fa-question-circle me-1"></i>Misunderstandings
+                                    </label>
+                                    <textarea class="form-control" id="misunderstandings" name="misunderstandings" rows="3">{{ word.misunderstandings or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
 
-                <button type="submit" class="btn btn-primary">Update Word</button>
-                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">Cancel</a>
-            </form>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="reality_connection" class="form-label">
+                                        <i class="fas fa-link me-1"></i>Reality Connection
+                                    </label>
+                                    <textarea class="form-control" id="reality_connection" name="reality_connection" rows="3">{{ word.reality_connection or '' }}</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="thinking_bubble" class="form-label">
+                                        <i class="fas fa-thought-bubble me-1"></i>Thinking Bubble
+                                    </label>
+                                    <textarea class="form-control" id="thinking_bubble" name="thinking_bubble" rows="3">{{ word.thinking_bubble or '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="smiling_conclusion" class="form-label">
+                                <i class="fas fa-smile me-1"></i>Smiling Conclusion
+                            </label>
+                            <textarea class="form-control" id="smiling_conclusion" name="smiling_conclusion" rows="2">{{ word.smiling_conclusion or '' }}</textarea>
+                        </div>
+
+                        <!-- Additional Tags (Optional) -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-tags me-1"></i>Additional Tags (Optional)
+                            </label>
+                            <small class="text-muted d-block mb-2">Select additional tags to further categorize this content</small>
+                            {% if available_tags %}
+                                {% for group_name, tags in available_tags.items() %}
+                                    {% if group_name != 'Bootcamp Type' and group_name != 'Bootcamp Types' %}
+                                    <div class="border rounded p-2 mb-2">
+                                        <strong class="text-primary">{{ group_name }}</strong><br>
+                                        {% for tag in tags %}
+                                        <div class="form-check form-check-inline mt-1">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="{{ tag.id }}" id="tag_{{ tag.id }}"
+                                                   {% if tag.id in tag_ids %}checked{% endif %}>
+                                            <label class="form-check-label" for="tag_{{ tag.id }}">{{ tag.name }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+
+                        <div class="alert alert-success">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>AI Vocabulary Guidelines:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>✅ Select appropriate bootcamp types for the target audience</li>
+                                <li>✅ Use the AI-enhanced fields to create engaging, memorable definitions</li>
+                                <li>✅ Connect abstract concepts to everyday experiences</li>
+                                <li>✅ Include scenarios that help students understand practical usage</li>
+                                <li>✅ No limit on bootcamp type selection!</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success" id="submitBtn">
+                                <i class="fas fa-save me-2"></i>Update AI Vocabulary Word
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-let coreElementIndex = {% if word.core_elements %}{{ word.core_elements|length }}{% else %}1{% endif %};
+let coreElementIndex = 1;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Set the initial index based on existing core elements
+    const existingElements = document.querySelectorAll('.core-element-pair');
+    coreElementIndex = existingElements.length;
+    
+    const form = document.getElementById('wordForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Enhanced bootcamp card interactions
+    const bootcampCards = document.querySelectorAll('.bootcamp-card');
+    const bootcampCheckboxes = document.querySelectorAll('.bootcamp-checkbox');
+    
+    // Add click interaction for entire card
+    bootcampCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.type !== 'checkbox') {
+                const checkbox = this.querySelector('.bootcamp-checkbox');
+                checkbox.checked = !checkbox.checked;
+                updateCardSelection(this, checkbox.checked);
+                updateSelectionCounter();
+            }
+        });
+    });
+    
+    // Handle checkbox changes
+    bootcampCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const card = this.closest('.bootcamp-card');
+            updateCardSelection(card, this.checked);
+            updateSelectionCounter();
+        });
+    });
+    
+    function updateCardSelection(card, isSelected) {
+        if (isSelected) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    }
+    
+    function updateSelectionCounter() {
+        const selectedCount = document.querySelectorAll('.bootcamp-checkbox:checked').length;
+        const info = document.getElementById('selection-info');
+        
+        if (selectedCount === 0) {
+            info.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i><strong>Please select at least one bootcamp type!</strong>';
+            info.className = 'alert alert-warning mt-3';
+        } else if (selectedCount === 3) {
+            info.innerHTML = '<i class="fas fa-globe me-2"></i><strong>Universal Vocabulary!</strong> This word will be available to all bootcamp types worldwide!';
+            info.className = 'alert alert-success mt-3';
+        } else {
+            info.innerHTML = `<i class="fas fa-check me-2"></i><strong>Perfect!</strong> Selected ${selectedCount} bootcamp type${selectedCount > 1 ? 's' : ''}.`;
+            info.className = 'alert alert-info mt-3';
+        }
+    }
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const selectedBootcampTypes = document.querySelectorAll('input[name="bootcamp_types"]:checked');
+        if (selectedBootcampTypes.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one bootcamp type.');
+            return false;
+        }
+        
+        const word = document.getElementById('word').value.trim();
+        if (!word) {
+            e.preventDefault();
+            alert('Please enter a word.');
+            return false;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+    });
+    
+    // Initialize card selection based on current values
+    bootcampCheckboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            const card = checkbox.closest('.bootcamp-card');
+            updateCardSelection(card, true);
+        }
+    });
+    
+    // Initial update
+    updateSelectionCounter();
+});
 
 function addCoreElement() {
     const container = document.getElementById('core-elements-container');
-    const newRow = document.createElement('div');
-    newRow.className = 'core-element-row mb-2';
-    newRow.innerHTML = `
+    const newElement = document.createElement('div');
+    newElement.className = 'core-element-pair mb-2';
+    newElement.innerHTML = `
         <div class="row">
             <div class="col-md-5">
-                <input type="text" class="form-control" name="core_elements[${coreElementIndex}][core_element]" placeholder="Core Element">
+                <input type="text" class="form-control" name="core_elements[${coreElementIndex}][core_element]" 
+                       placeholder="Core Element">
             </div>
             <div class="col-md-5">
-                <input type="text" class="form-control" name="core_elements[${coreElementIndex}][everyday_object]" placeholder="Everyday Object">
+                <input type="text" class="form-control" name="core_elements[${coreElementIndex}][everyday_object]" 
+                       placeholder="Everyday Object">
             </div>
             <div class="col-md-2">
-                <button type="button" class="btn btn-danger btn-sm remove-core-element" onclick="removeRow(this)">Remove</button>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeElement(this)">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>
         </div>
     `;
-    container.appendChild(newRow);
+    container.appendChild(newElement);
     coreElementIndex++;
 }
 
-function removeRow(button) {
-    const row = button.closest('.core-element-row');
-    row.remove();
+function removeElement(button) {
+    button.closest('.core-element-pair').remove();
 }
 </script>
+
+<style>
+/* Enhanced Bootcamp Selection Design */
+.bootcamp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.bootcamp-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.bootcamp-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.bootcamp-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: #007bff;
+}
+
+.bootcamp-card:hover::before {
+    transform: scaleX(1);
+}
+
+.bootcamp-card.selected {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #007bff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,123,255,0.2);
+}
+
+.bootcamp-card.selected::before {
+    transform: scaleX(1);
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.bootcamp-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.bootcamp-card:hover .bootcamp-icon,
+.bootcamp-card.selected .bootcamp-icon {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+.bootcamp-card[data-camp="Chinese"] .bootcamp-icon {
+    color: #dc3545;
+}
+
+.bootcamp-card[data-camp="English"] .bootcamp-icon {
+    color: #0066cc;
+}
+
+.bootcamp-card[data-camp="Middle East"] .bootcamp-icon {
+    color: #28a745;
+}
+
+.bootcamp-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #212529;
+}
+
+.bootcamp-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.bootcamp-card .form-check {
+    margin: 0;
+}
+
+.bootcamp-card .form-check-input {
+    transform: scale(1.2);
+    margin: 0;
+}
+
+.bootcamp-card .form-check-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.bootcamp-card.selected .form-check-label {
+    color: #007bff;
+    font-weight: 500;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+
+.form-check-input:checked + .form-check-label {
+    font-weight: bold;
+    color: #007bff;
+}
+
+.core-element-pair {
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 5px;
+}
+
+/* Enhanced form styling */
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .bootcamp-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bootcamp-card {
+        padding: 15px;
+    }
+    
+    .bootcamp-icon {
+        font-size: 2rem;
+    }
+}
+</style>
 {% endblock %}

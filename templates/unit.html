@@ -39,40 +39,39 @@
                     {% for material in materials %}
                         <div class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">
-                                <h6 class="mb-1">{{ material[0] }}</h6>
-                                {% if material[2] %}
-                                    <a href="{{ url_for('download_material', filename=material[2]) }}" class="btn btn-sm btn-primary" target="_blank" rel="noopener">
+                                <h6 class="mb-1">{{ material['title'] }}</h6>
+                                {% if material['file_path'] %}
+                                    <a href="{{ url_for('download_material', filename=material['file_path']) }}" class="btn btn-sm btn-primary" target="_blank" rel="noopener">
                                         <i class="fas fa-download"></i> Download
                                     </a>
                                 {% endif %}
                             </div>
-                            {% if material[1] %}
-                                <p class="mb-1 text-muted">{{ material[1] }}</p>
+                            {% if material['content'] %}
+                                <p class="mb-1 text-muted">{{ material['content'] }}</p>
                             {% endif %}
-
-                            {% if material[2] %}
-                                {% set ext = material[2].split('.')[-1].lower() %}
+                            {% if material['file_path'] %}
+                                {% set ext = material['file_path'].split('.')[-1].lower() %}
                                 <div class="mt-3">
                                     {% if ext == 'pdf' %}
                                         <div class="embed-responsive embed-responsive-4by3" style="height: 500px;">
-                                            <iframe class="embed-responsive-item" src="{{ url_for('static', filename='uploads/' + material[2]) }}"></iframe>
+                                            <iframe class="embed-responsive-item" src="{{ url_for('static', filename='uploads/' + material['file_path']) }}"></iframe>
                                         </div>
                                     {% elif ext in ['ppt', 'pptx'] %}
                                         <div class="mt-3" style="height: 500px;">
-                                            <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.url_root|replace('http://', 'https://') }}static/uploads/{{ material[2] }}" 
+                                            <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.url_root|replace('http://', 'https://') }}static/uploads/{{ material['file_path'] }}" 
                                                     width="100%" height="500" frameborder="0" allowfullscreen></iframe>
                                         </div>
                                     {% elif ext in ['jpg', 'jpeg', 'png', 'gif'] %}
-                                        <img src="{{ url_for('static', filename='uploads/' + material[2]) }}" class="img-fluid mt-2 rounded" alt="{{ material[0] }}">
+                                        <img src="{{ url_for('static', filename='uploads/' + material['file_path']) }}" class="img-fluid mt-2 rounded" alt="{{ material['title'] }}">
                                     {% elif ext in ['doc', 'docx'] %}
                                         <div class="mt-2 p-3 feature-card text-center">
                                             <i class="fas fa-file-word fa-5x text-primary mb-3"></i>
-                                            <p>Word document: {{ material[2] }}</p>
+                                            <p>Word document: {{ material['file_path'] }}</p>
                                         </div>
                                     {% else %}
                                         <div class="mt-2 p-3 feature-card text-center">
                                             <i class="fas fa-file fa-5x text-secondary mb-3"></i>
-                                            <p>File: {{ material[2] }}</p>
+                                            <p>File: {{ material['file_path'] }}</p>
                                         </div>
                                     {% endif %}
                                 </div>
@@ -101,11 +100,11 @@
                         <div class="col-md-6 mb-4">
                             <div class="card h-100">
                                 <div class="card-body">
-                                    <h5 class="card-title">{{ video[0] }}</h5>
-                                    {% if video[2] %}
-                                        <p class="card-text text-muted">{{ video[2] }}</p>
+                                    <h5 class="card-title">{{ video['title'] }}</h5>
+                                    {% if video['description'] %}
+                                        <p class="card-text text-muted">{{ video['description'] }}</p>
                                     {% endif %}
-                                    <a href="https://www.youtube.com/watch?v={{ video[1].split('v=')[1] if 'v=' in video[1] else video[1] }}" 
+                                    <a href="https://www.youtube.com/watch?v={{ video['video_id'] }}" 
                                        target="_blank" rel="noopener" class="btn btn-primary">
                                         <i class="fas fa-external-link-alt"></i> Watch on YouTube
                                     </a>
@@ -254,11 +253,11 @@
         </div>
         <div class="card-body">
             {% if project %}
-                <h5>{{ project[0] }}</h5>
-                <p class="text-muted">{{ project[1] }}</p>
-                {% if project[2] %}
+                <h5>{{ project['title'] }}</h5>
+                <p class="text-muted">{{ project['description'] }}</p>
+                {% if project['resources'] %}
                     <h6>Resources:</h6>
-                    <p class="text-muted">{{ project[2] }}</p>
+                    <p class="text-muted">{{ project['resources'] }}</p>
                 {% endif %}
 
                 {% if project_completed %}
@@ -291,41 +290,31 @@
         </div>
     </div>
 
-   <!-- Quiz Section in Unit Template - Replace the existing quiz section with this -->
-<div class="card mb-4">
-    <div class="card-header bg-warning text-dark">
-        <h5 class="card-title mb-0">
-            <i class="fas fa-question-circle"></i> {{ get_text('unit') }} {{ unit_id }} {{ get_text('quizzes') }}
-        </h5>
-    </div>
-    <div class="card-body">
-        {% if quiz_id %}
-            {% if quiz_attempted %}
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i>
-                    <strong>{{ get_text('quiz_completed') or 'Quiz Completed' }}</strong>
-                    {% if quiz_attempt_info %}
-                        <br>{{ get_text('score') }}: {{ quiz_attempt_info.score }} ({{ get_text('passed') if quiz_attempt_info.passed else get_text('not_passed') or 'Not Passed' }})
-                        <br>{{ get_text('completed') }}: {{ quiz_attempt_info.attempted_at.strftime('%B %d, %Y') if quiz_attempt_info.attempted_at else get_text('unknown_date') or 'Unknown date' }}
-                    {% endif %}
-                </div>
-                <p>{{ get_text('quiz_already_taken') or 'You have already taken this quiz. Click below to review your answers and explanations.' }}</p>
-                <a href="{{ url_for('quiz', unit_id=unit_id) }}" class="btn btn-outline-primary">
-                    <i class="fas fa-eye"></i> {{ get_text('review_quiz_results') or 'Review Quiz Results' }}
-                </a>
+    <!-- Quiz Section -->
+    <div class="card mb-4 animate-slideUp" style="animation-delay: 0.4s;">
+        <div class="card-header">
+            <h5><i class="fas fa-question-circle mr-2"></i>Quiz</h5>
+        </div>
+        <div class="card-body text-center">
+            {% if quiz_id %}
+                {% if quiz_attempted %}
+                    <a href="{{ url_for('quiz', unit_id=unit_id) }}" class="btn btn-success btn-lg">
+                        <i class="fas fa-clipboard-check"></i> Review Quiz
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('quiz', unit_id=unit_id) }}" class="btn btn-primary btn-lg">
+                        <i class="fas fa-pencil-alt"></i> Take Quiz
+                    </a>
+                {% endif %}
             {% else %}
-                <p>{{ get_text('test_knowledge') or 'Test your knowledge with this unit quiz. You can only take this quiz once, so make sure you are ready!' }}</p>
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>{{ get_text('important') or 'Important' }}:</strong> {{ get_text('quiz_one_attempt_warning') or 'This quiz can only be taken once. Make sure you have studied the material before proceeding.' }}
-                </div>
-                <a href="{{ url_for('quiz', unit_id=unit_id) }}" class="btn btn-warning text-dark">
-                    <i class="fas fa-play"></i> {{ get_text('take_quiz_one_attempt') or 'Take Quiz (One Attempt Only)' }}
-                </a>
+                <div class="text-muted">No quiz available for this unit.</div>
             {% endif %}
-        {% else %}
-            <p class="text-muted">{{ get_text('no_quiz_available') or 'No quiz available for this unit yet.' }}</p>
-        {% endif %}
+        </div>
     </div>
+
 </div>
+
+{% endblock %}
+
+{% block scripts %}
 {% endblock %}

@@ -1,0 +1,91 @@
+<!-- templates/admin/tags.html -->
+{% extends "admin/base.html" %}
+
+{% block title %}Tag Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Tag Management</h3>
+                    <div class="card-tools">
+                        <a href="{{ url_for('admin_add_tag_group') }}" class="btn btn-primary btn-sm">Add Tag Group</a>
+                        <a href="{{ url_for('admin_add_tag') }}" class="btn btn-success btn-sm">Add Tag</a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Tag Groups Section -->
+                    <h4>Tag Groups</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Description</th>
+                                    <th>Tag Count</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for group in tag_groups %}
+                                <tr>
+                                    <td>{{ group.id }}</td>
+                                    <td>{{ group.name }}</td>
+                                    <td>{{ group.description or 'No description' }}</td>
+                                    <td>{{ group.tag_count }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin_edit_tag_group', group_id=group.id) }}" class="btn btn-sm btn-info">Edit</a>
+                                        <form method="POST" action="{{ url_for('admin_delete_tag_group', group_id=group.id) }}" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Tags Section -->
+                    <h4>Tags</h4>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Group</th>
+                                    <th>Description</th>
+                                    <th>User Count</th>
+                                    <th>Content Count</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tag in tags %}
+                                <tr>
+                                    <td>{{ tag.id }}</td>
+                                    <td>{{ tag.name }}</td>
+                                    <td>{{ tag.group_name }}</td>
+                                    <td>{{ tag.description or 'No description' }}</td>
+                                    <td>{{ tag.user_count }}</td>
+                                    <td>{{ tag.content_count }}</td>
+                                    <td>
+                                        <a href="{{ url_for('admin_edit_tag', tag_id=tag.id) }}" class="btn btn-sm btn-info">Edit</a>
+                                        <form method="POST" action="{{ url_for('admin_delete_tag', tag_id=tag.id) }}" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

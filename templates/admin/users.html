@@ -1,79 +1,74 @@
-{% extends "admin/base.html" %}
+{% extends 'admin/base.html' %}
+
+{% block title %}User Management{% endblock %}
 
 {% block content %}
-<div class="content-header">
-    <h2>User Management</h2>
-</div>
-
-<div class="card">
-    <div class="card-body">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Email</th>
-                    <th>Username</th>
-                    <th>Language</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user in users %}
-                <tr>
-                    <td>{{ user.id }}</td>
-                    <td>
-                        <strong>{{ user.email or 'N/A' }}</strong>
-                        {% if user.email %}
-                        <small class="text-muted d-block">{{ user.email.split('@')[0] }}</small>
-                        {% endif %}
-                    </td>
-                    <td>{{ user.name or user.username or 'N/A' }}</td>
-                    <td>{{ LANGUAGES.get(user.language, user.language) }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">User Management</h1>
+        <div>
+            <a href="{{ url_for('admin_export_users') }}" class="btn btn-outline-success me-2"><i class="fas fa-file-export"></i> Export Users</a>
+            <a href="{{ url_for('admin_add_user') }}" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add User</a>
+        </div>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container mb-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category in ['error', 'danger'] else category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <div class="card admin-card">
+        <div class="card-header card-header-custom d-flex flex-column flex-md-row align-items-md-center justify-content-between">
+            <span class="fs-5 fw-bold">All Users</span>
+            <form class="d-flex mt-2 mt-md-0" method="get" action="{{ url_for('admin_users') }}">
+                <input class="form-control me-2" type="search" name="search" placeholder="Search by username or email" value="{{ request.args.get('search', '') }}" aria-label="Search">
+                <button class="btn btn-outline-light" type="submit"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-dark table-striped align-middle mb-0" style="min-width: 900px;">
+                <thead class="sticky-top" style="background: #2a2d3a;">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Email</th>
+                        <th scope="col">Camp</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Tags</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.camp or 'N/A' }}</td>
+                        <td>{{ user.role|capitalize }}</td>
+                        <td>
+                            {% for tag in user.tags %}
+                                <span class="badge bg-info text-dark me-1">{{ tag }}</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin_edit_user', user_id=user.id) }}" class="btn btn-sm btn-info"><i class="fas fa-edit"></i></a>
+                            <a href="{{ url_for('admin_user_tags', user_id=user.id) }}" class="btn btn-sm btn-warning ms-1"><i class="fas fa-tags"></i> Manage Tags</a>
+                            <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
-
-{% block additional_css %}
-<style>
-.table th {
-    background-color: #f8f9fa;
-    border-top: none;
-    font-weight: 600;
-}
-
-.table td {
-    vertical-align: middle;
-}
-
-.content-header {
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #dee2e6;
-}
-
-.content-header h2 {
-    margin: 0;
-    color: #495057;
-}
-
-.card {
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: 1px solid rgba(0, 0, 0, 0.125);
-}
-
-.btn-group-sm > .btn, .btn-sm {
-    margin-right: 5px;
-}
-
-.btn-sm:last-child {
-    margin-right: 0;
-}
-
-.text-muted {
-    font-size: 0.875em;
-}
-</style>
-{% endblock %}
 {% endblock %}

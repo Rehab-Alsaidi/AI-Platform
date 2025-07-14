@@ -1,0 +1,45 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Manage User Tags{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Manage Tags for {{ user.username }}</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            {% for tag in tags %}
+                                {% if loop.index0 % 3 == 0 %}
+                                    <div class="col-md-4">
+                                {% endif %}
+                                
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="tags" value="{{ tag.id }}" 
+                                           {% if tag.assigned %}checked{% endif %} id="tag_{{ tag.id }}">
+                                    <label class="form-check-label" for="tag_{{ tag.id }}">
+                                        <strong>{{ tag.group_name }}:</strong> {{ tag.name }}
+                                    </label>
+                                </div>
+                                
+                                {% if loop.index % 3 == 0 or loop.last %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="form-group mt-3">
+                            <button type="submit" class="btn btn-primary">Update Tags</button>
+                            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Back to Users</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -33,6 +33,11 @@
                 <div class="col-md-2 font-weight-bold">Resources:</div>
                 <div class="col-md-10">{{ project.resources }}</div>
             </div>
+            {% if project.deadline %}
+                <div class="mb-2">
+                    <strong>Submission Deadline:</strong> {{ project.deadline }}
+                </div>
+            {% endif %}
         </div>
     </div>
     

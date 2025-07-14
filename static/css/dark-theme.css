@@ -799,6 +799,11 @@ select:focus {
     100% { left: 100%; }
 }
 
+/* Ensure explanation text is visible in dark mode */
+body.dark-mode .explanation-box p {
+    color: #ffffff !important;
+}
+
 /* Gentle card entrance animation */
 .card {
     background: rgba(32, 33, 43, 0.7);

@@ -83,10 +83,7 @@
                            class="btn btn-sm btn-primary mr-1" title="Download File">
                             <i class="fas fa-download"></i>
                         </a>
-                        <a href="{{ url_for('debug_submission', submission_id=submission.id) }}" 
-                           class="btn btn-sm btn-info" title="Debug Submission">
-                            <i class="fas fa-bug"></i>
-                        </a>
+                       
                         {% else %}
                         <span class="text-muted">No actions</span>
                         {% endif %}

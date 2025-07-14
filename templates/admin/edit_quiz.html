@@ -1,73 +1,451 @@
 {% extends 'admin/base.html' %}
 
+{% block title %}Edit Quiz Question{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h1>Edit Quiz Question</h1>
-    
-    <div class="card">
-        <div class="card-body">
-            <form method="POST">
-                <div class="form-group">
-                    <label for="unit_id">Unit ID:</label>
-                    <input type="number" class="form-control" id="unit_id" name="unit_id" value="{{ quiz.unit_id }}" required min="1">
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-10 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Edit Quiz Question</h4>
                 </div>
-                
-                <div class="form-group">
-                    <label for="camp">Training Camp:</label>
-                    <select class="form-control" id="camp" name="camp" required>
-                        <option value="">-- Select Training Camp --</option>
-                        <option value="Middle East" {% if quiz.camp == 'Middle East' %}selected{% endif %}>Middle East</option>
-                        <option value="Chinese" {% if quiz.camp == 'Chinese' %}selected{% endif %}>Chinese</option>
-                        <option value="both" {% if quiz.camp == 'both' %}selected{% endif %}>Both Camps</option>
-                    </select>
-                    <small class="text-muted">Select which training camp(s) can access this quiz</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="question">Question:</label>
-                    <input type="text" class="form-control" id="question" name="question" value="{{ quiz.question }}" required>
-                </div>
-                
-                <div class="form-group">
-                    <label>Options (mark the correct answer):</label>
-                    
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <div class="input-group-text">
-                                <input type="radio" name="correct_answer" value="0" {% if quiz.correct_answer == 0 %}checked{% endif %} required>
+                <div class="card-body">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <form method="POST" id="quizForm">
+                        <div class="mb-3">
+                            <label for="unit_id" class="form-label">
+                                <i class="fas fa-book me-1"></i>Unit Number *
+                            </label>
+                            <input type="number" class="form-control" id="unit_id" name="unit_id" 
+                                   value="{{ quiz.unit_id }}" required min="1">
+                        </div>
+
+                        <!-- Improved Bootcamp Type Selection -->
+                        <div class="mb-4">
+                            <label class="form-label mb-3">
+                                <i class="fas fa-globe me-2"></i>
+                                <strong>Bootcamp Types *</strong>
+                                <small class="text-muted d-block">Select one or more bootcamp types (no limit)</small>
+                            </label>
+                            
+                            <div class="bootcamp-grid">
+                                <!-- Chinese Bootcamp -->
+                                <div class="bootcamp-card" data-camp="Chinese">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-dragon"></i>
+                                    </div>
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">Chinese</h6>
+                                        <p class="bootcamp-subtitle">中文训练营</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="Chinese" id="chinese"
+                                                   {% if 'Chinese' in current_bootcamp_types %}checked{% endif %}>
+                                            <label class="form-check-label" for="chinese">
+                                                Include for Chinese students
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- English Bootcamp -->
+                                <div class="bootcamp-card" data-camp="English">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-flag-usa"></i>
+                                    </div>
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">English</h6>
+                                        <p class="bootcamp-subtitle">English Bootcamp</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="English" id="english"
+                                                   {% if 'English' in current_bootcamp_types %}checked{% endif %}>
+                                            <label class="form-check-label" for="english">
+                                                Include for English students
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Middle East Bootcamp -->
+                                <div class="bootcamp-card" data-camp="Middle East">
+                                    <div class="bootcamp-icon">
+                                        <i class="fas fa-mosque"></i>
+                                    </div>
+                                    <div class="bootcamp-content">
+                                        <h6 class="bootcamp-title">Middle East</h6>
+                                        <p class="bootcamp-subtitle">الشرق الأوسط</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input bootcamp-checkbox" type="checkbox" 
+                                                   name="bootcamp_types" value="Middle East" id="middle_east"
+                                                   {% if 'Middle East' in current_bootcamp_types %}checked{% endif %}>
+                                            <label class="form-check-label" for="middle_east">
+                                                Include for Middle East students
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info mt-3" id="selection-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Select bootcamp types:</strong> Choose which students should see this quiz question.
                             </div>
                         </div>
-                        <input type="text" class="form-control" name="option1" value="{{ options[0] if options|length > 0 else '' }}" placeholder="Option 1" required>
-                    </div>
-                    
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <div class="input-group-text">
-                                <input type="radio" name="correct_answer" value="1" {% if quiz.correct_answer == 1 %}checked{% endif %}>
-                            </div>
+
+                        <!-- Additional Tags (Optional) -->
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-tags me-1"></i>Additional Tags (Optional)
+                            </label>
+                            <small class="text-muted d-block mb-2">Select additional tags to further categorize this content</small>
+                            {% if available_tags %}
+                                {% for group_name, tags in available_tags.items() %}
+                                    {% if group_name != 'Bootcamp Type' and group_name != 'Bootcamp Types' %}
+                                    <div class="border rounded p-2 mb-2">
+                                        <strong class="text-primary">{{ group_name }}</strong><br>
+                                        {% for tag in tags %}
+                                        <div class="form-check form-check-inline mt-1">
+                                            <input class="form-check-input" type="checkbox" name="tags" value="{{ tag.id }}" id="tag_{{ tag.id }}"
+                                                   {% if tag.id in tag_ids %}checked{% endif %}>
+                                            <label class="form-check-label" for="tag_{{ tag.id }}">{{ tag.name }}</label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
                         </div>
-                        <input type="text" class="form-control" name="option2" value="{{ options[1] if options|length > 1 else '' }}" placeholder="Option 2" required>
-                    </div>
-                    
-                    <div class="input-group mb-3">
-                        <div class="input-group-prepend">
-                            <div class="input-group-text">
-                                <input type="radio" name="correct_answer" value="2" {% if quiz.correct_answer == 2 %}checked{% endif %}>
-                            </div>
+
+                        <div class="mb-3">
+                            <label for="question" class="form-label">
+                                <i class="fas fa-question me-1"></i>Question *
+                            </label>
+                            <textarea class="form-control" id="question" name="question" rows="3" required>{{ quiz.question }}</textarea>
                         </div>
-                        <input type="text" class="form-control" name="option3" value="{{ options[2] if options|length > 2 else '' }}" placeholder="Option 3" required>
-                    </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-list me-1"></i>Answer Options *
+                            </label>
+                            <div class="row">
+                                <div class="col-md-6 mb-2">
+                                    <div class="input-group">
+                                        <div class="input-group-text">
+                                            <input type="radio" name="correct_answer" value="0" 
+                                                   {% if quiz.correct_answer == 0 %}checked{% endif %} required>
+                                        </div>
+                                        <input type="text" class="form-control" name="option1" 
+                                               value="{{ options[0] if options|length > 0 else '' }}" placeholder="Option 1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="input-group">
+                                        <div class="input-group-text">
+                                            <input type="radio" name="correct_answer" value="1" 
+                                                   {% if quiz.correct_answer == 1 %}checked{% endif %}>
+                                        </div>
+                                        <input type="text" class="form-control" name="option2" 
+                                               value="{{ options[1] if options|length > 1 else '' }}" placeholder="Option 2" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <div class="input-group">
+                                        <div class="input-group-text">
+                                            <input type="radio" name="correct_answer" value="2" 
+                                                   {% if quiz.correct_answer == 2 %}checked{% endif %}>
+                                        </div>
+                                        <input type="text" class="form-control" name="option3" 
+                                               value="{{ options[2] if options|length > 2 else '' }}" placeholder="Option 3" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <small class="text-muted">Click the radio button next to the correct answer</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="explanation" class="form-label">
+                                <i class="fas fa-lightbulb me-1"></i>Explanation *
+                            </label>
+                            <textarea class="form-control" id="explanation" name="explanation" rows="3" required>{{ quiz.explanation }}</textarea>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Quiz Guidelines:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>✅ Select appropriate bootcamp types for the target audience</li>
+                                <li>✅ Create clear, unambiguous questions</li>
+                                <li>✅ Provide helpful explanations for the correct answer</li>
+                                <li>✅ Use tags to categorize quiz content appropriately</li>
+                                <li>✅ No limit on bootcamp type selection!</li>
+                            </ul>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-success" id="submitBtn">
+                                <i class="fas fa-save me-2"></i>Update Quiz Question
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                
-                <div class="form-group">
-                    <label for="explanation">Explanation (shown after the quiz):</label>
-                    <textarea class="form-control" id="explanation" name="explanation" rows="3" required>{{ quiz.explanation }}</textarea>
-                </div>
-                
-                <button type="submit" class="btn btn-primary">Update Question</button>
-                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-secondary">Cancel</a>
-            </form>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('quizForm');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Enhanced bootcamp card interactions
+    const bootcampCards = document.querySelectorAll('.bootcamp-card');
+    const bootcampCheckboxes = document.querySelectorAll('.bootcamp-checkbox');
+    
+    // Add click interaction for entire card
+    bootcampCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.type !== 'checkbox') {
+                const checkbox = this.querySelector('.bootcamp-checkbox');
+                checkbox.checked = !checkbox.checked;
+                updateCardSelection(this, checkbox.checked);
+                updateSelectionCounter();
+            }
+        });
+    });
+    
+    // Handle checkbox changes
+    bootcampCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const card = this.closest('.bootcamp-card');
+            updateCardSelection(card, this.checked);
+            updateSelectionCounter();
+        });
+    });
+    
+    function updateCardSelection(card, isSelected) {
+        if (isSelected) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    }
+    
+    function updateSelectionCounter() {
+        const selectedCount = document.querySelectorAll('.bootcamp-checkbox:checked').length;
+        const info = document.getElementById('selection-info');
+        
+        if (selectedCount === 0) {
+            info.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i><strong>Please select at least one bootcamp type!</strong>';
+            info.className = 'alert alert-warning mt-3';
+        } else if (selectedCount === 3) {
+            info.innerHTML = '<i class="fas fa-globe me-2"></i><strong>Universal Question!</strong> This quiz will be available to all bootcamp types worldwide!';
+            info.className = 'alert alert-success mt-3';
+        } else {
+            info.innerHTML = `<i class="fas fa-check me-2"></i><strong>Perfect!</strong> Selected ${selectedCount} bootcamp type${selectedCount > 1 ? 's' : ''}.`;
+            info.className = 'alert alert-info mt-3';
+        }
+    }
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        const selectedBootcampTypes = document.querySelectorAll('input[name="bootcamp_types"]:checked');
+        if (selectedBootcampTypes.length === 0) {
+            e.preventDefault();
+            alert('Please select at least one bootcamp type.');
+            return false;
+        }
+        
+        // Validate that a correct answer is selected
+        const correctAnswerSelected = document.querySelector('input[name="correct_answer"]:checked');
+        if (!correctAnswerSelected) {
+            e.preventDefault();
+            alert('Please select which option is the correct answer.');
+            return false;
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Updating...';
+    });
+    
+    // Initialize card selection based on current values
+    bootcampCheckboxes.forEach(checkbox => {
+        if (checkbox.checked) {
+            const card = checkbox.closest('.bootcamp-card');
+            updateCardSelection(card, true);
+        }
+    });
+    
+    // Initial update
+    updateSelectionCounter();
+});
+</script>
+
+<style>
+/* Enhanced Bootcamp Selection Design */
+.bootcamp-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.bootcamp-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.bootcamp-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.bootcamp-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: #007bff;
+}
+
+.bootcamp-card:hover::before {
+    transform: scaleX(1);
+}
+
+.bootcamp-card.selected {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #007bff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,123,255,0.2);
+}
+
+.bootcamp-card.selected::before {
+    transform: scaleX(1);
+    background: linear-gradient(90deg, #28a745, #20c997);
+}
+
+.bootcamp-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.bootcamp-card:hover .bootcamp-icon,
+.bootcamp-card.selected .bootcamp-icon {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+.bootcamp-card[data-camp="Chinese"] .bootcamp-icon {
+    color: #dc3545;
+}
+
+.bootcamp-card[data-camp="English"] .bootcamp-icon {
+    color: #0066cc;
+}
+
+.bootcamp-card[data-camp="Middle East"] .bootcamp-icon {
+    color: #28a745;
+}
+
+.bootcamp-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #212529;
+}
+
+.bootcamp-subtitle {
+    font-size: 0.85rem;
+    color: #6c757d;
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.bootcamp-card .form-check {
+    margin: 0;
+}
+
+.bootcamp-card .form-check-input {
+    transform: scale(1.2);
+    margin: 0;
+}
+
+.bootcamp-card .form-check-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.bootcamp-card.selected .form-check-label {
+    color: #007bff;
+    font-weight: 500;
+}
+
+/* Enhanced form styling */
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+.input-group-text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .bootcamp-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .bootcamp-card {
+        padding: 15px;
+    }
+    
+    .bootcamp-icon {
+        font-size: 2rem;
+    }
+}
+</style>
 {% endblock %}

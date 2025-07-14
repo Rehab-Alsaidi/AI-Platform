@@ -1,0 +1,51 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ 'Edit' if cohort else 'Add' }} Cohort{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">{{ 'Edit' if cohort else 'Add' }} Cohort</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="container mt-3">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category in ['error', 'danger'] else category }} alert-dismissible fade show" role="alert">
+              {{ message }}
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <form method="POST">
+        <div class="mb-3">
+            <label for="name" class="form-label">Cohort Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ cohort.name if cohort else '' }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="bootcamp_type" class="form-label">Bootcamp Type</label>
+            <select class="form-control" id="bootcamp_type" name="bootcamp_type" required>
+                <option value="">-- Select Bootcamp --</option>
+                <option value="Chinese" {% if cohort and cohort.bootcamp_type == 'Chinese' %}selected{% endif %}>Chinese</option>
+                <option value="English" {% if cohort and cohort.bootcamp_type == 'English' %}selected{% endif %}>English</option>
+                <option value="Middle East" {% if cohort and cohort.bootcamp_type == 'Middle East' %}selected{% endif %}>Middle East</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="start_date" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ cohort.start_date if cohort and cohort.start_date else '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="end_date" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ cohort.end_date if cohort and cohort.end_date else '' }}">
+        </div>
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description">{{ cohort.description if cohort else '' }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-success">{{ 'Update' if cohort else 'Add' }} Cohort</button>
+        <a href="{{ url_for('admin_cohorts') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %} 

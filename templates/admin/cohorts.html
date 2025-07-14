@@ -1,0 +1,49 @@
+{% extends 'admin/base.html' %}
+{% block title %}Cohort Management{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Cohort Management</h1>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+    </div>
+    <div class="mb-4">
+        <a href="{{ url_for('admin_add_cohort') }}" class="btn btn-success"><i class="fas fa-plus"></i> Add Cohort</a>
+    </div>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title mb-3">All Cohorts</h5>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Bootcamp Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cohort in cohorts %}
+                    <tr>
+                        <td>{{ cohort.name }}</td>
+                        <td>{{ cohort.bootcamp_type }}</td>
+                        <td>{{ cohort.start_date or '-' }}</td>
+                        <td>{{ cohort.end_date or '-' }}</td>
+                        <td>{{ cohort.description or '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin_edit_cohort', cohort_id=cohort.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                            <form method="POST" action="{{ url_for('admin_delete_cohort', cohort_id=cohort.id) }}" style="display:inline;" onsubmit="return confirm('Delete this cohort?');">
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center">No cohorts found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} 

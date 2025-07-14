@@ -1,253 +1,486 @@
 {% extends 'admin/base.html' %}
+{% block title %}Admin Dashboard | 51Talk AI Learning{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>Admin Dashboard</h1>
+<div class="container-fluid">
+    <!-- Page Title -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0 page-title">
+            <i class="fas fa-chart-line mr-3"></i>Dashboard Overview
+        </h1>
+        <div class="text-muted">
+            <i class="fas fa-clock mr-1"></i>
+            <span id="currentTime"></span>
+        </div>
+    </div>
     
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card">
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm creative-shimmer" style="border-left: 4px solid #8b5cf6 !important;">
                 <div class="card-body text-center">
-                    <h5 class="card-title">Users</h5>
-                    <h2 class="text-primary">{{ stats.total_users }}</h2>
-                    <div class="btn-group-vertical w-100">
-                        <a href="{{ url_for('admin_users') }}" class="btn btn-sm btn-primary mb-1">Manage Users</a>
-                        <a href="{{ url_for('admin_export_users') }}" class="btn btn-sm btn-success">Export CSV</a>
+                    <div class="display-4 mb-3">
+                        <i class="fas fa-users" style="color: #8b5cf6;"></i>
                     </div>
+                    <h3 class="mb-1">{{ stats.total_users }}</h3>
+                    <p class="text-muted mb-0">Total Users</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #10b981 !important;">
                 <div class="card-body text-center">
-                    <h5 class="card-title">Quizzes</h5>
-                    <h2 class="text-info">{{ stats.total_quizzes }}</h2>
-                    <a href="{{ url_for('admin_add_quiz') }}" class="btn btn-sm btn-primary">Add Quiz</a>
+                    <div class="display-4 mb-3">
+                        <i class="fas fa-question-circle" style="color: #10b981;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ stats.total_quizzes }}</h3>
+                    <p class="text-muted mb-0">Quiz Questions</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #3b82f6 !important;">
                 <div class="card-body text-center">
-                    <h5 class="card-title">Materials</h5>
-                    <h2 class="text-warning">{{ stats.total_materials }}</h2>
-                    <a href="{{ url_for('admin_add_material') }}" class="btn btn-sm btn-primary">Add Material</a>
+                    <div class="display-4 mb-3">
+                        <i class="fas fa-file-alt" style="color: #3b82f6;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ stats.total_materials }}</h3>
+                    <p class="text-muted mb-0">Learning Materials</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #14b8a6 !important;">
                 <div class="card-body text-center">
-                    <h5 class="card-title">Videos</h5>
-                    <h2 class="text-danger">{{ stats.total_videos }}</h2>
-                    <a href="{{ url_for('admin_add_video') }}" class="btn btn-sm btn-primary">Add Video</a>
+                    <div class="display-4 mb-3">
+                        <i class="fas fa-video" style="color: #14b8a6;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ stats.total_videos }}</h3>
+                    <p class="text-muted mb-0">Video Content</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #6b7280 !important;">
+                <div class="card-body text-center">
+                    <div class="display-4 mb-3">
+                        <i class="fas fa-project-diagram" style="color: #6b7280;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ stats.total_projects }}</h3>
+                    <p class="text-muted mb-0">Projects</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #10b981 !important;">
+                <div class="card-body text-center">
+                    <div class="display-4 mb-3">
+                        <i class="fas fa-file-upload" style="color: #10b981;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ stats.total_submissions }}</h3>
+                    <p class="text-muted mb-0">Submissions</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #3b82f6 !important;">
+                <div class="card-body text-center">
+                    <div class="display-4 mb-3">
+                        <i class="fas fa-users-cog" style="color: #3b82f6;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ stats.total_teams }}</h3>
+                    <p class="text-muted mb-0">Teams</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-lg-4 col-md-6">
+            <div class="card h-100 border-0 shadow-sm creative-particles" style="border-left: 4px solid #8b5cf6 !important;">
+                <div class="card-body text-center">
+                    <div class="display-4 mb-3">
+                        <i class="fas fa-folder-open" style="color: #8b5cf6;"></i>
+                    </div>
+                    <h3 class="mb-1">{{ stats.total_documents }}</h3>
+                    <p class="text-muted mb-0">Documents</p>
                 </div>
             </div>
         </div>
     </div>
     
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Projects</h5>
-                    <h2 class="text-success">{{ stats.total_projects }}</h2>
-                    <a href="{{ url_for('admin_add_project') }}" class="btn btn-sm btn-primary">Add Project</a>
-                </div>
-            </div>
+    <!-- Quick Action Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-12">
+            <h3 class="mb-4 creative-text-wave">
+                <i class="fas fa-bolt mr-2"></i>Quick Actions
+            </h3>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Submissions</h5>
-                    <h2 class="text-secondary">{{ stats.total_submissions }}</h2>
-                    <div class="btn-group-vertical w-100">
-                        <a href="{{ url_for('admin_submissions', camp='all') }}" class="btn btn-sm btn-primary mb-1">
-                            <i class="fas fa-eye mr-1"></i> View All
-                        </a>
-                        <div class="dropdown">
-                            <button class="btn btn-sm btn-success dropdown-toggle w-100" type="button" id="submissionDownloadDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <i class="fas fa-download mr-1"></i> Download ZIP
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="submissionDownloadDropdown">
-                                <h6 class="dropdown-header">Download by Camp</h6>
-                                <a class="dropdown-item" href="{{ url_for('admin_download_submissions_by_camp', camp='all') }}">
-                                    <i class="fas fa-globe mr-2"></i> All Camps
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ url_for('admin_download_submissions_by_camp', camp='Middle East') }}">
-                                    <i class="fas fa-flag mr-2 text-success"></i> Middle East
-                                </a>
-                                <a class="dropdown-item" href="{{ url_for('admin_download_submissions_by_camp', camp='Chinese') }}">
-                                    <i class="fas fa-flag mr-2 text-info"></i> Chinese
-                                </a>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <a href="{{ url_for('admin_users') }}" class="btn btn-outline-primary btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 text-decoration-none" style="transition: all 0.3s ease;">
+                <i class="fas fa-users fa-2x mb-3"></i>
+                <span class="fw-bold">Manage Users</span>
+            </a>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <a href="{{ url_for('admin_teams') }}" class="btn btn-outline-info btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 text-decoration-none" style="transition: all 0.3s ease;">
+                <i class="fas fa-users-cog fa-2x mb-3"></i>
+                <span class="fw-bold">Teams</span>
+            </a>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <a href="{{ url_for('admin_manage_content') }}" class="btn btn-outline-success btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 text-decoration-none" style="transition: all 0.3s ease;">
+                <i class="fas fa-layer-group fa-2x mb-3"></i>
+                <span class="fw-bold">Content</span>
+            </a>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <a href="{{ url_for('admin_tags') }}" class="btn btn-outline-secondary btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 text-decoration-none" style="transition: all 0.3s ease;">
+                <i class="fas fa-tags fa-2x mb-3"></i>
+                <span class="fw-bold">Tags</span>
+            </a>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <a href="{{ url_for('admin_cohorts') }}" class="btn btn-outline-warning btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 text-decoration-none" style="transition: all 0.3s ease;">
+                <i class="fas fa-graduation-cap fa-2x mb-3"></i>
+                <span class="fw-bold">Cohorts</span>
+            </a>
+        </div>
+        
+        <div class="col-lg-2 col-md-4 col-sm-6">
+            <a href="{{ url_for('admin_export_advanced') }}" class="btn btn-outline-dark btn-lg w-100 h-100 d-flex flex-column align-items-center justify-content-center py-4 text-decoration-none" style="transition: all 0.3s ease;">
+                <i class="fas fa-download fa-2x mb-3"></i>
+                <span class="fw-bold">Export</span>
+            </a>
+        </div>
+    </div>
+    
+    <!-- Activity & System Info -->
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #8b5cf6 !important;">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock mr-2" style="color: #8b5cf6;"></i>Today's Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="border-right">
+                                <h4 class="mb-1" style="color: #8b5cf6;">{{ stats.today_qa }}</h4>
+                                <p class="text-muted mb-0 small">AI Queries</p>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="mb-1" style="color: #10b981;">{{ stats.today_quiz_attempts }}</h4>
+                            <p class="text-muted mb-0 small">Quiz Attempts</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress bars for visual representation -->
+                    <div class="mt-3">
+                        <div class="mb-2">
+                            <small class="text-muted">Daily AI Usage</small>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: 70%; background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <small class="text-muted">Quiz Engagement</small>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: 85%; background: linear-gradient(135deg, #10b981, #059669);"></div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="card-title">Today's Activity</h5>
-                    <div class="row">
-                        <div class="col-6">
-                            <small class="text-muted">Q&A</small>
-                            <h4 class="text-primary">{{ stats.today_qa }}</h4>
-                        </div>
-                        <div class="col-6">
-                            <small class="text-muted">Quiz Attempts</small>
-                            <h4 class="text-info">{{ stats.today_quiz_attempts }}</h4>
-                        </div>
-                    </div>
+        
+        <div class="col-lg-6">
+            <div class="card h-100 border-0 shadow-sm" style="border-left: 4px solid #10b981 !important;">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cogs mr-2" style="color: #10b981;"></i>System Status
+                    </h5>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h5 class="card-title">User Progress</h5>
-                    <div class="mt-3">
-                        <a href="{{ url_for('admin_export_progress') }}" class="btn btn-success">
-                            <i class="fas fa-chart-line mr-1"></i> Export CSV
-                        </a>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Platform Status</span>
+                        <span class="badge" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.5rem 1rem; border-radius: 20px;">
+                            <i class="fas fa-check-circle mr-1"></i>Online
+                        </span>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Camp-based Export Options -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="bg-dark text-white p-4 rounded">
-                <h4 class="mb-3 text-white">
-                    <i class="fas fa-download mr-2"></i>
-                    Export Data by Training Camp
-                </h4>
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="border-left border-success pl-3">
-                            <h6 class="text-success"><i class="fas fa-users mr-1"></i> User Data</h6>
-                            <a href="{{ url_for('admin_export_users_by_camp', camp='Middle East') }}" class="btn btn-sm btn-success mb-2 d-block">
-                                <i class="fas fa-flag mr-1"></i> ME Users CSV
-                            </a>
-                            <a href="{{ url_for('admin_export_users_by_camp', camp='Chinese') }}" class="btn btn-sm btn-info mb-2 d-block">
-                                <i class="fas fa-flag mr-1"></i> Chinese Users CSV
-                            </a>
-                            <a href="{{ url_for('admin_export_users_by_camp', camp='all') }}" class="btn btn-sm btn-light mb-2 d-block">
-                                <i class="fas fa-globe mr-1"></i> All Users CSV
-                            </a>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">AI System</span>
+                        <span class="badge" style="background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 20px;" id="aiStatus">
+                            <i class="fas fa-sync fa-spin mr-1"></i>Checking...
+                        </span>
                     </div>
-                    <div class="col-md-4">
-                        <div class="border-left border-info pl-3">
-                            <h6 class="text-info"><i class="fas fa-chart-line mr-1"></i> Progress Data</h6>
-                            <a href="{{ url_for('admin_export_progress_by_camp', camp='Middle East') }}" class="btn btn-sm btn-success mb-2 d-block">
-                                <i class="fas fa-flag mr-1"></i> ME Progress CSV
-                            </a>
-                            <a href="{{ url_for('admin_export_progress_by_camp', camp='Chinese') }}" class="btn btn-sm btn-info mb-2 d-block">
-                                <i class="fas fa-flag mr-1"></i> Chinese Progress CSV
-                            </a>
-                            <a href="{{ url_for('admin_export_progress_by_camp', camp='all') }}" class="btn btn-sm btn-light mb-2 d-block">
-                                <i class="fas fa-globe mr-1"></i> All Progress CSV
-                            </a>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted">Database</span>
+                        <span class="badge" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.5rem 1rem; border-radius: 20px;">
+                            <i class="fas fa-database mr-1"></i>Connected
+                        </span>
                     </div>
-                    <div class="col-md-4">
-                        <div class="border-left border-warning pl-3">
-                            <h6 class="text-warning"><i class="fas fa-comments mr-1"></i> Feedback Data</h6>
-                            <a href="{{ url_for('admin_export_feedback_by_camp', camp='Middle East') }}" class="btn btn-sm btn-success mb-2 d-block">
-                                <i class="fas fa-flag mr-1"></i> ME Feedback CSV
-                            </a>
-                            <a href="{{ url_for('admin_export_feedback_by_camp', camp='Chinese') }}" class="btn btn-sm btn-info mb-2 d-block">
-                                <i class="fas fa-flag mr-1"></i> Chinese Feedback CSV
-                            </a>
-                            <a href="{{ url_for('admin_export_feedback_by_camp', camp='all') }}" class="btn btn-sm btn-light mb-2 d-block">
-                                <i class="fas fa-globe mr-1"></i> All Feedback CSV
-                            </a>
-                        </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted">Last Updated</span>
+                        <span class="text-muted small" id="lastUpdate">Just now</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Quick Actions -->
+    <!-- Loading Animation for Demo -->
     <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="bg-primary text-white p-4 rounded">
-                <h5>
-                    <i class="fas fa-cogs mr-2"></i>Content Management
-                </h5>
-                <p class="mb-3">Manage quizzes, materials, videos, and projects across all camps.</p>
-                <a href="{{ url_for('admin_manage_content') }}" class="btn btn-light">
-                    <i class="fas fa-edit mr-1"></i> Manage All Content
-                </a>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="bg-danger text-white p-4 rounded">
-                <h5>
-                    <i class="fas fa-database mr-2"></i>Database Management
-                </h5>
-                <p class="mb-3">Reset the entire database. <strong>This action cannot be undone!</strong></p>
-                <a href="{{ url_for('admin_reset_db') }}" class="btn btn-light" onclick="return confirm('Are you sure you want to reset the database? This will delete ALL data!')">
-                    <i class="fas fa-exclamation-triangle mr-1"></i> Reset Database
-                </a>
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-brain mr-2" style="color: #8b5cf6;"></i>AI Processing Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <span class="mr-3">Current Operations:</span>
+                        <div class="creative-loading">
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                            <div class="dot"></div>
+                        </div>
+                        <span class="ml-3 text-muted">Processing learning data...</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* Additional hover effects for buttons */
+.btn-outline-primary:hover,
+.btn-outline-info:hover,
+.btn-outline-success:hover,
+.btn-outline-warning:hover,
+.btn-outline-secondary:hover,
+.btn-outline-dark:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Quick action button animations */
+.btn[href]:hover {
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: translateY(-2px) scale(1); }
+    50% { transform: translateY(-2px) scale(1.02); }
+    100% { transform: translateY(-2px) scale(1); }
+}
+
+/* Status badge animations */
+#aiStatus {
+    transition: all 0.3s ease;
+}
+
+/* Better spacing for responsive design */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .btn-lg {
+        padding: 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .fa-2x {
+        font-size: 1.5em !important;
+    }
+}
+
+/* Card entrance animations */
+.card {
+    animation: cardSlideIn 0.6s ease-out;
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Stagger the card animations */
+.row .col-xl-3:nth-child(1) .card { animation-delay: 0.1s; }
+.row .col-xl-3:nth-child(2) .card { animation-delay: 0.2s; }
+.row .col-xl-3:nth-child(3) .card { animation-delay: 0.3s; }
+.row .col-xl-3:nth-child(4) .card { animation-delay: 0.4s; }
+.row .col-xl-3:nth-child(5) .card { animation-delay: 0.5s; }
+.row .col-xl-3:nth-child(6) .card { animation-delay: 0.6s; }
+.row .col-xl-3:nth-child(7) .card { animation-delay: 0.7s; }
+.row .col-xl-3:nth-child(8) .card { animation-delay: 0.8s; }
+
+/* Page title gradient animation */
+.page-title {
+    background: linear-gradient(45deg, #8b5cf6, #a78bfa, #3b82f6, #14b8a6);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradientShift 4s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-$(document).ready(function() {
-    // Ensure Bootstrap dropdowns work properly
-    $('.dropdown-toggle').dropdown();
-    
-    // Add confirmation for download actions
-    $('[href*="download_submissions"]').click(function(e) {
-        const text = $(this).text().trim();
-        if (!confirm(`Download submissions for ${text}?`)) {
-            e.preventDefault();
+document.addEventListener('DOMContentLoaded', function() {
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleString();
+        const timeElement = document.getElementById('currentTime');
+        if (timeElement) {
+            timeElement.textContent = timeString;
         }
-    });
+    }
     
-    // Add confirmation for export actions
-    $('[href*="export_"]').click(function(e) {
-        const text = $(this).text().trim();
-        if (!confirm(`Export ${text}?`)) {
-            e.preventDefault();
-        }
-    });
+    // Update time every minute
+    updateTime();
+    setInterval(updateTime, 60000);
     
-    // Auto-dismiss alerts after 5 seconds
-    setTimeout(function() {
-        $('.alert').alert('close');
-    }, 5000);
+    // Check AI system status
+    function checkAIStatus() {
+        fetch('{{ url_for("ai_status") }}')
+            .then(response => response.json())
+            .then(data => {
+                const statusElement = document.getElementById('aiStatus');
+                const updateElement = document.getElementById('lastUpdate');
+                
+                if (statusElement) {
+                    if (data.status === 'ready') {
+                        statusElement.innerHTML = '<i class="fas fa-check-circle mr-1"></i>Ready';
+                        statusElement.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                        statusElement.style.color = 'white';
+                    } else if (data.status === 'initializing') {
+                        statusElement.innerHTML = '<i class="fas fa-sync fa-spin mr-1"></i>Loading';
+                        statusElement.style.background = '#f59e0b';
+                        statusElement.style.color = 'white';
+                    } else {
+                        statusElement.innerHTML = '<i class="fas fa-exclamation-circle mr-1"></i>Error';
+                        statusElement.style.background = '#ef4444';
+                        statusElement.style.color = 'white';
+                    }
+                }
+                
+                if (updateElement) {
+                    updateElement.textContent = new Date().toLocaleTimeString();
+                }
+            })
+            .catch(error => {
+                console.error('Status check failed:', error);
+                const statusElement = document.getElementById('aiStatus');
+                if (statusElement) {
+                    statusElement.innerHTML = '<i class="fas fa-question-circle mr-1"></i>Unknown';
+                    statusElement.style.background = '#6b7280';
+                    statusElement.style.color = 'white';
+                }
+            });
+    }
     
-    // Fix dropdown positioning
-    $('.dropdown').on('show.bs.dropdown', function() {
-        $(this).find('.dropdown-menu').css({
-            'position': 'absolute',
-            'z-index': '1050'
+    // Check AI status on load and every 30 seconds
+    checkAIStatus();
+    setInterval(checkAIStatus, 30000);
+    
+    // Add loading states to action buttons
+    document.querySelectorAll('.btn[href]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (!this.href.includes('#')) {
+                const icon = this.querySelector('i');
+                if (icon && !icon.classList.contains('fa-spin')) {
+                    const originalClass = icon.className;
+                    icon.className = 'fas fa-spinner fa-spin fa-2x mb-3';
+                    
+                    // Restore after 2 seconds if still on page
+                    setTimeout(() => {
+                        if (icon) {
+                            icon.className = originalClass;
+                        }
+                    }, 2000);
+                }
+            }
         });
+    });
+    
+    // Add counter animation for stats
+    function animateCounter(element, target) {
+        let current = 0;
+        const increment = target / 20;
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            element.textContent = Math.floor(current);
+        }, 50);
+    }
+    
+    // Animate counters when they come into view
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const h3 = entry.target.querySelector('h3');
+                if (h3 && !h3.classList.contains('animated')) {
+                    const target = parseInt(h3.textContent);
+                    if (!isNaN(target)) {
+                        h3.classList.add('animated');
+                        animateCounter(h3, target);
+                    }
+                }
+            }
+        });
+    });
+    
+    document.querySelectorAll('.card-body').forEach(card => {
+        observer.observe(card);
+    });
+    
+    // Add interactive effects to progress bars
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        
+        setTimeout(() => {
+            bar.style.transition = 'width 2s ease-out';
+            bar.style.width = width;
+        }, 500);
     });
 });
 </script>

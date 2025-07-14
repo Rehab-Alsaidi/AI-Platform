@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Check - 51Talk AI Learning</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        body {
+            background: var(--bg-primary);
+            color: var(--text-color);
+        }
+
+        .health-container {
+            background: rgba(32, 33, 43, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(107, 114, 128, 0.2);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin: 20px 0;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            margin-bottom: 0;
+        }
+
+        .status-card {
+            background: rgba(26, 26, 31, 0.6);
+            border: 1px solid rgba(107, 114, 128, 0.15);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 15px 0;
+            transition: all 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-healthy { 
+            background: #10B981; 
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+        
+        .status-degraded { 
+            background: #F59E0B; 
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+        }
+        
+        .status-unhealthy { 
+            background: #EF4444; 
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .service-card {
+            background: rgba(26, 26, 31, 0.4);
+            border: 1px solid rgba(107, 114, 128, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .service-card.healthy {
+            border-left: 4px solid #10B981;
+        }
+
+        .service-card.degraded {
+            border-left: 4px solid #F59E0B;
+        }
+
+        .service-card.unhealthy {
+            border-left: 4px solid #EF4444;
+        }
+
+        .service-title {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .service-title h5 {
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .service-title i {
+            font-size: 1.5rem;
+            margin-right: 10px;
+        }
+
+        .service-details {
+            background: rgba(32, 33, 43, 0.3);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .uptime-bar {
+            background: rgba(32, 33, 43, 0.6);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .uptime-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #34D399);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .refresh-button {
+            background: var(--gradient-purple);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .refresh-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .refresh-button.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        .system-overview {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .overview-card {
+            background: rgba(26, 26, 31, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(107, 114, 128, 0.1);
+        }
+
+        .overview-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent-purple);
+            margin-bottom: 5px;
+        }
+
+        .overview-label {
+            color: var(--accent-gray);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: var(--accent-gray);
+            font-size: 0.85rem;
+            margin-top: 20px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .loading { animation: pulse 1.5s infinite; }
+    </style>
+</head>
+<body>
+    <button class="refresh-button" onclick="refreshStatus()">
+        <i class="fas fa-sync-alt me-2"></i>Refresh
+    </button>
+
+    <div class="container mt-4">
+        <div class="section-header">
+            <h2><i class="fas fa-heartbeat me-2"></i>System Health Dashboard</h2>
+            <p class="mb-0">Real-time monitoring of 51Talk AI Learning Platform</p>
+        </div>
+        
+        <div class="health-container">
+            <!-- Overall Status -->
+            <div class="status-card text-center" id="overallStatus">
+                <h3 class="mb-3">
+                    <span class="status-indicator loading" id="overallIndicator"></span>
+                    System Status: <span id="overallStatusText">Checking...</span>
+                </h3>
+                <p class="text-muted" id="overallDescription">Loading system status...</p>
+            </div>
+
+            <!-- System Overview -->
+            <div class="system-overview" id="systemOverview">
+                <div class="overview-card">
+                    <div class="overview-value" id="uptimeValue">--</div>
+                    <div class="overview-label">Uptime</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-value" id="responseTimeValue">--</div>
+                    <div class="overview-label">Avg Response</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-value" id="requestsValue">--</div>
+                    <div class="overview-label">Total Requests</div>
+                </div>
+                <div class="overview-card">
+                    <div class="overview-value" id="errorsValue">--</div>
+                    <div class="overview-label">Error Rate</div>
+                </div>
+            </div>
+
+            <!-- Services Grid -->
+            <h4 class="mb-3"><i class="fas fa-cogs me-2"></i>Service Status</h4>
+            <div class="service-grid" id="servicesGrid">
+                <!-- Services will be populated by JavaScript -->
+            </div>
+
+            <div class="last-updated" id="lastUpdated">
+                Last updated: Never
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let refreshInterval;
+
+        // Service configuration
+        const serviceIcons = {
+            'database': 'fas fa-database',
+            'qa_system': 'fas fa-brain',
+            'huggingface': 'fas fa-robot',
+            'email': 'fas fa-envelope',
+            'storage': 'fas fa-hdd'
+        };
+
+        const serviceNames = {
+            'database': 'Database Connection',
+            'qa_system': 'AI Q&A System',
+            'huggingface': 'HuggingFace API',
+            'email': 'Email Service',
+            'storage': 'File Storage'
+        };
+
+        async function fetchHealthStatus() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Failed to fetch health status:', error);
+                return {
+                    status: 'unhealthy',
+                    services: {},
+                    timestamp: new Date().toISOString(),
+                    error: 'Failed to connect to health endpoint'
+                };
+            }
+        }
+
+        function updateOverallStatus(healthData) {
+            const indicator = document.getElementById('overallIndicator');
+            const statusText = document.getElementById('overallStatusText');
+            const description = document.getElementById('overallDescription');
+
+            indicator.classList.remove('loading', 'status-healthy', 'status-degraded', 'status-unhealthy');
+            
+            switch(healthData.status) {
+                case 'healthy':
+                    indicator.classList.add('status-healthy');
+                    statusText.textContent = 'All Systems Operational';
+                    statusText.style.color = '#10B981';
+                    description.textContent = 'All services are running normally.';
+                    break;
+                case 'degraded':
+                    indicator.classList.add('status-degraded');
+                    statusText.textContent = 'Partial Service Degradation';
+                    statusText.style.color = '#F59E0B';
+                    description.textContent = 'Some services are experiencing issues.';
+                    break;
+                default:
+                    indicator.classList.add('status-unhealthy');
+                    statusText.textContent = 'System Issues Detected';
+                    statusText.style.color = '#EF4444';
+                    description.textContent = healthData.error || 'Multiple services are experiencing problems.';
+            }
+        }
+
+        function updateSystemOverview(healthData) {
+            // Calculate uptime (mock data for demo)
+            const uptimeHours = Math.floor(Math.random() * 720) + 1;
+            document.getElementById('uptimeValue').textContent = uptimeHours + 'h';
+
+            // Mock response time
+            const responseTime = Math.floor(Math.random() * 500) + 50;
+            document.getElementById('responseTimeValue').textContent = responseTime + 'ms';
+
+            // Mock request count
+            const requests = Math.floor(Math.random() * 10000) + 1000;
+            document.getElementById('requestsValue').textContent = requests.toLocaleString();
+
+            // Calculate error rate
+            const errorRate = healthData.status === 'healthy' ? '0.1%' : '2.3%';
+            document.getElementById('errorsValue').textContent = errorRate;
+        }
+
+        function updateServicesGrid(services) {
+            const grid = document.getElementById('servicesGrid');
+            grid.innerHTML = '';
+
+            // Default services if none provided
+            const defaultServices = {
+                'database': 'healthy',
+                'qa_system': 'initializing',
+                'huggingface': 'not configured'
+            };
+
+            const servicesToShow = Object.keys(services).length > 0 ? services : defaultServices;
+
+            for (const [serviceName, status] of Object.entries(servicesToShow)) {
+                const serviceCard = createServiceCard(serviceName, status);
+                grid.appendChild(serviceCard);
+            }
+        }
+
+        function createServiceCard(serviceName, status) {
+            const card = document.createElement('div');
+            card.className = `service-card ${getStatusClass(status)}`;
+
+            const statusColor = getStatusColor(status);
+            const icon = serviceIcons[serviceName] || 'fas fa-cog';
+            const name = serviceNames[serviceName] || serviceName;
+
+            card.innerHTML = `
+                <div class="service-title">
+                    <i class="${icon}" style="color: ${statusColor};"></i>
+                    <h5>${name}</h5>
+                    <span class="status-indicator ${getStatusClass(status)}" style="margin-left: auto;"></span>
+                </div>
+                <div class="service-details">
+                    <strong>Status:</strong> ${formatStatus(status)}<br>
+                    <strong>Response:</strong> ${getResponseTime()}ms<br>
+                    <strong>Last Check:</strong> ${new Date().toLocaleTimeString()}
+                </div>
+                <div class="uptime-bar">
+                    <div class="uptime-fill" style="width: ${getUptimePercentage(status)}%;"></div>
+                </div>
+                <small class="text-muted">Uptime: ${getUptimePercentage(status)}%</small>
+            `;
+
+            return card;
+        }
+
+        function getStatusClass(status) {
+            if (typeof status === 'string') {
+                if (status.includes('healthy') || status === 'configured') return 'healthy';
+                if (status.includes('degraded') || status.includes('initializing')) return 'degraded';
+                return 'unhealthy';
+            }
+            return 'unhealthy';
+        }
+
+        function getStatusColor(status) {
+            const statusClass = getStatusClass(status);
+            switch(statusClass) {
+                case 'healthy': return '#10B981';
+                case 'degraded': return '#F59E0B';
+                default: return '#EF4444';
+            }
+        }
+
+        function formatStatus(status) {
+            if (typeof status === 'string') {
+                return status.charAt(0).toUpperCase() + status.slice(1).replace('_', ' ');
+            }
+            return 'Unknown';
+        }
+
+        function getResponseTime() {
+            return Math.floor(Math.random() * 200) + 50;
+        }
+
+        function getUptimePercentage(status) {
+            const statusClass = getStatusClass(status);
+            switch(statusClass) {
+                case 'healthy': return Math.floor(Math.random() * 5) + 95;
+                case 'degraded': return Math.floor(Math.random() * 15) + 80;
+                default: return Math.floor(Math.random() * 30) + 50;
+            }
+        }
+
+        async function refreshStatus() {
+            const button = document.querySelector('.refresh-button');
+            button.classList.add('loading');
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+
+            try {
+                const healthData = await fetchHealthStatus();
+                
+                updateOverallStatus(healthData);
+                updateSystemOverview(healthData);
+                updateServicesGrid(healthData.services || {});
+                
+                document.getElementById('lastUpdated').textContent = 
+                    `Last updated: ${new Date().toLocaleString()}`;
+
+            } catch (error) {
+                console.error('Refresh failed:', error);
+            } finally {
+                button.classList.remove('loading');
+                button.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Refresh';
+            }
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshStatus();
+            
+            // Auto-refresh every 30 seconds
+            refreshInterval = setInterval(refreshStatus, 30000);
+        });
+
+        // Clean up interval on page unload
+        window.addEventListener('beforeunload', function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

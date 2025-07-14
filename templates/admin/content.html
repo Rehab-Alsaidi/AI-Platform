@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Management | Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #8B5CF6;
+            --secondary-color: #14B8A6;
+            --dark-bg: #1a1a1f;
+            --card-bg: #2a2d3a;
+            --text-light: #e5e7eb;
+            --text-muted: #9ca3af;
+            --border-color: #374151;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-light);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+        }
+
+        .admin-header {
+            background: rgba(26, 26, 31, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.5rem 0;
+        }
+
+        .admin-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
+        }
+
+        .card-header-custom {
+            background: linear-gradient(135deg, var(--primary-color), #a855f7);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0;
+            border: none;
+        }
+
+        .content-type-tabs {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-pills .nav-link {
+            color: var(--text-muted);
+            border-radius: 8px;
+            margin: 0 0.25rem;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .nav-pills .nav-link.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .nav-pills .nav-link:hover {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--primary-color);
+        }
+
+        .content-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .content-item:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .content-type-badge {
+            background: linear-gradient(135deg, var(--primary-color), #a855f7);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .content-type-badge.quiz { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+        .content-type-badge.video { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        .content-type-badge.material { background: linear-gradient(135deg, #10B981, #059669); }
+        .content-type-badge.project { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .content-type-badge.word { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+
+        .status-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-published {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-draft {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning-color);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .tag-chip {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--primary-color);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 0.1rem;
+            display: inline-block;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--primary-color), #a855f7);
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
+            color: white;
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            background: transparent;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), #a855f7);
+            color: white;
+            border-radius: 16px 16px 0 0;
+            border-bottom: none;
+        }
+
+        .modal-body {
+            padding: 2rem;
+        }
+
+        .form-control, .form-select, .form-check-input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-light);
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
+            color: var(--text-light);
+        }
+
+        .form-label {
+            color: var(--text-light);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .search-filter-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .table-dark {
+            background: var(--card-bg);
+        }
+
+        .table-dark th {
+            border-color: var(--border-color);
+            color: var(--text-light);
+            font-weight: 600;
+        }
+
+        .table-dark td {
+            border-color: var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .content-preview {
+            max-height: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .content-preview::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(transparent, var(--card-bg));
+        }
+
+        .pagination .page-link {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+            color: var(--text-light);
+        }
+
+        .pagination .page-link:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            color: white;
+        }
+
+        .pagination .page-item.active .page-link {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .file-upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .file-upload-area.drag-over {
+            border-color: var(--primary-color);
+            background: rgba(139, 92, 246, 0.15);
+        }
+
+        /* Content type specific styles */
+        .quiz-options {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .video-preview {
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .word-elements {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        @media (max-width: 768px) {
+            .content-item {
+                padding: 1rem;
+            }
+            
+            .modal-body {
+                padding: 1rem;
+            }
+            
+            .search-filter-bar {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Content Management
+                    </h2>
+                    <p class="mb-0 text-muted">Create, edit, and manage all learning content</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary-custom" onclick="showCreateContentModal()">
+                        <i class="fas fa-plus me-2"></i>
+                        Add Content
+                    </button>
+                    <button class="btn btn-outline-custom" onclick="bulkImport()">
+                        <i class="fas fa-upload me-2"></i>
+                        Bulk Import
+                    </button>
+                    <a href="/admin/dashboard" class="btn btn-outline-custom">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid py-4">
+        <!-- Content Type Navigation -->
+        <nav class="content-type-tabs">
+            <ul class="nav nav-pills nav-fill">
+                <li class="nav-item">
+                    <a class="nav-link active" data-content-type="all" onclick="switchContentType('all')">
+                        <i class="fas fa-list me-2"></i>All Content
+                        <span class="badge bg-light text-dark ms-2" id="count-all">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-content-type="quiz" onclick="switchContentType('quiz')">
+                        <i class="fas fa-question-circle me-2"></i>Quizzes
+                        <span class="badge bg-light text-dark ms-2" id="count-quiz">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-content-type="video" onclick="switchContentType('video')">
+                        <i class="fas fa-video me-2"></i>Videos
+                        <span class="badge bg-light text-dark ms-2" id="count-video">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-content-type="material" onclick="switchContentType('material')">
+                        <i class="fas fa-file-pdf me-2"></i>Materials
+                        <span class="badge bg-light text-dark ms-2" id="count-material">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-content-type="project" onclick="switchContentType('project')">
+                        <i class="fas fa-tasks me-2"></i>Projects
+                        <span class="badge bg-light text-dark ms-2" id="count-project">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-content-type="word" onclick="switchContentType('word')">
+                        <i class="fas fa-font me-2"></i>Vocabulary
+                        <span class="badge bg-light text-dark ms-2" id="count-word">0</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Search and Filter Bar -->
+        <div class="search-filter-bar">
+            <div class="row align-items-center">
+                <div class="col-lg-4 col-md-6 mb-3 mb-lg-0">
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0 text-muted">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" id="searchInput" class="form-control border-start-0 ps-0" 
+                               placeholder="Search content..." onkeyup="debounceSearch()">
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-3 mb-lg-0">
+                    <select class="form-select" id="unitFilter" onchange="filterContent()">
+                        <option value="">All Units</option>
+                        <!-- Options populated dynamically -->
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-3 mb-lg-0">
+                    <select class="form-select" id="tagFilter" onchange="filterContent()">
+                        <option value="">All Tags</option>
+                        <!-- Options populated dynamically -->
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-6 mb-3 mb-lg-0">
+                    <select class="form-select" id="statusFilter" onchange="filterContent()">
+                        <option value="">All Status</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+                <div class="col-lg-2 col-md-12">
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-custom btn-sm flex-fill" onclick="resetFilters()">
+                            <i class="fas fa-undo me-1"></i>Reset
+                        </button>
+                        <button class="btn btn-outline-custom btn-sm flex-fill" onclick="exportContent()">
+                            <i class="fas fa-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Display Area -->
+        <div id="contentContainer">
+            <!-- Content will be loaded here -->
+        </div>
+
+        <!-- Pagination -->
+        <nav id="paginationNav" style="display: none;">
+            <ul class="pagination justify-content-center">
+                <!-- Pagination will be generated dynamically -->
+            </ul>
+        </nav>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading content...</p>
+        </div>
+    </div>
+
+    <!-- Create/Edit Content Modal -->
+    <div class="modal fade" id="contentModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="contentModalTitle">
+                        <i class="fas fa-plus me-2"></i>
+                        Create Content
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="contentForm" enctype="multipart/form-data">
+                        <input type="hidden" id="contentId">
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="contentType" class="form-label">Content Type *</label>
+                                <select class="form-select" id="contentType" required onchange="toggleContentFields()">
+                                    <option value="">Select content type</option>
+                                    <option value="quiz">Quiz</option>
+                                    <option value="video">Video</option>
+                                    <option value="material">Learning Material</option>
+                                    <option value="project">Project</option>
+                                    <option value="word">Vocabulary Word</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="unitId" class="form-label">Unit *</label>
+                                <select class="form-select" id="unitId" required>
+                                    <option value="">Select unit</option>
+                                    <!-- Options populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-8">
+                                <label for="contentTitle" class="form-label">Title *</label>
+                                <input type="text" class="form-control" id="contentTitle" required 
+                                       placeholder="Enter content title">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="contentStatus" class="form-label">Status</label>
+                                <select class="form-select" id="contentStatus">
+                                    <option value="published">Published</option>
+                                    <option value="draft">Draft</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="contentDescription" class="form-label">Description</label>
+                            <textarea class="form-control" id="contentDescription" rows="3" 
+                                    placeholder="Enter content description"></textarea>
+                        </div>
+
+                        <!-- Tags -->
+                        <div class="mb-4">
+                            <label class="form-label">Visibility Tags</label>
+                            <div id="tagCheckboxes" class="border rounded p-3">
+                                <!-- Tag checkboxes will be populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Content Type Specific Fields -->
+                        
+                        <!-- Quiz Fields -->
+                        <div id="quizFields" class="content-type-fields" style="display: none;">
+                            <h6 class="mb-3">Quiz Configuration</h6>
+                            <div class="quiz-options">
+                                <div class="mb-3">
+                                    <label class="form-label">Quiz Options</label>
+                                    <div id="quizOptionsContainer">
+                                        <div class="quiz-option mb-2">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control quiz-option-input" 
+                                                       placeholder="Option 1" data-option="0">
+                                                <span class="input-group-text">
+                                                    <input type="radio" name="correctAnswer" value="0">
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="quiz-option mb-2">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control quiz-option-input" 
+                                                       placeholder="Option 2" data-option="1">
+                                                <span class="input-group-text">
+                                                    <input type="radio" name="correctAnswer" value="1">
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="quiz-option mb-2">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control quiz-option-input" 
+                                                       placeholder="Option 3" data-option="2">
+                                                <span class="input-group-text">
+                                                    <input type="radio" name="correctAnswer" value="2">
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="quiz-option mb-2">
+                                            <div class="input-group">
+                                                <input type="text" class="form-control quiz-option-input" 
+                                                       placeholder="Option 4" data-option="3">
+                                                <span class="input-group-text">
+                                                    <input type="radio" name="correctAnswer" value="3">
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="quizExplanation" class="form-label">Explanation</label>
+                                    <textarea class="form-control" id="quizExplanation" rows="3" 
+                                            placeholder="Explain the correct answer"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video Fields -->
+                        <div id="videoFields" class="content-type-fields" style="display: none;">
+                            <h6 class="mb-3">Video Configuration</h6>
+                            <div class="mb-3">
+                                <label for="youtubeUrl" class="form-label">YouTube URL</label>
+                                <input type="url" class="form-control" id="youtubeUrl" 
+                                       placeholder="https://www.youtube.com/watch?v=..."
+                                       onchange="updateVideoPreview()">
+                            </div>
+                            <div id="videoPreview" class="video-preview mb-3" style="display: none;">
+                                <iframe width="100%" height="100%" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                        </div>
+
+                        <!-- Material Fields -->
+                        <div id="materialFields" class="content-type-fields" style="display: none;">
+                            <h6 class="mb-3">Material Configuration</h6>
+                            <div class="mb-3">
+                                <label for="materialContent" class="form-label">Content Text</label>
+                                <textarea class="form-control" id="materialContent" rows="5" 
+                                        placeholder="Enter the learning material content"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="materialFile" class="form-label">Upload File (Optional)</label>
+                                <div class="file-upload-area" onclick="document.getElementById('materialFile').click()">
+                                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">Click to upload or drag and drop files here</p>
+                                    <small class="text-muted">Supported: PDF, DOC, DOCX, PPT, PPTX</small>
+                                </div>
+                                <input type="file" class="form-control d-none" id="materialFile" 
+                                       accept=".pdf,.doc,.docx,.ppt,.pptx" onchange="handleFileUpload(this)">
+                                <div id="uploadedFileName" class="mt-2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Project Fields -->
+                        <div id="projectFields" class="content-type-fields" style="display: none;">
+                            <h6 class="mb-3">Project Configuration</h6>
+                            <div class="mb-3">
+                                <label for="projectResources" class="form-label">Resources</label>
+                                <textarea class="form-control" id="projectResources" rows="4" 
+                                        placeholder="List required resources, tools, or materials"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="projectInstructions" class="form-label">Instructions</label>
+                                <textarea class="form-control" id="projectInstructions" rows="6" 
+                                        placeholder="Detailed project instructions"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Word Fields -->
+                        <div id="wordFields" class="content-type-fields" style="display: none;">
+                            <h6 class="mb-3">Vocabulary Word Configuration</h6>
+                            <div class="word-elements">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="wordOneSentence" class="form-label">One Sentence Version</label>
+                                        <input type="text" class="form-control" id="wordOneSentence" 
+                                               placeholder="Brief definition">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="wordSection" class="form-label">Section</label>
+                                        <input type="number" class="form-control" id="wordSection" 
+                                               value="1" min="1">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="wordDailyDefinition" class="form-label">Daily Definition</label>
+                                    <textarea class="form-control" id="wordDailyDefinition" rows="2" 
+                                            placeholder="Everyday explanation"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="wordLifeMetaphor" class="form-label">Life Metaphor</label>
+                                    <textarea class="form-control" id="wordLifeMetaphor" rows="2" 
+                                            placeholder="Real-life comparison"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="wordVisualExplanation" class="form-label">Visual Explanation</label>
+                                    <textarea class="form-control" id="wordVisualExplanation" rows="2" 
+                                            placeholder="Visual description"></textarea>
+                                </div>
+                                
+                                <!-- Core Elements -->
+                                <div class="mb-3">
+                                    <label class="form-label">Core Elements</label>
+                                    <div id="coreElementsContainer">
+                                        <div class="core-element-pair mb-2">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control core-element" 
+                                                           placeholder="Core element">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="input-group">
+                                                        <input type="text" class="form-control everyday-object" 
+                                                               placeholder="Everyday object">
+                                                        <button type="button" class="btn btn-outline-danger" 
+                                                                onclick="removeCoreElement(this)">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                                            onclick="addCoreElement()">
+                                        <i class="fas fa-plus me-1"></i>Add Core Element
+                                    </button>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="wordScenarioTheater" class="form-label">Scenario Theater</label>
+                                        <textarea class="form-control" id="wordScenarioTheater" rows="3" 
+                                                placeholder="Scenario description"></textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="wordMisunderstandings" class="form-label">Misunderstandings</label>
+                                        <textarea class="form-control" id="wordMisunderstandings" rows="3" 
+                                                placeholder="Common misunderstandings"></textarea>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="wordRealityConnection" class="form-label">Reality Connection</label>
+                                        <textarea class="form-control" id="wordRealityConnection" rows="3" 
+                                                placeholder="Real-world connection"></textarea>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="wordThinkingBubble" class="form-label">Thinking Bubble</label>
+                                        <textarea class="form-control" id="wordThinkingBubble" rows="3" 
+                                                placeholder="Thought process"></textarea>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="wordSmilingConclusion" class="form-label">Smiling Conclusion</label>
+                                    <textarea class="form-control" id="wordSmilingConclusion" rows="2" 
+                                            placeholder="Positive conclusion"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-primary-custom" onclick="saveContent()">
+                        <i class="fas fa-save me-2"></i>
+                        <span id="saveButtonText">Create Content</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Content Modal -->
+    <div class="modal fade" id="viewContentModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewContentTitle">
+                        <i class="fas fa-eye me-2"></i>
+                        View Content
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="viewContentBody">
+                    <!-- Content details will be populated here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">
+                        Close
+                    </button>
+                    <button type="button" class="btn btn-primary-custom" id="editFromViewBtn">
+                        <i class="fas fa-edit me-2"></i>
+                        Edit Content
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger">
+                    <h5 class="modal-title text-white">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Confirm Delete
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="deleteMessage">Are you sure you want to delete this content?</p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-warning me-2"></i>
+                        This action cannot be undone. All associated data will be permanently removed.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-custom" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">
+                        <i class="fas fa-trash me-2"></i>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentContentType = 'all';
+        let currentPage = 1;
+        let contentData = [];
+        let tagsData = [];
+        let searchTimeout;
+        let currentContentId = null;
+        let totalPages = 1;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadContent();
+            loadTags();
+            loadUnits();
+            setupFileUpload();
+        });
+
+        // Load content with filtering and pagination
+        async function loadContent(page = 1) {
+            try {
+                showLoading(true);
+                
+                const params = new URLSearchParams({
+                    page: page,
+                    per_page: 12,
+                    type: currentContentType,
+                    search: document.getElementById('searchInput')?.value || '',
+                    unit: document.getElementById('unitFilter')?.value || '',
+                    tag: document.getElementById('tagFilter')?.value || '',
+                    status: document.getElementById('statusFilter')?.value || ''
+                });
+
+                const response = await fetch(`/admin/api/content?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    contentData = data.content;
+                    currentPage = data.pagination.page;
+                    totalPages = data.pagination.pages;
+                    
+                    renderContent();
+                    renderPagination();
+                    updateContentCounts();
+                } else {
+                    showAlert('Error loading content: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error loading content: ' + error.message, 'danger');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Render content items
+        function renderContent() {
+            const container = document.getElementById('contentContainer');
+            container.innerHTML = '';
+
+            if (contentData.length === 0) {
+                container.innerHTML = `
+                    <div class="admin-card">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-file-alt text-muted mb-3" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted">No content found</h5>
+                            <p class="text-muted">Start by creating your first content item.</p>
+                            <button class="btn btn-primary-custom" onclick="showCreateContentModal()">
+                                <i class="fas fa-plus me-2"></i>
+                                Create Content
+                            </button>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'row';
+
+            contentData.forEach(item => {
+                const col = document.createElement('div');
+                col.className = 'col-xl-4 col-lg-6 mb-4';
+                
+                const tags = item.tags ? item.tags.split(', ').map(tag => 
+                    `<span class="tag-chip">${tag}</span>`
+                ).join('') : '';
+
+                col.innerHTML = `
+                    <div class="content-item fade-in">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <span class="content-type-badge ${item.content_type}">${item.content_type}</span>
+                                <span class="status-badge status-${item.status} ms-2">${item.status}</span>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li><a class="dropdown-item" href="#" onclick="viewContent(${item.id}, '${item.content_type}')">
+                                        <i class="fas fa-eye me-2"></i>View Details
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="editContent(${item.id}, '${item.content_type}')">
+                                        <i class="fas fa-edit me-2"></i>Edit
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="duplicateContent(${item.id}, '${item.content_type}')">
+                                        <i class="fas fa-copy me-2"></i>Duplicate
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#" onclick="deleteContent(${item.id}, '${item.content_type}', '${item.title}')">
+                                        <i class="fas fa-trash me-2"></i>Delete
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <h6 class="mb-2">${item.title}</h6>
+                        <div class="content-preview mb-3">
+                            <p class="text-muted small">${item.description || 'No description available'}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            ${tags}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center text-muted small">
+                            <span><i class="fas fa-layer-group me-1"></i>Unit ${item.unit_id}</span>
+                            <span><i class="fas fa-calendar me-1"></i>${formatDate(item.created_at)}</span>
+                        </div>
+                    </div>
+                `;
+                
+                grid.appendChild(col);
+            });
+
+            container.appendChild(grid);
+        }
+
+        // Continue with more functions...
+        
+        // Switch content type
+        function switchContentType(type) {
+            currentContentType = type;
+            currentPage = 1;
+            
+            // Update active tab
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`[data-content-type="${type}"]`).classList.add('active');
+            
+            loadContent();
+        }
+
+        // Show create content modal
+        function showCreateContentModal() {
+            document.getElementById('contentModalTitle').innerHTML = '<i class="fas fa-plus me-2"></i>Create Content';
+            document.getElementById('saveButtonText').textContent = 'Create Content';
+            document.getElementById('contentForm').reset();
+            document.getElementById('contentId').value = '';
+            
+            // Hide all content type fields
+            document.querySelectorAll('.content-type-fields').forEach(field => {
+                field.style.display = 'none';
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('contentModal'));
+            modal.show();
+        }
+
+        // Toggle content type specific fields
+        function toggleContentFields() {
+            const contentType = document.getElementById('contentType').value;
+            
+            // Hide all fields first
+            document.querySelectorAll('.content-type-fields').forEach(field => {
+                field.style.display = 'none';
+            });
+            
+            // Show relevant fields
+            if (contentType) {
+                const fieldsId = contentType + 'Fields';
+                const fieldsElement = document.getElementById(fieldsId);
+                if (fieldsElement) {
+                    fieldsElement.style.display = 'block';
+                }
+            }
+        }
+
+        // Save content (create or update)
+        async function saveContent() {
+            try {
+                const form = document.getElementById('contentForm');
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const contentId = document.getElementById('contentId').value;
+                const isEdit = !!contentId;
+                
+                const formData = new FormData();
+                
+                // Basic fields
+                formData.append('content_type', document.getElementById('contentType').value);
+                formData.append('title', document.getElementById('contentTitle').value);
+                formData.append('description', document.getElementById('contentDescription').value);
+                formData.append('unit_id', document.getElementById('unitId').value);
+                formData.append('status', document.getElementById('contentStatus').value);
+                
+                // Tags
+                const selectedTags = Array.from(document.querySelectorAll('input[name="tags"]:checked'))
+                    .map(cb => cb.value);
+                formData.append('tag_ids', JSON.stringify(selectedTags));
+                
+                // Content type specific fields
+                const contentType = document.getElementById('contentType').value;
+                
+                switch (contentType) {
+                    case 'quiz':
+                        const options = Array.from(document.querySelectorAll('.quiz-option-input'))
+                            .map(input => input.value).filter(val => val.trim());
+                        const correctAnswer = document.querySelector('input[name="correctAnswer"]:checked')?.value;
+                        
+                        formData.append('options', JSON.stringify(options));
+                        formData.append('correct_answer', correctAnswer || 0);
+                        formData.append('explanation', document.getElementById('quizExplanation').value);
+                        break;
+                        
+                    case 'video':
+                        formData.append('youtube_url', document.getElementById('youtubeUrl').value);
+                        break;
+                        
+                    case 'material':
+                        formData.append('content', document.getElementById('materialContent').value);
+                        const fileInput = document.getElementById('materialFile');
+                        if (fileInput.files[0]) {
+                            formData.append('file', fileInput.files[0]);
+                        }
+                        break;
+                        
+                    case 'project':
+                        formData.append('resources', document.getElementById('projectResources').value);
+                        formData.append('instructions', document.getElementById('projectInstructions').value);
+                        break;
+                        
+                    case 'word':
+                        formData.append('one_sentence_version', document.getElementById('wordOneSentence').value);
+                        formData.append('section', document.getElementById('wordSection').value);
+                        formData.append('daily_definition', document.getElementById('wordDailyDefinition').value);
+                        formData.append('life_metaphor', document.getElementById('wordLifeMetaphor').value);
+                        formData.append('visual_explanation', document.getElementById('wordVisualExplanation').value);
+                        formData.append('scenario_theater', document.getElementById('wordScenarioTheater').value);
+                        formData.append('misunderstandings', document.getElementById('wordMisunderstandings').value);
+                        formData.append('reality_connection', document.getElementById('wordRealityConnection').value);
+                        formData.append('thinking_bubble', document.getElementById('wordThinkingBubble').value);
+                        formData.append('smiling_conclusion', document.getElementById('wordSmilingConclusion').value);
+                        
+                        // Core elements
+                        const coreElements = [];
+                        document.querySelectorAll('.core-element-pair').forEach(pair => {
+                            const element = pair.querySelector('.core-element').value;
+                            const object = pair.querySelector('.everyday-object').value;
+                            if (element && object) {
+                                coreElements.push({ core_element: element, everyday_object: object });
+                            }
+                        });
+                        formData.append('core_elements', JSON.stringify(coreElements));
+                        break;
+                }
+
+                const url = isEdit ? `/admin/api/content/${contentId}` : '/admin/api/content';
+                const method = isEdit ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('contentModal')).hide();
+                    loadContent(currentPage);
+                } else {
+                    showAlert('Error saving content: ' + result.error, 'danger');
+                }
+            } catch (error) {
+                showAlert('Error saving content: ' + error.message, 'danger');
+            }
+        }
+
+        // Additional helper functions
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                currentPage = 1;
+                loadContent();
+            }, 500);
+        }
+
+        function filterContent() {
+            currentPage = 1;
+            loadContent();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('unitFilter').value = '';
+            document.getElementById('tagFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            currentPage = 1;
+            loadContent();
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingState').style.display = show ? 'block' : 'none';
+            document.getElementById('contentContainer').style.display = show ? 'none' : 'block';
+        }
+
+        function showAlert(message, type = 'info') {
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alert.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        // Placeholder functions (to be implemented)
+        function loadTags() { /* Load available tags for filtering and assignment */ }
+        function loadUnits() { /* Load available units for filtering and assignment */ }
+        function setupFileUpload() { /* Setup drag and drop file upload */ }
+        function updateContentCounts() { /* Update content type counts in tabs */ }
+        function renderPagination() { /* Render pagination controls */ }
+        function viewContent(id, type) { /* View content details */ }
+        function editContent(id, type) { /* Edit existing content */ }
+        function duplicateContent(id, type) { /* Duplicate content */ }
+        function deleteContent(id, type, title) { /* Delete content */ }
+        function confirmDelete() { /* Confirm deletion */ }
+        function exportContent() { /* Export content data */ }
+        function bulkImport() { /* Bulk import content */ }
+        function updateVideoPreview() { /* Update YouTube video preview */ }
+        function addCoreElement() { /* Add core element pair for vocabulary */ }
+        function removeCoreElement(btn) { /* Remove core element pair */ }
+        function handleFileUpload(input) { /* Handle file upload */ }
+    </script>
+</body>
+</html>

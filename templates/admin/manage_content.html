@@ -1,256 +1,516 @@
-{% extends 'admin/base.html' %}
+{% extends "admin/base.html" %}
+
+{% block title %}Content Management{% endblock %}
 
 {% block content %}
-
-<div class="container mt-4">
-    <h1>Manage Content</h1>
-    
-    <div class="mb-4">
-        <div class="btn-group" role="group">
-            <button type="button" class="btn btn-outline-primary" onclick="filterByCamp('all')">All Camps</button>
-            <button type="button" class="btn btn-outline-primary" onclick="filterByCamp('Middle East')">Middle East</button>
-            <button type="button" class="btn btn-outline-primary" onclick="filterByCamp('Chinese')">Chinese</button>
-            <button type="button" class="btn btn-outline-primary" onclick="filterByCamp('both')">Both Camps</button>
-        </div>
-    </div>
-    
-    <!-- Quizzes Section -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>Quiz Questions</h3>
-            <a href="{{ url_for('admin_add_quiz') }}" class="btn btn-sm btn-primary float-right">Add Quiz</a>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Unit</th>
-                            <th>Camp</th>
-                            <th>Question</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for quiz in quizzes %}
-                        <tr data-camp="{{ quiz.camp }}">
-                            <td>{{ quiz.id }}</td>
-                            <td>{{ quiz.unit_id }}</td>
-                            <td>
-                                <span class="badge badge-{{ 'success' if quiz.camp == 'Middle East' else 'info' if quiz.camp == 'Chinese' else 'secondary' }}">
-                                    {{ quiz.camp }}
-                                </span>
-                            </td>
-                            <td>{{ quiz.question[:50] }}{% if quiz.question|length > 50 %}...{% endif %}</td>
-                            <td>
-                                <a href="{{ url_for('admin_view_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-info">View</a>
-                                <a href="{{ url_for('admin_edit_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <a href="{{ url_for('admin_delete_quiz', quiz_id=quiz.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-layer-group me-2"></i>Content Management</h2>
+                <!-- Removed Add Content dropdown button as requested -->
             </div>
-        </div>
-    </div>
 
-    <!-- Materials Section -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>Learning Materials</h3>
-            <a href="{{ url_for('admin_add_material') }}" class="btn btn-sm btn-primary float-right">Add Material</a>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Unit</th>
-                            <th>Camp</th>
-                            <th>Title</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for material in materials %}
-                        <tr data-camp="{{ material.camp }}">
-                            <td>{{ material.id }}</td>
-                            <td>{{ material.unit_id }}</td>
-                            <td>
-                                <span class="badge badge-{{ 'success' if material.camp == 'Middle East' else 'info' if material.camp == 'Chinese' else 'secondary' }}">
-                                    {{ material.camp }}
-                                </span>
-                            </td>
-                            <td>{{ material.title }}</td>
-                            <td>
-                                <a href="{{ url_for('admin_view_material', material_id=material.id) }}" class="btn btn-sm btn-info">View</a>
-                                <a href="{{ url_for('admin_edit_material', material_id=material.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <a href="{{ url_for('admin_delete_material', material_id=material.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-success alert-dismissible fade show">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Content Summary Cards -->
+            <div class="row mb-4">
+                <div class="col-md-2">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-question-circle fa-2x mb-2"></i>
+                            <h4>{{ quizzes|length }}</h4>
+                            <small>Quiz Questions</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-file fa-2x mb-2"></i>
+                            <h4>{{ materials|length }}</h4>
+                            <small>Materials</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-info text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-video fa-2x mb-2"></i>
+                            <h4>{{ videos|length }}</h4>
+                            <small>Videos</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-project-diagram fa-2x mb-2"></i>
+                            <h4>{{ projects|length }}</h4>
+                            <small>Projects</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-secondary text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-spell-check fa-2x mb-2"></i>
+                            <h4>{{ words|length }}</h4>
+                            <small>Vocabulary</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="card bg-dark text-white">
+                        <div class="card-body text-center">
+                            <i class="fas fa-layer-group fa-2x mb-2"></i>
+                            <h4>{{ (quizzes|length + materials|length + videos|length + projects|length + words|length) }}</h4>
+                            <small>Total Items</small>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Videos Section -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>Videos</h3>
-            <a href="{{ url_for('admin_add_video') }}" class="btn btn-sm btn-primary float-right">Add Video</a>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Unit</th>
-                            <th>Camp</th>
-                            <th>Title</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for video in videos %}
-                        <tr data-camp="{{ video.camp }}">
-                            <td>{{ video.id }}</td>
-                            <td>{{ video.unit_id }}</td>
-                            <td>
-                                <span class="badge badge-{{ 'success' if video.camp == 'Middle East' else 'info' if video.camp == 'Chinese' else 'secondary' }}">
-                                    {{ video.camp }}
-                                </span>
-                            </td>
-                            <td>{{ video.title }}</td>
-                            <td>
-                                <a href="{{ url_for('admin_view_video', video_id=video.id) }}" class="btn btn-sm btn-info">View</a>
-                                <a href="{{ url_for('admin_edit_video', video_id=video.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <a href="{{ url_for('admin_delete_video', video_id=video.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Quiz Questions -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>Quiz Questions</h5>
+                </div>
+                <div class="card-body">
+                    {% if quizzes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Unit</th>
+                                    <th>Question</th>
+                                    <th>Bootcamp Types</th>
+                                    <th>Tags</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quiz in quizzes %}
+                                <tr>
+                                    <td><span class="badge bg-primary">Unit {{ quiz.unit_id }}</span></td>
+                                    <td>
+                                        {% if quiz.question %}
+                                            {{ quiz.question[:50] }}{% if quiz.question|length > 50 %}...{% endif %}
+                                        {% else %}
+                                            <em class="text-muted">No question text</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set quiz_tags = get_content_tags('quiz', quiz.id) %}
+                                        {% for tag in quiz_tags %}
+                                            {% if tag in ['Chinese', 'English', 'Middle East'] %}
+                                                <span class="badge bg-info me-1">{{ tag }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not quiz_tags %}
+                                            <span class="badge bg-secondary">Legacy ({{ quiz.camp or 'both' }})</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set all_tags = get_content_tags('quiz', quiz.id) %}
+                                        {% for tag in all_tags %}
+                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin_view_quiz', quiz_id=quiz.id) }}" 
+                                               class="btn btn-outline-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_edit_quiz', quiz_id=quiz.id) }}" 
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_delete_quiz', quiz_id=quiz.id) }}" 
+                                               class="btn btn-outline-danger" title="Delete"
+                                               onclick="return confirm('Delete this quiz question?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No quiz questions created yet.</p>
+                        <a href="{{ url_for('admin_add_quiz') }}" class="btn btn-primary">Add First Quiz</a>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Words Section -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>AI Vocabulary Words</h3>
-            <a href="{{ url_for('admin_add_word') }}" class="btn btn-sm btn-primary float-right">Add Word</a>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Unit</th>
-                            <th>Camp</th>
-                            <th>Section</th>
-                            <th>Word</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for word in words %}
-                        <tr data-camp="{{ word.camp }}">
-                            <td>{{ word.id }}</td>
-                            <td>{{ word.unit_id }}</td>
-                            <td>
-                                <span class="badge badge-{{ 'success' if word.camp == 'Middle East' else 'info' if word.camp == 'Chinese' else 'secondary' }}">
-                                    {{ word.camp }}
-                                </span>
-                            </td>
-                            <td>{{ word.section }}</td>
-                            <td>{{ word.word }}</td>
-                            <td>
-                                <a href="{{ url_for('admin_view_word', word_id=word.id) }}" class="btn btn-sm btn-info">View</a>
-                                <a href="{{ url_for('admin_edit_word', word_id=word.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <a href="{{ url_for('admin_delete_word', word_id=word.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Learning Materials -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-file me-2"></i>Learning Materials</h5>
+                </div>
+                <div class="card-body">
+                    {% if materials %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Unit</th>
+                                    <th>Title</th>
+                                    <th>File</th>
+                                    <th>Bootcamp Types</th>
+                                    <th>Tags</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for material in materials %}
+                                <tr>
+                                    <td><span class="badge bg-success">Unit {{ material.unit_id }}</span></td>
+                                    <td>{{ material.title or 'Untitled' }}</td>
+                                    <td>
+                                        {% if material.file_path %}
+                                            <i class="fas fa-file me-1"></i>{{ material.file_path.split('_')[-1] }}
+                                        {% else %}
+                                            <span class="text-muted">No file</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set material_tags = get_content_tags('material', material.id) %}
+                                        {% for tag in material_tags %}
+                                            {% if tag in ['Chinese', 'English', 'Middle East'] %}
+                                                <span class="badge bg-info me-1">{{ tag }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not material_tags %}
+                                            <span class="badge bg-secondary">Legacy ({{ material.camp or 'both' }})</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set all_tags = get_content_tags('material', material.id) %}
+                                        {% for tag in all_tags %}
+                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin_view_material', material_id=material.id) }}" 
+                                               class="btn btn-outline-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_edit_material', material_id=material.id) }}" 
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_delete_material', material_id=material.id) }}" 
+                                               class="btn btn-outline-danger" title="Delete"
+                                               onclick="return confirm('Delete this material?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-file fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No materials created yet.</p>
+                        <a href="{{ url_for('admin_add_material') }}" class="btn btn-success">Add First Material</a>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Projects Section -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h3>Projects</h3>
-            <a href="{{ url_for('admin_add_project') }}" class="btn btn-sm btn-primary float-right">Add Project</a>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Unit</th>
-                            <th>Camp</th>
-                            <th>Title</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for project in projects %}
-                        <tr data-camp="{{ project.camp }}">
-                            <td>{{ project.id }}</td>
-                            <td>{{ project.unit_id }}</td>
-                            <td>
-                                <span class="badge badge-{{ 'success' if project.camp == 'Middle East' else 'info' if project.camp == 'Chinese' else 'secondary' }}">
-                                    {{ project.camp }}
-                                </span>
-                            </td>
-                            <td>{{ project.title }}</td>
-                            <td>
-                                <a href="{{ url_for('admin_view_project', project_id=project.id) }}" class="btn btn-sm btn-info">View</a>
-                                <a href="{{ url_for('admin_edit_project', project_id=project.id) }}" class="btn btn-sm btn-warning">Edit</a>
-                                <a href="{{ url_for('admin_delete_project', project_id=project.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Video Resources -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-video me-2"></i>Videos</h5>
+                </div>
+                <div class="card-body">
+                    {% if videos %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Unit</th>
+                                    <th>Title</th>
+                                    <th>YouTube</th>
+                                    <th>Bootcamp Types</th>
+                                    <th>Tags</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for video in videos %}
+                                <tr>
+                                    <td><span class="badge bg-info">Unit {{ video.unit_id }}</span></td>
+                                    <td>{{ video.title or 'Untitled' }}</td>
+                                    <td>
+                                        {% if video.youtube_url %}
+                                            <a href="https://www.youtube.com/watch?v={{ video.youtube_url }}" target="_blank" rel="noopener">{{ video.youtube_url }}</a>
+                                        {% else %}
+                                            <span class="text-muted">No link</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set video_tags = get_content_tags('video', video.id) %}
+                                        {% for tag in video_tags %}
+                                            {% if tag in ['Chinese', 'English', 'Middle East'] %}
+                                                <span class="badge bg-info me-1">{{ tag }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not video_tags %}
+                                            <span class="badge bg-secondary">Legacy ({{ video.camp or 'both' }})</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set all_tags = get_content_tags('video', video.id) %}
+                                        {% for tag in all_tags %}
+                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin_view_video', video_id=video.id) }}" 
+                                               class="btn btn-outline-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_edit_video', video_id=video.id) }}" 
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_delete_video', video_id=video.id) }}" 
+                                               class="btn btn-outline-danger" title="Delete"
+                                               onclick="return confirm('Delete this video?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No videos created yet.</p>
+                        <a href="{{ url_for('admin_add_video') }}" class="btn btn-info">Add First Video</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Project Assignments -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-project-diagram me-2"></i>Projects</h5>
+                </div>
+                <div class="card-body">
+                    {% if projects %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Unit</th>
+                                    <th>Title</th>
+                                    <th>Description</th>
+                                    <th>Bootcamp Types</th>
+                                    <th>Tags</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for project in projects %}
+                                <tr>
+                                    <td><span class="badge bg-warning text-dark">Unit {{ project.unit_id }}</span></td>
+                                    <td>{{ project.title or 'Untitled' }}</td>
+                                    <td>
+                                        {% if project.description %}
+                                            {{ project.description[:60] }}{% if project.description|length > 60 %}...{% endif %}
+                                        {% else %}
+                                            <em class="text-muted">No description</em>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set project_tags = get_content_tags('project', project.id) %}
+                                        {% for tag in project_tags %}
+                                            {% if tag in ['Chinese', 'English', 'Middle East'] %}
+                                                <span class="badge bg-info me-1">{{ tag }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not project_tags %}
+                                            <span class="badge bg-secondary">Legacy ({{ project.camp or 'both' }})</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set all_tags = get_content_tags('project', project.id) %}
+                                        {% for tag in all_tags %}
+                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin_view_project', project_id=project.id) }}" 
+                                               class="btn btn-outline-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_edit_project', project_id=project.id) }}" 
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_delete_project', project_id=project.id) }}" 
+                                               class="btn btn-outline-danger" title="Delete"
+                                               onclick="return confirm('Delete this project?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-project-diagram fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No projects created yet.</p>
+                        <a href="{{ url_for('admin_add_project') }}" class="btn btn-warning">Add First Project</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- AI Vocabulary Words -->
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-spell-check me-2"></i>Vocabulary Words</h5>
+                </div>
+                <div class="card-body">
+                    {% if words %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Unit</th>
+                                    <th>Word</th>
+                                    <th>Section</th>
+                                    <th>Bootcamp Types</th>
+                                    <th>Tags</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for word in words %}
+                                <tr>
+                                    <td><span class="badge bg-secondary">Unit {{ word.unit_id }}</span></td>
+                                    <td><strong>{{ word.word or 'Unnamed Word' }}</strong></td>
+                                    <td>{{ word.section or 'N/A' }}</td>
+                                    <td>
+                                        {% set word_tags = get_content_tags('word', word.id) %}
+                                        {% for tag in word_tags %}
+                                            {% if tag in ['Chinese', 'English', 'Middle East'] %}
+                                                <span class="badge bg-info me-1">{{ tag }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not word_tags %}
+                                            <span class="badge bg-secondary">Legacy ({{ word.camp or 'both' }})</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set all_tags = get_content_tags('word', word.id) %}
+                                        {% for tag in all_tags %}
+                                            <span class="badge bg-secondary me-1">{{ tag }}</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin_view_word', word_id=word.id) }}" 
+                                               class="btn btn-outline-info" title="View">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_edit_word', word_id=word.id) }}" 
+                                               class="btn btn-outline-primary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ url_for('admin_delete_word', word_id=word.id) }}" 
+                                               class="btn btn-outline-danger" title="Delete"
+                                               onclick="return confirm('Delete this word?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-spell-check fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No vocabulary words created yet.</p>
+                        <a href="{{ url_for('admin_add_word') }}" class="btn btn-secondary">Add First Word</a>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-function filterByCamp(camp) {
-    const rows = document.querySelectorAll('tbody tr[data-camp]');
-    const buttons = document.querySelectorAll('.btn-group .btn');
-    
-    // Reset button states
-    buttons.forEach(btn => btn.classList.remove('active'));
-    
-    // Set active button
-    event.target.classList.add('active');
-    
-    rows.forEach(row => {
-        const rowCamp = row.getAttribute('data-camp');
-        if (camp === 'all' || rowCamp === camp) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
-    });
+<style>
+.badge {
+    font-size: 0.75rem;
 }
 
-// Set 'All Camps' as default active
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelector('.btn-group .btn').classList.add('active');
-});
-</script>
+.table th {
+    border-top: none;
+    font-weight: 600;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+code {
+    font-size: 0.875rem;
+}
+
+.card-header h5 {
+    margin: 0;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,.075);
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+.me-1 {
+    margin-right: 0.25rem !important;
+}
+
+.me-2 {
+    margin-right: 0.5rem !important;
+}
+</style>
 {% endblock %}

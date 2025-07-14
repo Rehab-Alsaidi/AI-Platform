@@ -1,0 +1,59 @@
+{% extends 'admin/base.html' %}
+{% block title %}Metrics Dashboard{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="page-title mb-4">Application Metrics</h1>
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark text-white shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-robot mr-2"></i>Total QA Requests</h5>
+                    <h2 class="display-4">{{ metrics.qa_requests_total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark text-white shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-exclamation-triangle mr-2 text-danger"></i>QA Errors</h5>
+                    <h2 class="display-4 text-danger">{{ metrics.qa_errors_total }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark text-white shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-users mr-2 text-success"></i>Active Users</h5>
+                    <h2 class="display-4 text-success">{{ metrics.active_users_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-white shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-percentage mr-2 text-info"></i>QA Success Rate</h5>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="h3 mb-0 mr-3">{{ (metrics.qa_success_rate * 100) | round(1) }}%</span>
+                        <div class="progress flex-grow-1" style="height: 1.5rem;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ (metrics.qa_success_rate * 100) | round(1) }}%;" aria-valuenow="{{ (metrics.qa_success_rate * 100) | round(1) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card bg-dark text-white shadow">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-stopwatch mr-2 text-warning"></i>Avg. Response Time</h5>
+                    <h2 class="display-4 text-warning">{{ metrics.avg_response_time_seconds }}s</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card bg-dark text-white mt-4">
+        <div class="card-body text-right">
+            <small class="text-muted">Last updated: {{ metrics.timestamp }}</small>
+        </div>
+    </div>
+</div>
+{% endblock %}

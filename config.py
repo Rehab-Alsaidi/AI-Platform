@@ -12,33 +12,67 @@ import requests
 load_dotenv()
 
 
-class HuggingFaceLLM:
+class OpenRouterLLM:
     """
-    Wrapper for Hugging Face Inference API for LLM text generation.
+    Wrapper for OpenRouter API for LLM text generation using GPT and other models.
     """
     def __init__(self, api_key: str, model: str):
         self.api_key = api_key
         self.model = model
+        self.base_url = "https://openrouter.ai/api/v1/chat/completions"
 
     def generate_response(self, prompt: str) -> str:
-        url = f"https://api-inference.huggingface.co/models/{self.model}"
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        payload = {"inputs": prompt, "parameters": {"max_new_tokens": 512}}
+        """Generate response using OpenRouter API."""
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://51talk-ai-learning.com",  # Replace with your actual domain
+            "X-Title": "51Talk AI Learning Platform"
+        }
+        
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ],
+            "max_tokens": 800,
+            "temperature": 0.7,
+            "top_p": 1,
+            "frequency_penalty": 0,
+            "presence_penalty": 0
+        }
+        
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=60)
-            response.raise_for_status()
+            response = requests.post(
+                self.base_url, 
+                headers=headers, 
+                json=payload, 
+                timeout=60
+            )
+            
+            if response.status_code == 429:
+                return "[Rate Limited] Too many requests. Please wait a moment and try again."
+            elif response.status_code == 401:
+                return "[Authentication Error] Invalid API key."
+            elif response.status_code == 402:
+                return "[Insufficient Credits] Please check your OpenRouter account balance."
+            elif response.status_code != 200:
+                return f"[API Error] Service unavailable (Status: {response.status_code})"
+                
             data = response.json()
-            # The response format may vary by model; handle both list and dict
-            if isinstance(data, list) and "generated_text" in data[0]:
-                return data[0]["generated_text"]
-            elif isinstance(data, dict) and "generated_text" in data:
-                return data["generated_text"]
-            elif isinstance(data, list) and "text" in data[0]:
-                return data[0]["text"]
+            
+            if "choices" in data and len(data["choices"]) > 0:
+                return data["choices"][0]["message"]["content"]
             else:
-                return str(data)
+                return "[Error] No response generated"
+                
+        except requests.exceptions.Timeout:
+            return "[Timeout] Request timed out. Please try again."
+        except requests.exceptions.ConnectionError:
+            return "[Connection Error] Unable to connect to OpenRouter service."
         except Exception as e:
-            return f"[HF API Error] {e}"
+            return f"[Error] {str(e)}"
+
 
 class Config:
     """Base configuration class."""
@@ -56,17 +90,15 @@ class Config:
     # Access password for the application
     ACCESS_PASSWORD = os.getenv("ACCESS_PASSWORD", "5151")
 
-    # Add HuggingFace configuration
-    HF_API_KEY = os.getenv("HF_API_KEY")
-    HF_MODEL = os.getenv("HF_MODEL", "meta-llama/Llama-3-8B-Instruct")
-    USE_HF_API = os.getenv("USE_HF_API", "false").lower() in ("true", "1", "yes")
+    # OpenRouter configuration
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+    OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
     
     @staticmethod
     def validate_config():
         """Validate critical configuration."""
-        if Config.USE_HF_API and not Config.HF_API_KEY:
-            raise ValueError("HF_API_KEY is required when USE_HF_API is enabled")
-
+        if not Config.OPENROUTER_API_KEY:
+            raise ValueError("OPENROUTER_API_KEY is required")
     
     # Mail configuration
     MAIL_SERVER = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -113,14 +145,11 @@ config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
     'production': ProductionConfig,
-    'railway': RailwayConfig,
     'default': DevelopmentConfig
 }
 
 def get_config():
     """Return the appropriate config class based on environment variables."""
-    if RAILWAY_ENV:
-        return RailwayConfig
     flask_env = os.getenv('FLASK_ENV', '').lower()
     if flask_env == 'production':
         return ProductionConfig

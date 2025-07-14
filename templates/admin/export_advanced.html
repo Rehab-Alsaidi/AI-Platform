@@ -1,0 +1,131 @@
+{% extends 'admin/base.html' %}
+{% block title %}Export Assignments & Users{% endblock %}
+{% block content %}
+<div class="container-fluid mt-4">
+  <div class="row">
+    <!-- Filter Sidebar -->
+    <div class="col-lg-3 mb-4">
+      <div class="card p-3 sticky-top" style="top: 90px;">
+        <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filter Options</h5>
+        <form method="GET" id="exportFilterForm">
+          <!-- Student Type -->
+          <div class="mb-3">
+            <label class="form-label">Student Type</label>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="student_type" value="existing" id="student_existing">
+              <label class="form-check-label" for="student_existing">Existing Students</label>
+            </div>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="student_type" value="new" id="student_new">
+              <label class="form-check-label" for="student_new">New Students</label>
+            </div>
+          </div>
+          <!-- Tags -->
+          <div class="mb-3">
+            <label class="form-label">Tags</label>
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="tag_all" onclick="toggleAllTags(this)">
+              <label class="form-check-label" for="tag_all"><strong>All</strong></label>
+            </div>
+            <hr class="my-2">
+            <div class="ps-2" style="max-height: 120px; overflow-y: auto;">
+              {% if available_tags %}
+                {% for group, tags in available_tags.items() %}
+                  <div class="mb-1"><strong>{{ group }}</strong></div>
+                  <div class="ps-2 mb-2">
+                    {% for tag in tags %}
+                    <div class="form-check">
+                      <input class="form-check-input tag-checkbox" type="checkbox" name="tags" value="{{ tag.name }}" id="tag_{{ tag.name|replace(' ', '_') }}">
+                      <label class="form-check-label" for="tag_{{ tag.name|replace(' ', '_') }}">{{ tag.name }}</label>
+                    </div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary w-100 mb-2"><i class="fas fa-filter me-1"></i>Apply Filters</button>
+          <button type="button" class="btn btn-outline-secondary w-100" onclick="resetExportFilters()">Reset Filters</button>
+        </form>
+      </div>
+    </div>
+    <!-- Main Content -->
+    <div class="col-lg-9">
+      <div class="row mb-4">
+        <div class="col-md-4">
+          <div class="card text-center p-3">
+            <h5>Assignment Submission Rate</h5>
+            <div class="display-4">{{ summary.assignment_rate }}%</div>
+            <div class="text-muted">({{ summary.assignment_submitted }}/{{ summary.assignment_total }})</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-center p-3">
+            <h5>Challenge Assignment Submission Rate</h5>
+            <div class="display-4">{{ summary.challenge_rate }}%</div>
+            <div class="text-muted">({{ summary.challenge_submitted }}/{{ summary.challenge_total }})</div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card text-center p-3">
+            <h5>Assignment Submission Rate Trend</h5>
+            <div class="display-6">{{ summary.trend_text }}</div>
+          </div>
+        </div>
+      </div>
+      <!-- List of Students to Follow Up -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">List of Students to Follow Up <span class="text-muted">(Pending Submission)</span></h5>
+          {% if followup_students %}
+          <ul class="list-group">
+            {% for student in followup_students %}
+            <li class="list-group-item">{{ student.name }}</li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="text-muted">No students to follow up.</div>
+          {% endif %}
+        </div>
+      </div>
+      <!-- Student Assignment Details Table -->
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title mb-3">Student Assignment Details</h5>
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Cohort</th>
+                <th>Assignment Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for student in assignment_details %}
+              <tr>
+                <td>{{ student.name }}</td>
+                <td>{{ student.department }}</td>
+                <td>{{ student.cohort }}</td>
+                <td><a href="{{ student.assignment_link }}">Click to view</a></td>
+              </tr>
+              {% else %}
+              <tr><td colspan="4" class="text-center">No assignment details found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function resetExportFilters() {
+  document.getElementById('exportFilterForm').reset();
+}
+function toggleAllTags(allBox) {
+  const checkboxes = document.querySelectorAll('.tag-checkbox');
+  checkboxes.forEach(cb => { cb.checked = allBox.checked; });
+}
+</script>
+{% endblock %}
