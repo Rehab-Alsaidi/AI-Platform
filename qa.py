@@ -1,5 +1,5 @@
 """
-Complete Document QA System - OpenRouter GPT Only
+Complete Document QA System - OpenRouter GPT Only &Railway Compatible Version
 A reliable module for document-based question answering using OpenRouter API with GPT models.
 """
 
@@ -11,6 +11,7 @@ import json
 import re
 import requests
 import hashlib
+import tempfile
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
@@ -46,6 +47,94 @@ def get_openrouter_config():
     except Exception as e:
         logger.error(f"Error getting OpenRouter config: {e}")
         return None, None
+
+def get_db_connection():
+    """Get database connection for Railway deployment."""
+    try:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+        
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST", "localhost"),
+            port=os.getenv("DB_PORT", "5432"),
+            database=os.getenv("DB_NAME", "fiftyone_learning"),
+            user=os.getenv("DB_USER", "admin"),
+            password=os.getenv("DB_PASSWORD", "admin123"),
+        )
+        return conn
+    except Exception as e:
+        logger.error(f"Database connection error: {e}")
+        return None
+
+def get_documents_from_database() -> List[Dict[str, Any]]:
+    """Get documents from database instead of filesystem."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return []
+            
+        cursor = conn.cursor()
+        
+        # Check if table exists, create if not
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS stored_documents (
+                id SERIAL PRIMARY KEY,
+                filename VARCHAR(255) NOT NULL,
+                content BYTEA NOT NULL,
+                content_type VARCHAR(100),
+                upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(filename)
+            )
+        """)
+        conn.commit()
+        
+        cursor.execute("""
+            SELECT filename, content, content_type
+            FROM stored_documents
+            ORDER BY upload_date DESC
+        """)
+        
+        documents = cursor.fetchall()
+        cursor.close()
+        logger.info(f"Retrieved {len(documents)} documents from database")
+        return documents
+        
+    except Exception as e:
+        logger.error(f"Error getting documents from database: {str(e)}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+def create_temp_documents_from_db() -> str:
+    """Create temporary directory with documents from database."""
+    try:
+        # Create temporary directory
+        temp_dir = tempfile.mkdtemp(prefix="railway_qa_docs_")
+        
+        # Get documents from database
+        documents = get_documents_from_database()
+        
+        if not documents:
+            logger.warning("No documents found in database")
+            return temp_dir
+        
+        # Save documents to temp directory
+        for filename, content, content_type in documents:
+            if content:
+                file_path = os.path.join(temp_dir, filename)
+                with open(file_path, 'wb') as f:
+                    f.write(content)
+                logger.info(f"Extracted document: {filename}")
+        
+        logger.info(f"Created temporary documents directory: {temp_dir} with {len(documents)} files")
+        return temp_dir
+        
+    except Exception as e:
+        logger.error(f"Error creating temp documents directory: {str(e)}")
+        # Return empty temp directory
+        return tempfile.mkdtemp(prefix="railway_qa_docs_empty_")
 
 # ============================================================================
 # CONVERSATION MEMORY
@@ -191,13 +280,13 @@ class PPTXLoader:
             return []
 
 # ============================================================================
-# DOCUMENT PROCESSOR
+# DOCUMENT PROCESSOR - RAILWAY COMPATIBLE
 # ============================================================================
 
 class DocumentProcessor:
-    """Document processor for all supported formats."""
-    def __init__(self, documents_dir: str):
-        self.documents_dir = documents_dir
+    """Document processor for Railway deployment - uses database storage."""
+    def __init__(self, documents_dir: str = None):
+        self.documents_dir = documents_dir or create_temp_documents_from_db()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=800,
             chunk_overlap=100,
@@ -206,28 +295,31 @@ class DocumentProcessor:
 
     def load_documents(self) -> List[Any]:
         all_docs = []
-        if not os.path.exists(self.documents_dir):
-            logger.warning(f"Documents directory not found: {self.documents_dir}")
-            return []
         
-        for root, _, files in os.walk(self.documents_dir):
-            for file in files:
-                file_path = os.path.join(root, file)
-                filename = os.path.basename(file_path)
-                try:
-                    if file.lower().endswith('.pdf'):
-                        docs = self._load_pdf(file_path, filename)
-                        all_docs.extend(docs)
-                    elif file.lower().endswith(('.pptx', '.ppt')):
-                        loader = PPTXLoader(file_path)
-                        docs = loader.load()
-                        all_docs.extend(docs)
-                    elif file.lower().endswith('.txt'):
-                        docs = self._load_txt(file_path, filename)
-                        all_docs.extend(docs)
-                except Exception as e:
-                    logger.error(f"Error processing {file_path}: {str(e)}")
-                    continue
+        # If documents_dir is provided, use it (temp directory from database)
+        if self.documents_dir and os.path.exists(self.documents_dir):
+            logger.info(f"Loading documents from temporary directory: {self.documents_dir}")
+            
+            for root, _, files in os.walk(self.documents_dir):
+                for file in files:
+                    file_path = os.path.join(root, file)
+                    filename = os.path.basename(file_path)
+                    try:
+                        if file.lower().endswith('.pdf'):
+                            docs = self._load_pdf(file_path, filename)
+                            all_docs.extend(docs)
+                        elif file.lower().endswith(('.pptx', '.ppt')):
+                            loader = PPTXLoader(file_path)
+                            docs = loader.load()
+                            all_docs.extend(docs)
+                        elif file.lower().endswith('.txt'):
+                            docs = self._load_txt(file_path, filename)
+                            all_docs.extend(docs)
+                    except Exception as e:
+                        logger.error(f"Error processing {file_path}: {str(e)}")
+                        continue
+        else:
+            logger.warning("No documents directory available")
         
         logger.info(f"Loaded {len(all_docs)} document sections")
         return all_docs
@@ -295,17 +387,17 @@ class DocumentProcessor:
             return []
 
 # ============================================================================
-# VECTOR STORE - FIXED FOR OPENROUTER/GPT MODE
+# VECTOR STORE - RAILWAY COMPATIBLE
 # ============================================================================
 
 class VectorStore:
-    """Vector store manager with OpenRouter/GPT-only mode support."""
-    def __init__(self, documents_dir: str, vector_db_path: str = "vector_db"):
-        self.documents_dir = documents_dir
+    """Vector store manager for Railway deployment."""
+    def __init__(self, documents_dir: str = None, vector_db_path: str = "vector_db"):
+        self.documents_dir = documents_dir or create_temp_documents_from_db()
         self.vector_db_path = vector_db_path
         self.embeddings = None
         self.vector_store_instance = None
-        self.document_chunks = []  # Store document chunks for OpenRouter/GPT mode
+        self.document_chunks = []
         self._initialization_lock = threading.Lock()
         self._is_initializing = False
         self._initialization_complete = False
@@ -319,16 +411,16 @@ class VectorStore:
                     if self._initialization_complete or self._is_initializing:
                         return
                     self._is_initializing = True
-                    logger.info("Starting vector store initialization...")
+                    logger.info("Starting Railway-compatible vector store initialization...")
                     
-                    # For OpenRouter/GPT mode, just load documents without embeddings
+                    # Load documents from temporary directory (created from database)
                     processor = DocumentProcessor(self.documents_dir)
                     self.document_chunks = processor.process_documents()
                     
-                    # Mark as complete - we don't need actual vector store for OpenRouter/GPT
+                    # Mark as complete
                     self._initialization_complete = True
                     self._is_initializing = False
-                    logger.info("Vector store initialization completed")
+                    logger.info(f"Vector store initialization completed with {len(self.document_chunks)} chunks")
                     
             except Exception as e:
                 self._initialization_error = str(e)
@@ -339,7 +431,7 @@ class VectorStore:
         thread.start()
 
     def get_vector_store(self, timeout: int = 30):
-        """For OpenRouter/GPT mode, return a mock retriever that searches document chunks."""
+        """For Railway deployment, return a mock retriever that searches document chunks."""
         start_time = time.time()
         while time.time() - start_time < timeout:
             if self._initialization_complete:
@@ -350,11 +442,11 @@ class VectorStore:
         raise TimeoutError("Vector store initialization timed out")
 
     def is_ready(self) -> bool:
-        """For OpenRouter/GPT mode, ready when document chunks are loaded."""
+        """Ready when document chunks are loaded."""
         return self._initialization_complete and len(self.document_chunks) > 0
 
 class MockRetriever:
-    """Mock retriever for OpenRouter/GPT mode that searches document chunks."""
+    """Mock retriever for Railway deployment that searches document chunks."""
     def __init__(self, document_chunks):
         self.document_chunks = document_chunks
 
@@ -389,14 +481,14 @@ class MockRetriever:
         return [doc for score, doc in scored_docs[:k]]
 
 # ============================================================================
-# MAIN QA SYSTEM - FIXED FOR OPENROUTER/GPT MODE
+# MAIN QA SYSTEM - RAILWAY COMPATIBLE
 # ============================================================================
 
 class DocumentQA:
-    """Main Document QA system with OpenRouter GPT - FIXED VERSION."""
-    def __init__(self, documents_dir: str):
-        self.documents_dir = documents_dir
-        self.vector_store_manager = VectorStore(documents_dir)
+    """Main Document QA system for Railway deployment."""
+    def __init__(self, documents_dir: str = None):
+        self.documents_dir = documents_dir or create_temp_documents_from_db()
+        self.vector_store_manager = VectorStore(self.documents_dir)
         self.gpt_llm = None
         self.conversation_memory = ConversationMemory()
         self.response_cache = {}
@@ -481,9 +573,8 @@ class DocumentQA:
         return "Hello! I'm your GPT-powered AI learning assistant. I'm here to help you understand course materials, answer questions, or discuss topics you're studying. What would you like to explore today?"
 
     def _handle_document_question(self, question: str, user_id: str = None) -> Dict[str, Any]:
-        """FIXED: Handle document questions with OpenRouter/GPT mode."""
+        """Handle document questions for Railway deployment."""
         try:
-            # Check if we have the GPT LLM available
             if not self.gpt_llm:
                 return {
                     "answer": "OpenRouter GPT is not properly configured. Please check your API settings.",
@@ -491,31 +582,38 @@ class DocumentQA:
                     "conversation_type": "error"
                 }
             
-            # For OpenRouter/GPT mode, check if documents are ready
             if not self.vector_store_manager.is_ready():
                 if self.vector_store_manager._is_initializing:
                     return {
-                        "answer": "I'm currently loading course materials. Please wait a moment and try again.",
+                        "answer": "I'm currently loading course materials from the database. Please wait a moment and try again.",
                         "sources": [],
                         "conversation_type": "loading"
                     }
                 else:
-                    return {
-                        "answer": "I don't have access to course materials right now. Please ensure documents are uploaded to the documents directory.",
-                        "sources": [],
-                        "conversation_type": "error"
-                    }
+                    # Check if we have documents in database
+                    documents = get_documents_from_database()
+                    if not documents:
+                        return {
+                            "answer": "I don't have any course materials available. Please upload some documents through the admin panel.",
+                            "sources": [],
+                            "conversation_type": "no_documents"
+                        }
+                    else:
+                        return {
+                            "answer": "I'm having trouble accessing the course materials. Please try again in a moment.",
+                            "sources": [],
+                            "conversation_type": "error"
+                        }
             
-            # Get the mock retriever for OpenRouter/GPT mode
             retriever = self.vector_store_manager.get_vector_store(timeout=10)
             if not retriever:
                 return {
-                    "answer": "I don't have access to course materials right now. Please ensure documents are uploaded.",
+                    "answer": "I'm having trouble accessing course materials. Please try again.",
                     "sources": [],
                     "conversation_type": "error"
                 }
             
-            # Get relevant documents using our mock retriever
+            # Get relevant documents
             docs = retriever.get_relevant_documents(question, search_kwargs={"k": 6})
             
             # Enhanced search with keywords
@@ -531,7 +629,6 @@ class DocumentQA:
                         seen_contents.add(content)
             
             if not docs:
-                # If no relevant documents found, still try to answer using GPT general knowledge
                 logger.info("No relevant documents found, using GPT general knowledge")
                 answer = self._generate_gpt_response_general(question, user_id)
                 return {
@@ -574,7 +671,6 @@ Please provide a helpful, educational response:"""
         
         try:
             response = self.gpt_llm.generate_response(prompt)
-            # Add a note that this isn't from course materials
             response += "\n\n*Note: This response is based on general knowledge since I couldn't find specific information about this topic in your course materials.*"
             return response
         except Exception as e:
@@ -673,13 +769,10 @@ Please provide a helpful, educational response based on the course materials abo
             return "[Error] I encountered an issue generating a response. Please try again."
 
     def get_status(self) -> Dict[str, Any]:
-        """FIXED: Get status for OpenRouter/GPT mode."""
-        document_count = 0
-        if os.path.exists(self.documents_dir):
-            for root, dirs, files in os.walk(self.documents_dir):
-                for file in files:
-                    if file.lower().endswith(('.pdf', '.pptx', '.ppt', '.txt')):
-                        document_count += 1
+        """Get status for Railway deployment."""
+        # Count documents in database
+        documents = get_documents_from_database()
+        document_count = len(documents)
         
         return {
             "ready": self.vector_store_manager.is_ready() and self.gpt_llm is not None,
@@ -688,7 +781,8 @@ Please provide a helpful, educational response based on the course materials abo
             "document_count": document_count,
             "llm_provider": "OpenRouter GPT",
             "gpt_available": self.gpt_llm is not None,
-            "cache_size": len(self.response_cache)
+            "cache_size": len(self.response_cache),
+            "deployment": "Railway Compatible"
         }
 
 # ============================================================================
@@ -697,27 +791,29 @@ Please provide a helpful, educational response based on the course materials abo
 
 _qa_instance = None
 
-def initialize_qa(documents_dir: str = "documents", llama_model_path: str = None) -> DocumentQA:
-    """Initialize the QA system with OpenRouter GPT."""
+def initialize_qa(documents_dir: str = None, llama_model_path: str = None) -> DocumentQA:
+    """Initialize the QA system for Railway deployment."""
     global _qa_instance
     if _qa_instance is None:
-        logger.info(f"🚀 Initializing QA system with OpenRouter GPT from: {documents_dir}")
-        _qa_instance = DocumentQA(documents_dir)
+        # For Railway, always create temp directory from database
+        temp_dir = documents_dir or create_temp_documents_from_db()
+        logger.info(f"🚀 Initializing Railway-compatible QA system from: {temp_dir}")
+        _qa_instance = DocumentQA(temp_dir)
     return _qa_instance
 
 def get_qa_system() -> Optional[DocumentQA]:
     """Get the global QA instance."""
     return _qa_instance
 
-def ask_question(question: str, documents_dir: str = "documents", 
+def ask_question(question: str, documents_dir: str = None, 
                 llama_model_path: str = None, user_id: str = None) -> Dict[str, Any]:
-    """Simple function to ask a question using GPT."""
+    """Simple function to ask a question using GPT on Railway."""
     qa_system = initialize_qa(documents_dir)
     return qa_system.answer_question(question, user_id)
 
-def get_system_status(documents_dir: str = "documents", 
+def get_system_status(documents_dir: str = None, 
                      llama_model_path: str = None) -> Dict[str, Any]:
-    """Get system status."""
+    """Get system status for Railway deployment."""
     qa_system = initialize_qa(documents_dir)
     return qa_system.get_status()
 
@@ -726,11 +822,11 @@ def cleanup_qa():
     global _qa_instance
     try:
         if _qa_instance:
-            logger.info("Cleaning up QA system resources...")
+            logger.info("Cleaning up Railway QA system resources...")
             _qa_instance.response_cache.clear()
             _qa_instance.conversation_memory.conversations.clear()
             _qa_instance = None
-            logger.info("QA cleanup completed")
+            logger.info("Railway QA cleanup completed")
     except Exception as e:
         logger.error(f"Error during QA cleanup: {str(e)}")
 
@@ -740,8 +836,8 @@ def cleanup_qa():
 
 if __name__ == "__main__":
     try:
-        print("🚀 Starting QA System Test with OpenRouter GPT...")
-        qa = DocumentQA("documents")
+        print("🚀 Starting Railway-Compatible QA System Test with OpenRouter GPT...")
+        qa = DocumentQA()
         status = qa.get_status()
         print("QA System Status:", json.dumps(status, indent=2))
         
@@ -752,7 +848,7 @@ if __name__ == "__main__":
             response = qa.answer_question("What is artificial intelligence?")
             print(f"\n🤖 AI Question Response: {response['answer']}")
         else:
-            print("⏳ QA system is not ready. Add documents to the 'documents' directory.")
+            print("⏳ QA system is not ready. Upload documents through the admin panel.")
             
     except Exception as e:
         print(f"❌ Test failed: {str(e)}")
