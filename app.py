@@ -8644,6 +8644,13 @@ def get_all_cohorts():
 
 if __name__ == "__main__":
     try:
+        # Add SQLAlchemy database URI config if Config.get_db_uri() is available
+        try:
+            from config import Config
+            app.config['SQLALCHEMY_DATABASE_URI'] = Config.get_db_uri()
+        except ImportError:
+            print("Warning: config.py or Config.get_db_uri() not found. Skipping SQLALCHEMY_DATABASE_URI setup.")
+
         initialize_tag_system()
         initialize_enhanced_qa_system()
         init_db_pool()

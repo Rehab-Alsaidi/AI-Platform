@@ -32,9 +32,7 @@ class OpenRouterLLM:
         
         payload = {
             "model": self.model,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ],
+            "messages": [{"role": "user", "content": prompt}],
             "max_tokens": 800,
             "temperature": 0.7,
             "top_p": 1,
@@ -44,10 +42,7 @@ class OpenRouterLLM:
         
         try:
             response = requests.post(
-                self.base_url, 
-                headers=headers, 
-                json=payload, 
-                timeout=60
+                self.base_url, headers=headers, json=payload, timeout=60
             )
             
             if response.status_code == 429:
@@ -114,8 +109,16 @@ class Config:
     DB_NAME = os.getenv('DB_NAME', 'fiftyone_learning')
     DB_USER = os.getenv('DB_USER', 'admin')
     DB_PASSWORD = os.getenv('DB_PASSWORD', 'admin123')
+    DATABASE_URL = os.getenv("DATABASE_URL")
+
+    @staticmethod
+    def get_db_uri():
+        """Return full SQLAlchemy URI from DATABASE_URL or fallback values."""
+        if Config.DATABASE_URL:
+            # Replace 'postgres://' with 'postgresql://' if needed
+            return Config.DATABASE_URL.replace('postgres://', 'postgresql://')
+        return f"postgresql://{Config.DB_USER}:{Config.DB_PASSWORD}@{Config.DB_HOST}:{Config.DB_PORT}/{Config.DB_NAME}"
     
-    # Create required directories
     @staticmethod
     def init_app(app):
         """Initialize application configuration."""
@@ -132,12 +135,10 @@ class TestingConfig(Config):
     """Testing configuration."""
     TESTING = True
     DEBUG = True
-    # Use a separate test database
     DB_NAME = os.getenv('TEST_DB_NAME', 'fiftyone_testing')
 
 class ProductionConfig(Config):
     """Production configuration."""
-    # Production-specific settings can be added here
     pass
 
 # Configuration dictionary
