@@ -8005,7 +8005,7 @@ def admin_test_database_storage():
         </div>
         """
 
-# ADD THIS ROUTE TO CHECK WHAT'S IN THE DATABASE
+# FIXED VERSION - NO F-STRING SYNTAX ERRORS
 @app.route("/admin/check_database_documents")
 @admin_required
 def admin_check_database_documents():
@@ -8043,15 +8043,18 @@ def admin_check_database_documents():
         cursor.close()
         release_db_connection(conn)
         
-        html = f"""
-        <div style="font-family: monospace; padding: 20px; background: #f8f9fa;">
-            <h2>📋 Database Documents Report</h2>
-            <p><strong>Table exists:</strong> ✅ Yes</p>
-            <p><strong>Document count:</strong> {len(documents)}</p>
-            
-            {f'''
-            <h3>📄 Documents in Database:</h3>
-            <table style="border-collapse: collapse; width: 100%;">
+        # Build HTML step by step to avoid f-string nesting issues
+        html_parts = [
+            '<div style="font-family: monospace; padding: 20px; background: #f8f9fa;">',
+            '<h2>📋 Database Documents Report</h2>',
+            '<p><strong>Table exists:</strong> ✅ Yes</p>',
+            '<p><strong>Document count:</strong> ' + str(len(documents)) + '</p>'
+        ]
+        
+        if documents:
+            html_parts.append('<h3>📄 Documents in Database:</h3>')
+            html_parts.append('<table style="border-collapse: collapse; width: 100%;">')
+            html_parts.append('''
                 <tr style="background: #e9ecef;">
                     <th style="border: 1px solid #dee2e6; padding: 8px;">ID</th>
                     <th style="border: 1px solid #dee2e6; padding: 8px;">Filename</th>
@@ -8059,25 +8062,47 @@ def admin_check_database_documents():
                     <th style="border: 1px solid #dee2e6; padding: 8px;">Size</th>
                     <th style="border: 1px solid #dee2e6; padding: 8px;">Upload Date</th>
                 </tr>
-                {"".join(f'''
-                <tr>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[0]}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[1]}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[2] or "Unknown"}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[4] / 1024:.1f} KB</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else "Unknown"}</td>
-                </tr>
-                ''' for doc in documents)}
-            </table>
-            ''' if documents else '<p style="color: orange;">⚠️ No documents found in database!</p>'}
+            ''')
             
-            <br>
-            <p><a href="/admin/upload_document" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">📤 Upload Document</a></p>
-            <p><a href="/debug/qa_system" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🔍 Check QA Status</a></p>
-        </div>
-        """
+            # Build table rows safely
+            for doc in documents:
+                doc_id = doc[0]
+                filename = doc[1]
+                content_type = doc[2] or "Unknown"
+                upload_date = doc[3]
+                size_bytes = doc[4]
+                
+                # Format size
+                size_str = f"{size_bytes / 1024:.1f} KB" if size_bytes else "0 KB"
+                
+                # Format date
+                date_str = upload_date.strftime("%Y-%m-%d %H:%M:%S") if upload_date else "Unknown"
+                
+                # Build row HTML safely
+                row_html = f'''
+                <tr>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc_id}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{filename}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{content_type}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{size_str}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{date_str}</td>
+                </tr>
+                '''
+                html_parts.append(row_html)
+            
+            html_parts.append('</table>')
+        else:
+            html_parts.append('<p style="color: orange;">⚠️ No documents found in database!</p>')
         
-        return html
+        # Add footer links
+        html_parts.extend([
+            '<br>',
+            '<p><a href="/admin/upload_document" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">📤 Upload Document</a></p>',
+            '<p><a href="/debug/qa_system" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🔍 Check QA Status</a></p>',
+            '</div>'
+        ])
+        
+        return ''.join(html_parts)
         
     except Exception as e:
         return f"""
