@@ -20,7 +20,7 @@ from collections import defaultdict
 from datetime import datetime
 from functools import wraps
 from typing import Any, Dict, List, Optional, Tuple, Callable
-
+from datetime import datetime, timedelta
 from flask import Flask, request, render_template, redirect, url_for, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import logging
@@ -110,7 +110,7 @@ os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 # Email validation regex
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
-# FIXED: Updated bootcamp configuration to include all three camps consistently
+# bootcamp configuration to include all three camps consistently
 BOOTCAMP_TYPES = ["Chinese", "English", "Middle East"]
 
 CAMPS = {"Chinese": "Chinese", "English": "English", "Middle East": "Middle East"}
@@ -145,7 +145,6 @@ app_metrics = {
 # Supported languages
 LANGUAGES: Dict[str, str] = {"en": "English", "zh": "中文", "ar": "العربية"}
 
-# Replace your TRANSLATIONS dictionary in app.py with this updated version:
 
 TRANSLATIONS = {
     "en": {
@@ -969,25 +968,25 @@ def save_qa_history_async(user_id: int, question: str, answer: str):
 
 
 def initialize_enhanced_qa_system():
-    """Initialize the QA system properly using qa.py functions with better error handling"""
+    """FIXED: Initialize the QA system properly for Railway deployment"""
     try:
 
         def init_in_background():
             try:
-                logger.info("Starting QA system initialization...")
+                logger.info("🚀 Starting QA system initialization...")
 
                 # Import the proper initialization function
                 from qa import initialize_qa, get_system_status
 
-                # Initialize using the qa.py function (this sets the global instance correctly)
-                qa_system = initialize_qa(documents_dir=DOCUMENTS_DIR)
+                # Initialize using the qa.py function
+                qa_system = initialize_qa()
 
-                # Wait for initialization to complete with more detailed logging
-                max_wait = 120  # 2 minutes max
+                # Wait for initialization to complete
+                max_wait = 60  # 1 minute max
                 wait_time = 0
 
                 while wait_time < max_wait:
-                    status = get_system_status(DOCUMENTS_DIR)
+                    status = get_system_status()
 
                     if status.get("ready"):
                         logger.info(f"✅ QA system ready after {wait_time} seconds!")
@@ -997,17 +996,6 @@ def initialize_enhanced_qa_system():
                         logger.info(
                             f"🤖 LLM Provider: {status.get('llm_provider', 'Unknown')}"
                         )
-
-                        # Test the system is actually working
-                        from qa import get_qa_system
-
-                        test_qa = get_qa_system()
-                        if test_qa:
-                            logger.info("✅ QA system accessible via get_qa_system()")
-                        else:
-                            logger.warning(
-                                "⚠️ QA system initialized but not accessible via get_qa_system()"
-                            )
                         return
 
                     elif status.get("error"):
@@ -1019,10 +1007,10 @@ def initialize_enhanced_qa_system():
                     elif status.get("initializing"):
                         logger.info(f"⏳ QA system initializing... ({wait_time}s)")
 
-                    time.sleep(5)
-                    wait_time += 5
+                    time.sleep(2)
+                    wait_time += 2
 
-                logger.warning("❌ QA initialization timed out after 2 minutes")
+                logger.warning("❌ QA initialization timed out after 1 minute")
 
             except Exception as e:
                 logger.error(f"Failed to initialize QA system: {str(e)}")
@@ -1313,9 +1301,8 @@ def register_bootcamp_selection() -> Any:
                     "register_bootcamp_info.html",
                     registration_data=reg_data,
                     bootcamp_types=BOOTCAMP_TYPES,
-                )  # FIXED
+                )
 
-            # FIXED: Validate against BOOTCAMP_TYPES
             if not validate_bootcamp_type(
                 previous_bootcamp_type
             ) or not validate_bootcamp_type(upcoming_bootcamp_type):
@@ -1324,7 +1311,7 @@ def register_bootcamp_selection() -> Any:
                     "register_bootcamp_info.html",
                     registration_data=reg_data,
                     bootcamp_types=BOOTCAMP_TYPES,
-                )  # FIXED
+                )
 
             reg_data.update(
                 {
@@ -1344,7 +1331,7 @@ def register_bootcamp_selection() -> Any:
                     "register_bootcamp_info.html",
                     registration_data=reg_data,
                     bootcamp_types=BOOTCAMP_TYPES,
-                )  # FIXED
+                )
 
             reg_data.update(
                 {
@@ -1380,7 +1367,7 @@ def register_bootcamp_selection() -> Any:
     return render_template(
         "register_bootcamp_info.html",
         registration_data=reg_data,
-        bootcamp_types=BOOTCAMP_TYPES,  # FIXED
+        bootcamp_types=BOOTCAMP_TYPES,
         past_cohorts=past_cohorts,
     )
 
@@ -1787,7 +1774,7 @@ def select_camp() -> Any:
     if request.method == "POST":
         camp = request.form.get("camp")
 
-        if not validate_bootcamp_type(camp):  # FIXED: Use validation function
+        if not validate_bootcamp_type(camp):
             flash("Please select a valid training camp.", "error")
             return render_template("select_camp.html", camps=CAMPS)
 
@@ -1891,7 +1878,7 @@ def get_content_with_tag_filtering(content_type: str, unit_id: int, user_id: int
 
         table_name = f"{content_type}s" if content_type != "quiz" else "quizzes"
 
-        # FIXED APPROACH: Check if user's camp matches ANY of the content's bootcamp tags OR the main camp field
+        # Check if user's camp matches ANY of the content's bootcamp tags OR the main camp field
         cursor.execute(
             f"""
             SELECT DISTINCT c.* FROM {table_name} c
@@ -1930,158 +1917,6 @@ def get_content_with_tag_filtering(content_type: str, unit_id: int, user_id: int
         return []
     finally:
         if conn:
-            release_db_connection(conn)
-
-
-# Emergency route to fix quiz route temporarily
-@app.route("/quiz_fixed/<int:unit_id>", methods=["GET", "POST"])
-@login_required
-def quiz_fixed(unit_id: int):
-    """Fixed quiz route that uses bulletproof filtering"""
-    if not session.get("authenticated"):
-        return redirect(url_for("password_gate"))
-
-    username = session["username"]
-    user_id = session["user_id"]
-    user_camp = session.get("user_camp")
-
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Check if user has already attempted the quiz
-        cursor.execute(
-            """
-            SELECT id, score, attempted_at, passed
-            FROM quiz_attempts
-            WHERE user_id = %s AND unit_id = %s AND score IS NOT NULL
-            ORDER BY attempted_at DESC
-            LIMIT 1
-        """,
-            (user_id, unit_id),
-        )
-        attempt = cursor.fetchone()
-
-        # Get available quiz questions using BULLETPROOF filtering
-        available_quizzes = get_content_with_tag_filtering("quiz", unit_id, user_id)
-
-        logger.info(
-            f"FIXED QUIZ: User {user_id}, unit {unit_id}: found {len(available_quizzes)} questions"
-        )
-
-        if not available_quizzes:
-            # Emergency fallback - get by camp
-            cursor.execute("SELECT camp FROM users WHERE id = %s", (user_id,))
-            user_camp_result = cursor.fetchone()
-            if user_camp_result:
-                cursor.execute(
-                    "SELECT * FROM quizzes WHERE unit_id = %s AND camp = %s ORDER BY id",
-                    (unit_id, user_camp_result[0]),
-                )
-                available_quizzes = cursor.fetchall()
-                logger.info(
-                    f"EMERGENCY FALLBACK: Found {len(available_quizzes)} questions by camp"
-                )
-
-        if not available_quizzes:
-            flash("No quiz questions available for your camp in this unit.", "error")
-            return redirect(url_for("unit", unit_id=unit_id))
-
-        total_questions = len(available_quizzes)
-        min_passing = max(3, int(total_questions * 0.6))
-
-        # If user has already attempted the quiz, show REVIEW MODE
-        if attempt and attempt[1] is not None:
-            # REDIRECT TO FORCE REVIEW (which we know works)
-            return redirect(f"/debug/force_quiz_review/{unit_id}")
-
-        # Handle quiz submission (POST)
-        if request.method == "POST":
-            logger.info(
-                f"FIXED QUIZ: User {user_id} submitting quiz for unit {unit_id}"
-            )
-
-            # Create new quiz attempt
-            cursor.execute(
-                """
-                INSERT INTO quiz_attempts (user_id, unit_id, score, passed)
-                VALUES (%s, %s, %s, %s)
-                RETURNING id
-            """,
-                (user_id, unit_id, 0, False),
-            )
-            attempt_id = cursor.fetchone()[0]
-
-            score = 0
-            # Process each question
-            for quiz in available_quizzes:
-                q_id = quiz["id"]
-                correct_answer = quiz["correct_answer"]
-                user_answer = request.form.get(f"q{q_id}")
-
-                correct = False
-                if user_answer and int(user_answer) == correct_answer:
-                    score += 1
-                    correct = True
-
-                # Save response
-                cursor.execute(
-                    """
-                    INSERT INTO quiz_responses (attempt_id, question_id, user_answer, is_correct)
-                    VALUES (%s, %s, %s, %s)
-                """,
-                    (
-                        attempt_id,
-                        q_id,
-                        int(user_answer) if user_answer else None,
-                        correct,
-                    ),
-                )
-
-            # Calculate pass/fail
-            passed = score >= min_passing
-
-            # Update quiz attempt with final score
-            cursor.execute(
-                """
-                UPDATE quiz_attempts
-                SET score = %s, passed = %s
-                WHERE id = %s
-            """,
-                (score, passed, attempt_id),
-            )
-
-            conn.commit()
-
-            # Redirect to force review to show results
-            return redirect(f"/debug/force_quiz_review/{unit_id}")
-
-        # GET request - Show quiz form (first attempt)
-        question_list = []
-        for quiz in available_quizzes:
-            options = safely_parse_options(quiz["options"])
-            question_list.append(
-                {"id": quiz["id"], "question": quiz["question"], "options": options}
-            )
-
-        return render_template(
-            "quiz.html",
-            username=username,
-            unit_id=unit_id,
-            questions=question_list,
-            motivation="🚀 Fixed quiz with bulletproof filtering!",
-            is_first_attempt=True,
-            user_camp=user_camp,
-        )
-
-    except Exception as e:
-        logger.error(f"Fixed quiz error: {str(e)}")
-        flash(f"Quiz error: {str(e)}", "error")
-        return redirect(url_for("unit", unit_id=unit_id))
-    finally:
-        if conn:
-            cursor.close()
             release_db_connection(conn)
 
 
@@ -2227,10 +2062,9 @@ def ensure_default_tags():
         )
         group_map = {row[1]: row[0] for row in cursor.fetchall()}
 
-        # FIXED: Ensure default tags match BOOTCAMP_TYPES
         default_tags = [
             ("Bootcamp Type", "Chinese", "Chinese bootcamp participants"),
-            ("Bootcamp Type", "English", "English bootcamp participants"),  # ADDED
+            ("Bootcamp Type", "English", "English bootcamp participants"),
             ("Bootcamp Type", "Middle East", "Middle East bootcamp participants"),
             ("Student Type", "New Student", "First-time participants"),
             ("Student Type", "Existing Student", "Returning participants"),
@@ -2520,7 +2354,6 @@ def unit(unit_id: int) -> Any:
                 logger.error(f"Error submitting project: {str(e)}")
                 flash("Error submitting project. Please try again.", "error")
 
-        # Use FIXED filtering for all content types
         materials = get_content_with_tag_filtering("material", unit_id, user_id)
         videos = get_content_with_tag_filtering("video", unit_id, user_id)
         projects_list = get_content_with_tag_filtering("project", unit_id, user_id)
@@ -2633,7 +2466,6 @@ def quiz(unit_id: int) -> Any:
             )
             return redirect(url_for("quiz_review", unit_id=unit_id))
 
-        # Get available quiz questions using FIXED filtering
         available_quizzes = get_content_with_tag_filtering("quiz", unit_id, user_id)
 
         logger.info(
@@ -3017,42 +2849,6 @@ def debug_quiz_review_test(unit_id: int):
         if conn:
             release_db_connection(conn)
 
-@app.route("/admin/force_qa_reload")
-@admin_required
-def admin_force_qa_reload():
-    """Force QA system to reload from database."""
-    try:
-        # Reset global QA instance
-        global _qa_instance
-        _qa_instance = None
-        
-        # Force reload from qa.py
-        from qa import initialize_qa, create_temp_documents_from_db
-        
-        # Create temp directory from database
-        temp_dir = create_temp_documents_from_db()
-        
-        # Initialize fresh QA system
-        qa_system = initialize_qa(temp_dir)
-        
-        return f"""
-        <div style="font-family: monospace; padding: 20px; background: #d4edda;">
-            <h2>✅ QA System Force Reload Complete!</h2>
-            <p>Temporary directory: {temp_dir}</p>
-            <p>QA system reinitialized with database documents.</p>
-            <p><strong>Wait 30 seconds, then test AI assistant!</strong></p>
-            <p><a href="/debug/qa_system">🔍 Check QA Status</a></p>
-            <p><a href="/ai_assistant">🤖 Test AI Assistant</a></p>
-        </div>
-        """
-    except Exception as e:
-        return f"""
-        <div style="font-family: monospace; padding: 20px; background: #f8d7da;">
-            <h2>❌ Force Reload Failed!</h2>
-            <p>Error: {str(e)}</p>
-        </div>
-        """
-        
 
 @app.route("/admin/fix_all_user_tags")
 @admin_required
@@ -3288,7 +3084,7 @@ def download_material(filename: str) -> Any:
 @app.route("/ai_assistant", methods=["GET", "POST"])
 @login_required
 def ai_assistant() -> Any:
-    """Simplified AI assistant with conversational capabilities."""
+    """FIXED: AI assistant with better error handling."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
 
@@ -3341,27 +3137,30 @@ def ai_assistant() -> Any:
         is_processing = True
 
         try:
-            # Enhanced QA system checking
+            # Get QA system
             qa_system = get_qa_system()
 
-            # More detailed system status checking
             if qa_system is None:
                 logger.warning("QA system is None, checking system status...")
                 from qa import get_system_status
 
-                status = get_system_status(DOCUMENTS_DIR)
+                status = get_system_status()
                 logger.info(f"QA System Status: {status}")
 
                 if status.get("initializing"):
-                    current_answer = "I'm still loading course materials. Please wait a moment and try again!"
+                    current_answer = "⏳ I'm still loading course materials from the database. Please wait a moment and try again!"
                     current_sources = []
                     conversation_type = "system_loading"
                 elif status.get("error"):
-                    current_answer = f"I encountered an error during setup: {status.get('error')}. Please contact your administrator."
+                    current_answer = f"❌ I encountered an error during setup: {status.get('error')}. Please try again."
                     current_sources = []
                     conversation_type = "system_error"
+                elif status.get("document_count", 0) == 0:
+                    current_answer = "📄 I don't have any course materials uploaded yet. Please upload documents through the admin panel (/admin/upload_document) so I can help you with course-specific questions!"
+                    current_sources = []
+                    conversation_type = "no_documents"
                 else:
-                    current_answer = "I'm currently starting up and loading course materials. Please wait a moment and try again!"
+                    current_answer = "🔄 I'm starting up and loading course materials. Please wait a moment and try again!"
                     current_sources = []
                     conversation_type = "system_loading"
             else:
@@ -3390,6 +3189,8 @@ def ai_assistant() -> Any:
                         current_answer += (
                             "\n\n📖 *This answer is based on your course materials.*"
                         )
+                    elif conversation_type == "no_documents":
+                        current_answer += "\n\n📁 *Once you upload course materials, I'll be able to provide more specific help!*"
 
                 except Exception as qa_error:
                     logger.error(f"Error during QA processing: {str(qa_error)}")
@@ -3397,14 +3198,9 @@ def ai_assistant() -> Any:
                     current_sources = []
                     conversation_type = "error"
 
-            # Save to database using the fixed function
+            # Save to database
             try:
-                if not save_qa_history_sync(
-                    session["user_id"], question, current_answer
-                ):
-                    logger.warning(
-                        f"Failed to save QA history for user {session['user_id']}"
-                    )
+                save_qa_history_sync(session["user_id"], question, current_answer)
             except Exception as db_error:
                 logger.error(f"Error saving QA history: {str(db_error)}")
 
@@ -3434,9 +3230,9 @@ def ai_assistant() -> Any:
 
 @app.route("/ask_ai_enhanced", methods=["POST"])
 @login_required
-@limiter.limit("20 per minute")  # Specific limit for AI calls
+@limiter.limit("20 per minute")
 def ask_ai_enhanced() -> Any:
-    """Simplified API endpoint for conversational chat, now with metrics tracking."""
+    """FIXED: API endpoint for conversational chat."""
     start_time = time.time()
     success = False
     user_id = str(session.get("user_id", "unknown"))
@@ -3473,17 +3269,34 @@ def ask_ai_enhanced() -> Any:
         qa_system = get_qa_system()
 
         if qa_system is None:
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "answer": "I'm currently starting up and loading course materials. Please wait a moment and try again!",
-                        "sources": [],
-                        "conversation_type": "system_loading",
-                    }
-                ),
-                503,
-            )
+            from qa import get_system_status
+
+            status = get_system_status()
+
+            if status.get("document_count", 0) == 0:
+                return (
+                    jsonify(
+                        {
+                            "success": True,
+                            "answer": "📄 I don't have any course materials uploaded yet. Please upload documents through the admin panel (/admin/upload_document) so I can help you with course-specific questions!",
+                            "sources": [],
+                            "conversation_type": "no_documents",
+                        }
+                    ),
+                    200,
+                )
+            else:
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "answer": "⏳ I'm currently starting up and loading course materials. Please wait a moment and try again!",
+                            "sources": [],
+                            "conversation_type": "system_loading",
+                        }
+                    ),
+                    503,
+                )
 
         try:
             qa_response = qa_system.answer_question(question, user_id=user_id)
@@ -3499,7 +3312,7 @@ def ask_ai_enhanced() -> Any:
                 "greeting": "\n\n💡 *Tip: You can ask me about course materials, explanations, or just chat about learning!*",
                 "general": "\n\n📚 *Feel free to ask me anything else about your studies!*",
                 "document_based": "\n\n📖 *This answer is based on your course materials.*",
-                "hybrid": "\n\n🔍 *I've combined information from your materials with general knowledge.*",
+                "no_documents": "\n\n📁 *Once you upload course materials, I'll be able to provide more specific help!*",
             }
 
             if conversation_type in personality_additions:
@@ -3518,7 +3331,7 @@ def ask_ai_enhanced() -> Any:
             sources = []
             conversation_type = "error"
 
-        # Save QA history using the fixed function
+        # Save QA history
         try:
             save_qa_history_sync(int(user_id), question, answer)
         except Exception as db_error:
@@ -3615,7 +3428,7 @@ def ask_ai() -> Any:
             answer = "I encountered an error while processing your question. Please try again with a simpler question."
             sources = []
 
-        # Save history using the fixed function
+        # Save history using the function
         try:
             user_id = session["user_id"]
             save_qa_history_sync(user_id, question, answer)
@@ -3833,13 +3646,15 @@ def clear_history() -> Any:
 @app.route("/ai_status")
 @login_required
 def ai_status() -> Any:
-    """Get the current status of the simplified AI system with detailed debugging."""
+    """FIXED: Get the current status of the AI system."""
     if not session.get("authenticated"):
         return jsonify({"error": "Not authenticated"}), 401
 
     try:
         # Get detailed status
-        status = get_system_status(documents_dir=DOCUMENTS_DIR)
+        from qa import get_system_status
+
+        status = get_system_status()
 
         # Get QA system instance
         qa_system = get_qa_system()
@@ -3852,27 +3667,13 @@ def ai_status() -> Any:
             "document_count": status.get("document_count", 0),
             "llm_provider": status.get("llm_provider", "Unknown"),
             "qa_system_instance": qa_system is not None,
-            "documents_dir": DOCUMENTS_DIR,
-            "documents_dir_exists": os.path.exists(DOCUMENTS_DIR),
+            "gpt_available": status.get("gpt_available", False),
+            "chunks_loaded": status.get("chunks_loaded", 0),
         }
-
-        # Check if documents directory has files
-        if os.path.exists(DOCUMENTS_DIR):
-            doc_files = []
-            for root, dirs, files in os.walk(DOCUMENTS_DIR):
-                for file in files:
-                    if file.lower().endswith(
-                        (".pdf", ".txt", ".ppt", ".pptx", ".doc", ".docx")
-                    ):
-                        doc_files.append(file)
-            detailed_status["document_files"] = doc_files
-        else:
-            detailed_status["document_files"] = []
 
         # Test QA system if available
         if qa_system:
             try:
-                # Quick test query
                 test_response = qa_system.answer_question(
                     "Hello", user_id=session.get("user_id", "test")
                 )
@@ -3897,6 +3698,14 @@ def ai_status() -> Any:
                     {
                         "status": "error",
                         "message": f'Initialization error: {detailed_status["error"]}',
+                        "details": detailed_status,
+                    }
+                )
+            elif detailed_status["document_count"] == 0:
+                return jsonify(
+                    {
+                        "status": "no_documents",
+                        "message": "No course materials uploaded. Please upload documents through the admin panel.",
                         "details": detailed_status,
                     }
                 )
@@ -4326,7 +4135,7 @@ def admin_add_cohort() -> Any:
                 "admin/add_cohort.html", bootcamp_types=BOOTCAMP_TYPES
             )
 
-        # FIXED: Validate against BOOTCAMP_TYPES instead of hardcoded list
+        # Validate against BOOTCAMP_TYPES instead of hardcoded list
         if not validate_bootcamp_type(bootcamp_type):
             flash(
                 f'Invalid bootcamp type. Must be one of: {", ".join(BOOTCAMP_TYPES)}',
@@ -4446,74 +4255,6 @@ def admin_dashboard() -> Any:
     """Display admin dashboard with statistics."""
     stats = get_admin_stats()
     return render_template("admin/dashboard.html", stats=stats)
-
-
-@app.route("/admin/fix_content_tags")
-@admin_required
-def fix_content_tags():
-    """Fix missing content tags by assigning bootcamp type tags to content based on camp field"""
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        fixed_count = 0
-        content_types = [
-            ("materials", "material"),
-            ("videos", "video"),
-            ("projects", "project"),
-            ("words", "word"),
-            ("quizzes", "quiz"),
-        ]
-
-        for table_name, content_type in content_types:
-            # Get content that has a camp but no tags
-            cursor.execute(
-                f"""
-                SELECT id, camp FROM {table_name} 
-                WHERE camp IS NOT NULL 
-                AND id NOT IN (
-                    SELECT content_id FROM content_tags 
-                    WHERE content_type = %s
-                )
-            """,
-                (content_type,),
-            )
-
-            untagged_content = cursor.fetchall()
-
-            for content_id, camp in untagged_content:
-                # Find the tag for this camp
-                cursor.execute("SELECT id FROM tags WHERE name = %s", (camp,))
-                tag_result = cursor.fetchone()
-
-                if tag_result:
-                    tag_id = tag_result[0]
-
-                    # Assign the tag
-                    cursor.execute(
-                        """
-                        INSERT INTO content_tags (content_type, content_id, tag_id)
-                        VALUES (%s, %s, %s)
-                        ON CONFLICT DO NOTHING
-                    """,
-                        (content_type, content_id, tag_id),
-                    )
-
-                    fixed_count += 1
-
-        conn.commit()
-        cursor.close()
-
-        return f"<pre>✅ Fixed {fixed_count} content items by assigning missing bootcamp type tags.<br><br>You should now be able to see content as a user!</pre>"
-
-    except Exception as e:
-        if conn:
-            conn.rollback()
-        return f"<pre>❌ Error: {str(e)}</pre>"
-    finally:
-        if conn:
-            release_db_connection(conn)
 
 
 # --- USER MANAGEMENT ROUTES ---
@@ -6327,7 +6068,7 @@ def admin_add_team() -> Any:
             flash("All fields are required", "danger")
             return redirect(url_for("admin_add_team"))
 
-        # FIXED: Use validation
+        # Use validation
         if not validate_bootcamp_type(camp):
             flash(
                 f"Invalid camp. Must be one of: {', '.join(BOOTCAMP_TYPES)}", "danger"
@@ -6421,7 +6162,7 @@ def admin_edit_team(team_id: int) -> Any:
             flash("All fields are required", "danger")
             return redirect(url_for("admin_edit_team", team_id=team_id))
 
-        # FIXED: Use validation
+        # Use validation
         if not validate_bootcamp_type(camp):
             flash(
                 f"Invalid camp. Must be one of: {', '.join(BOOTCAMP_TYPES)}", "danger"
@@ -7771,17 +7512,18 @@ def admin_manage_documents() -> Any:
     return render_template("admin/manage_documents.html", documents=documents)
 
 
-
-
-def store_document_in_database(filename: str, content: bytes, content_type: str) -> bool:
+def store_document_in_database(
+    filename: str, content: bytes, content_type: str
+) -> bool:
     """Store document content in database - FIXED VERSION."""
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # First ensure the table exists
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS stored_documents (
                 id SERIAL PRIMARY KEY,
                 filename VARCHAR(255) NOT NULL,
@@ -7790,10 +7532,12 @@ def store_document_in_database(filename: str, content: bytes, content_type: str)
                 upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(filename)
             )
-        """)
-        
+        """
+        )
+
         # Insert or update document
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO stored_documents (filename, content, content_type)
             VALUES (%s, %s, %s)
             ON CONFLICT (filename) 
@@ -7802,15 +7546,17 @@ def store_document_in_database(filename: str, content: bytes, content_type: str)
                 content_type = EXCLUDED.content_type,
                 upload_date = CURRENT_TIMESTAMP
             RETURNING id
-        """, (filename, content, content_type))
-        
+        """,
+            (filename, content, content_type),
+        )
+
         doc_id = cursor.fetchone()[0]
         conn.commit()
         cursor.close()
-        
+
         logger.info(f"✅ Document {filename} stored in database with ID: {doc_id}")
         return True
-        
+
     except Exception as e:
         if conn:
             conn.rollback()
@@ -7820,15 +7566,17 @@ def store_document_in_database(filename: str, content: bytes, content_type: str)
         if conn:
             release_db_connection(conn)
 
+
 def get_documents_from_database_admin() -> List[Dict[str, Any]]:
     """Get all documents from database for admin display."""
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Ensure table exists first
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS stored_documents (
                 id SERIAL PRIMARY KEY,
                 filename VARCHAR(255) NOT NULL,
@@ -7837,31 +7585,38 @@ def get_documents_from_database_admin() -> List[Dict[str, Any]]:
                 upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(filename)
             )
-        """)
-        
-        cursor.execute("""
+        """
+        )
+
+        cursor.execute(
+            """
             SELECT id, filename, content_type, upload_date, length(content) as size_bytes
             FROM stored_documents
             ORDER BY upload_date DESC
-        """)
-        
+        """
+        )
+
         documents = cursor.fetchall()
         cursor.close()
-        
+
         # Format for display
         result = []
         for doc in documents:
-            result.append({
-                "id": doc[0],
-                "name": doc[1],
-                "type": doc[2] or "Unknown",
-                "added": doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else "Unknown",
-                "size": f"{doc[4] / 1024 / 1024:.2f} MB" if doc[4] else "Unknown"
-            })
-        
+            result.append(
+                {
+                    "id": doc[0],
+                    "name": doc[1],
+                    "type": doc[2] or "Unknown",
+                    "added": (
+                        doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else "Unknown"
+                    ),
+                    "size": f"{doc[4] / 1024 / 1024:.2f} MB" if doc[4] else "Unknown",
+                }
+            )
+
         logger.info(f"📄 Retrieved {len(result)} documents for admin display")
         return result
-        
+
     except Exception as e:
         logger.error(f"❌ Error getting documents from database: {str(e)}")
         return []
@@ -7869,7 +7624,7 @@ def get_documents_from_database_admin() -> List[Dict[str, Any]]:
         if conn:
             release_db_connection(conn)
 
-# FIXED ADMIN UPLOAD ROUTE
+
 @app.route("/admin/upload_document", methods=["GET", "POST"])
 @admin_required
 def admin_upload_document() -> Any:
@@ -7888,9 +7643,9 @@ def admin_upload_document() -> Any:
             return redirect(request.url)
 
         # Check file extension
-        allowed_extensions = ['.pdf', '.ppt', '.pptx', '.txt', '.doc', '.docx']
+        allowed_extensions = [".pdf", ".ppt", ".pptx", ".txt", ".doc", ".docx"]
         if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
-            flash(f"Invalid file type. Allowed: {', '.join(allowed_extensions)}", "error")
+            flash("Invalid file type. Allowed: PDF, PPT, PPTX, TXT, DOC, DOCX", "error")
             return redirect(request.url)
 
         try:
@@ -7898,30 +7653,50 @@ def admin_upload_document() -> Any:
             filename = secure_filename(file.filename)
             file_content = file.read()
             content_type = file.content_type or "application/octet-stream"
-            
-            logger.info(f"📤 Uploading: {filename} ({len(file_content)} bytes, {content_type})")
-            
+
+            logger.info(f"📤 Uploading: {filename} ({len(file_content)} bytes)")
+
             # Store in database
-            if store_document_in_database(filename, file_content, content_type):
-                # Reset QA system to reload documents
-                global _qa_instance
-                _qa_instance = None
-                
-                flash(f"✅ Document '{filename}' uploaded successfully! QA system will reload.", "success")
-                logger.info(f"✅ Successfully uploaded {filename}")
-            else:
-                flash("❌ Failed to store document in database.", "error")
-                logger.error(f"❌ Failed to store {filename}")
-                
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            cursor.execute(
+                """
+                INSERT INTO stored_documents (filename, content, content_type)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (filename) 
+                DO UPDATE SET 
+                    content = EXCLUDED.content, 
+                    content_type = EXCLUDED.content_type,
+                    upload_date = CURRENT_TIMESTAMP
+                RETURNING id
+            """,
+                (filename, file_content, content_type),
+            )
+
+            doc_id = cursor.fetchone()[0]
+            conn.commit()
+            cursor.close()
+            release_db_connection(conn)
+
+            # Reset QA system to reload documents
+            global _qa_instance
+            _qa_instance = None
+
+            flash(
+                f"Document '{filename}' uploaded successfully! QA system will reload.",
+                "success",
+            )
+            logger.info(f"✅ Successfully uploaded {filename}")
+
         except Exception as e:
             logger.error(f"❌ Upload error: {str(e)}")
             flash(f"Error uploading document: {str(e)}", "error")
 
         return redirect(url_for("admin_manage_documents"))
 
-    # GET request - show upload form with current documents
-    documents = get_documents_from_database_admin()
-    return render_template("admin/upload_document.html", documents=documents)
+    # GET request - show upload form
+    return render_template("admin/upload_document.html")
 
 
 @app.route("/admin/delete_document/<filename>")
@@ -7931,26 +7706,29 @@ def admin_delete_document(filename: str) -> Any:
     try:
         # Security check
         safe_filename = secure_filename(filename)
-        
+
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Delete from database
-        cursor.execute("DELETE FROM stored_documents WHERE filename = %s RETURNING id", (safe_filename,))
+        cursor.execute(
+            "DELETE FROM stored_documents WHERE filename = %s RETURNING id",
+            (safe_filename,),
+        )
         deleted = cursor.fetchone()
-        
+
         if deleted:
             conn.commit()
-            
+
             # Reset QA system
             global _qa_instance
             _qa_instance = None
-            
-            flash(f"✅ Document '{safe_filename}' deleted successfully.", "success")
+
+            flash(f"Document '{safe_filename}' deleted successfully.", "success")
             logger.info(f"🗑️ Deleted document: {safe_filename}")
         else:
-            flash(f"❌ Document '{safe_filename}' not found.", "error")
-        
+            flash(f"Document '{safe_filename}' not found.", "error")
+
         cursor.close()
         release_db_connection(conn)
 
@@ -7960,88 +7738,39 @@ def admin_delete_document(filename: str) -> Any:
 
     return redirect(url_for("admin_manage_documents"))
 
-# ADD THIS TEST ROUTE TO VERIFY DATABASE STORAGE
-@app.route("/admin/test_database_storage")
+
+@app.route("/admin/force_qa_reload")
 @admin_required
-def admin_test_database_storage():
-    """Test route to verify database document storage."""
+def admin_force_qa_reload():
+    """FIXED: Force QA system to reload from database."""
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Check if table exists
-        cursor.execute("""
-            SELECT EXISTS (
-                SELECT FROM information_schema.tables 
-                WHERE table_name = 'stored_documents'
-            );
-        """)
-        table_exists = cursor.fetchone()[0]
-        
-        if not table_exists:
-            # Create table
-            cursor.execute("""
-                CREATE TABLE stored_documents (
-                    id SERIAL PRIMARY KEY,
-                    filename VARCHAR(255) NOT NULL,
-                    content BYTEA NOT NULL,
-                    content_type VARCHAR(100),
-                    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    UNIQUE(filename)
-                )
-            """)
-            conn.commit()
-            
-        # Test insert
-        test_content = "This is a test document for verifying database storage works properly."
-        cursor.execute("""
-            INSERT INTO stored_documents (filename, content, content_type)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (filename) DO UPDATE SET upload_date = CURRENT_TIMESTAMP
-            RETURNING id
-        """, ("test_document.txt", test_content.encode('utf-8'), "text/plain"))
-        
-        doc_id = cursor.fetchone()[0]
-        conn.commit()
-        
-        # Verify it was stored
-        cursor.execute("SELECT filename, length(content) FROM stored_documents WHERE id = %s", (doc_id,))
-        result = cursor.fetchone()
-        
-        cursor.close()
-        release_db_connection(conn)
-        
-        if result:
-            return f"""
-            <div style="font-family: monospace; padding: 20px; background: #d4edda;">
-                <h2>✅ Database Storage Test PASSED!</h2>
-                <p>Table exists: {table_exists}</p>
-                <p>Test document stored with ID: {doc_id}</p>
-                <p>Filename: {result[0]}</p>
-                <p>Content size: {result[1]} bytes</p>
-                <p><strong>Database storage is working properly!</strong></p>
-                <p><a href="/admin/manage_documents">📄 Manage Documents</a></p>
-                <p><a href="/admin/upload_document">📤 Upload Document</a></p>
-            </div>
-            """
-        else:
-            return """
-            <div style="font-family: monospace; padding: 20px; background: #f8d7da;">
-                <h2>❌ Database Storage Test FAILED!</h2>
-                <p>Could not verify document storage.</p>
-            </div>
-            """
-            
+        # Reset global QA instance
+        global _qa_instance
+        _qa_instance = None
+
+        # Force reload from qa.py
+        from qa import initialize_qa
+
+        qa_system = initialize_qa()
+
+        return f"""
+        <div style="font-family: monospace; padding: 20px; background: #d4edda;">
+            <h2>✅ QA System Force Reload Complete!</h2>
+            <p>QA system reinitialized with database documents.</p>
+            <p><strong>Wait 30 seconds, then test AI assistant!</strong></p>
+            <p><a href="/ai_status">🔍 Check QA Status</a></p>
+            <p><a href="/ai_assistant">🤖 Test AI Assistant</a></p>
+        </div>
+        """
     except Exception as e:
         return f"""
         <div style="font-family: monospace; padding: 20px; background: #f8d7da;">
-            <h2>❌ Database Storage Test ERROR!</h2>
+            <h2>❌ Force Reload Failed!</h2>
             <p>Error: {str(e)}</p>
-            <p>Check your database connection and permissions.</p>
         </div>
         """
 
-# FIXED VERSION - NO F-STRING SYNTAX ERRORS
+# ADD THIS ROUTE TO CHECK WHAT'S IN THE DATABASE
 @app.route("/admin/check_database_documents")
 @admin_required
 def admin_check_database_documents():
@@ -8079,18 +7808,15 @@ def admin_check_database_documents():
         cursor.close()
         release_db_connection(conn)
         
-        # Build HTML step by step to avoid f-string nesting issues
-        html_parts = [
-            '<div style="font-family: monospace; padding: 20px; background: #f8f9fa;">',
-            '<h2>📋 Database Documents Report</h2>',
-            '<p><strong>Table exists:</strong> ✅ Yes</p>',
-            '<p><strong>Document count:</strong> ' + str(len(documents)) + '</p>'
-        ]
-        
-        if documents:
-            html_parts.append('<h3>📄 Documents in Database:</h3>')
-            html_parts.append('<table style="border-collapse: collapse; width: 100%;">')
-            html_parts.append('''
+        html = f"""
+        <div style="font-family: monospace; padding: 20px; background: #f8f9fa;">
+            <h2>📋 Database Documents Report</h2>
+            <p><strong>Table exists:</strong> ✅ Yes</p>
+            <p><strong>Document count:</strong> {len(documents)}</p>
+            
+            {f'''
+            <h3>📄 Documents in Database:</h3>
+            <table style="border-collapse: collapse; width: 100%;">
                 <tr style="background: #e9ecef;">
                     <th style="border: 1px solid #dee2e6; padding: 8px;">ID</th>
                     <th style="border: 1px solid #dee2e6; padding: 8px;">Filename</th>
@@ -8098,47 +7824,25 @@ def admin_check_database_documents():
                     <th style="border: 1px solid #dee2e6; padding: 8px;">Size</th>
                     <th style="border: 1px solid #dee2e6; padding: 8px;">Upload Date</th>
                 </tr>
-            ''')
-            
-            # Build table rows safely
-            for doc in documents:
-                doc_id = doc[0]
-                filename = doc[1]
-                content_type = doc[2] or "Unknown"
-                upload_date = doc[3]
-                size_bytes = doc[4]
-                
-                # Format size
-                size_str = f"{size_bytes / 1024:.1f} KB" if size_bytes else "0 KB"
-                
-                # Format date
-                date_str = upload_date.strftime("%Y-%m-%d %H:%M:%S") if upload_date else "Unknown"
-                
-                # Build row HTML safely
-                row_html = f'''
+                {"".join(f'''
                 <tr>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc_id}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{filename}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{content_type}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{size_str}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{date_str}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[0]}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[1]}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[2] or "Unknown"}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[4] / 1024:.1f} KB</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else "Unknown"}</td>
                 </tr>
-                '''
-                html_parts.append(row_html)
+                ''' for doc in documents)}
+            </table>
+            ''' if documents else '<p style="color: orange;">⚠️ No documents found in database!</p>'}
             
-            html_parts.append('</table>')
-        else:
-            html_parts.append('<p style="color: orange;">⚠️ No documents found in database!</p>')
+            <br>
+            <p><a href="/admin/upload_document" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">📤 Upload Document</a></p>
+            <p><a href="/debug/qa_system" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🔍 Check QA Status</a></p>
+        </div>
+        """
         
-        # Add footer links
-        html_parts.extend([
-            '<br>',
-            '<p><a href="/admin/upload_document" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">📤 Upload Document</a></p>',
-            '<p><a href="/debug/qa_system" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🔍 Check QA Status</a></p>',
-            '</div>'
-        ])
-        
-        return ''.join(html_parts)
+        return html
         
     except Exception as e:
         return f"""
@@ -8933,9 +8637,12 @@ if __name__ == "__main__":
         # Add SQLAlchemy database URI config if Config.get_db_uri() is available
         try:
             from config import Config
-            app.config['SQLALCHEMY_DATABASE_URI'] = Config.get_db_uri()
+
+            app.config["SQLALCHEMY_DATABASE_URI"] = Config.get_db_uri()
         except ImportError:
-            print("Warning: config.py or Config.get_db_uri() not found. Skipping SQLALCHEMY_DATABASE_URI setup.")
+            print(
+                "Warning: config.py or Config.get_db_uri() not found. Skipping SQLALCHEMY_DATABASE_URI setup."
+            )
 
         initialize_tag_system()
         initialize_enhanced_qa_system()

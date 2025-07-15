@@ -1,6 +1,7 @@
 -- 51Talk AI Learning Platform Database Schema
--- PostgreSQL Database Initialization Script
+-- PostgreSQL Database Initialization Script (Idempotent Version)
 -- This script creates the complete database schema for the 51Talk AI Learning Platform.
+-- Safe to run multiple times - will not drop existing tables or duplicate data.
 
 -- Create database (uncomment if needed)
 -- CREATE DATABASE fiftyone_learning;
@@ -11,32 +12,8 @@
 -- Enable UUID extension (optional, for future use)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Drop existing tables if they exist (in reverse dependency order)
-DROP TABLE IF EXISTS quiz_responses CASCADE;
-DROP TABLE IF EXISTS quiz_attempts CASCADE;
-DROP TABLE IF EXISTS content_tags CASCADE;
-DROP TABLE IF EXISTS user_tags CASCADE;
-DROP TABLE IF EXISTS tags CASCADE;
-DROP TABLE IF EXISTS tag_groups CASCADE;
-DROP TABLE IF EXISTS followups CASCADE;
-DROP TABLE IF EXISTS qa_history CASCADE;
-DROP TABLE IF EXISTS feedback CASCADE;
-DROP TABLE IF EXISTS submissions CASCADE;
-DROP TABLE IF EXISTS progress CASCADE;
-DROP TABLE IF EXISTS words CASCADE;
-DROP TABLE IF EXISTS quizzes CASCADE;
-DROP TABLE IF EXISTS projects CASCADE;
-DROP TABLE IF EXISTS videos CASCADE;
-DROP TABLE IF EXISTS materials CASCADE;
-DROP TABLE IF EXISTS team_scores CASCADE;
-DROP TABLE IF EXISTS team_members CASCADE;
-DROP TABLE IF EXISTS teams CASCADE;
-DROP TABLE IF EXISTS users CASCADE;
-DROP TABLE IF EXISTS cohorts CASCADE;
-DROP TABLE IF EXISTS admin_users CASCADE;
-
 -- Admin users table - stores admin accounts
-CREATE TABLE admin_users (
+CREATE TABLE IF NOT EXISTS admin_users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -44,7 +21,7 @@ CREATE TABLE admin_users (
 );
 
 -- Cohorts table - stores cohort information for bootcamps
-CREATE TABLE cohorts (
+CREATE TABLE IF NOT EXISTS cohorts (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     bootcamp_type VARCHAR(50) NOT NULL, -- 'Chinese', 'English', 'Middle East'
@@ -57,7 +34,7 @@ CREATE TABLE cohorts (
 );
 
 -- Users table - stores user accounts with enhanced fields
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -75,8 +52,16 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Add role column if it doesn't exist
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'role') THEN
+        ALTER TABLE users ADD COLUMN role VARCHAR(32) DEFAULT 'user';
+    END IF;
+END $$;
+
 -- Tag groups table - stores tag group categories
-CREATE TABLE tag_groups (
+CREATE TABLE IF NOT EXISTS tag_groups (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) UNIQUE NOT NULL,
     description TEXT,
@@ -86,7 +71,7 @@ CREATE TABLE tag_groups (
 );
 
 -- Tags table - stores individual tags
-CREATE TABLE tags (
+CREATE TABLE IF NOT EXISTS tags (
     id SERIAL PRIMARY KEY,
     tag_group_id INTEGER REFERENCES tag_groups(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
@@ -98,7 +83,7 @@ CREATE TABLE tags (
 );
 
 -- User tags table - assigns tags to users
-CREATE TABLE user_tags (
+CREATE TABLE IF NOT EXISTS user_tags (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE,
@@ -108,7 +93,7 @@ CREATE TABLE user_tags (
 );
 
 -- Content tags table - assigns tags to content (materials, videos, etc.)
-CREATE TABLE content_tags (
+CREATE TABLE IF NOT EXISTS content_tags (
     id SERIAL PRIMARY KEY,
     content_type VARCHAR(50) NOT NULL, -- 'material', 'video', 'project', 'quiz', 'word'
     content_id INTEGER NOT NULL,
@@ -118,7 +103,7 @@ CREATE TABLE content_tags (
 );
 
 -- Teams table - stores team information
-CREATE TABLE teams (
+CREATE TABLE IF NOT EXISTS teams (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     team_lead_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
@@ -128,7 +113,7 @@ CREATE TABLE teams (
 );
 
 -- Team members table - stores team membership
-CREATE TABLE team_members (
+CREATE TABLE IF NOT EXISTS team_members (
     id SERIAL PRIMARY KEY,
     team_id INTEGER REFERENCES teams(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -137,7 +122,7 @@ CREATE TABLE team_members (
 );
 
 -- Team scores table - stores team performance scores
-CREATE TABLE team_scores (
+CREATE TABLE IF NOT EXISTS team_scores (
     id SERIAL PRIMARY KEY,
     team_id INTEGER REFERENCES teams(id) ON DELETE CASCADE,
     score INTEGER DEFAULT 0,
@@ -146,7 +131,7 @@ CREATE TABLE team_scores (
 );
 
 -- Materials table - stores learning materials with camp filtering
-CREATE TABLE materials (
+CREATE TABLE IF NOT EXISTS materials (
     id SERIAL PRIMARY KEY,
     unit_id INTEGER NOT NULL,
     title VARCHAR(200) NOT NULL,
@@ -158,7 +143,7 @@ CREATE TABLE materials (
 );
 
 -- Videos table - stores video resources with camp filtering
-CREATE TABLE videos (
+CREATE TABLE IF NOT EXISTS videos (
     id SERIAL PRIMARY KEY,
     unit_id INTEGER NOT NULL,
     title VARCHAR(200) NOT NULL,
@@ -170,7 +155,7 @@ CREATE TABLE videos (
 );
 
 -- Projects table - stores project assignments with camp filtering
-CREATE TABLE projects (
+CREATE TABLE IF NOT EXISTS projects (
     id SERIAL PRIMARY KEY,
     unit_id INTEGER NOT NULL,
     title VARCHAR(200) NOT NULL,
@@ -183,7 +168,7 @@ CREATE TABLE projects (
 );
 
 -- Quizzes table - stores quiz questions with camp filtering
-CREATE TABLE quizzes (
+CREATE TABLE IF NOT EXISTS quizzes (
     id SERIAL PRIMARY KEY,
     unit_id INTEGER NOT NULL,
     question TEXT NOT NULL,
@@ -196,7 +181,7 @@ CREATE TABLE quizzes (
 );
 
 -- Words table - stores AI vocabulary words with enhanced structure and camp filtering
-CREATE TABLE words (
+CREATE TABLE IF NOT EXISTS words (
     id SERIAL PRIMARY KEY,
     unit_id INTEGER NOT NULL,
     word VARCHAR(100) NOT NULL,
@@ -222,7 +207,7 @@ CREATE TABLE words (
 );
 
 -- Progress table - tracks user progress through units
-CREATE TABLE progress (
+CREATE TABLE IF NOT EXISTS progress (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     unit_number INTEGER NOT NULL,
@@ -235,7 +220,7 @@ CREATE TABLE progress (
 );
 
 -- Quiz attempts table - tracks quiz attempts (one per user per unit)
-CREATE TABLE quiz_attempts (
+CREATE TABLE IF NOT EXISTS quiz_attempts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     unit_id INTEGER NOT NULL,
@@ -246,7 +231,7 @@ CREATE TABLE quiz_attempts (
 );
 
 -- Quiz responses table - stores individual question responses
-CREATE TABLE quiz_responses (
+CREATE TABLE IF NOT EXISTS quiz_responses (
     id SERIAL PRIMARY KEY,
     attempt_id INTEGER REFERENCES quiz_attempts(id) ON DELETE CASCADE,
     question_id INTEGER REFERENCES quizzes(id) ON DELETE CASCADE,
@@ -255,8 +240,18 @@ CREATE TABLE quiz_responses (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Stored documents table - stores uploaded files
+CREATE TABLE IF NOT EXISTS stored_documents (
+    id SERIAL PRIMARY KEY,
+    filename VARCHAR(255) NOT NULL,
+    content BYTEA NOT NULL,
+    content_type VARCHAR(100),
+    upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(filename)
+);
+
 -- Submissions table - stores project submissions
-CREATE TABLE submissions (
+CREATE TABLE IF NOT EXISTS submissions (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     unit_id INTEGER NOT NULL,
@@ -265,7 +260,7 @@ CREATE TABLE submissions (
 );
 
 -- Feedback table - stores user feedback
-CREATE TABLE feedback (
+CREATE TABLE IF NOT EXISTS feedback (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     feedback_text TEXT NOT NULL,
@@ -274,7 +269,7 @@ CREATE TABLE feedback (
 );
 
 -- QA History table - stores Q&A interactions with AI assistant
-CREATE TABLE qa_history (
+CREATE TABLE IF NOT EXISTS qa_history (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     question TEXT NOT NULL,
@@ -283,7 +278,7 @@ CREATE TABLE qa_history (
 );
 
 -- Followups table - stores follow-up tasks for users
-CREATE TABLE followups (
+CREATE TABLE IF NOT EXISTS followups (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     title VARCHAR(200) NOT NULL,
@@ -296,75 +291,120 @@ CREATE TABLE followups (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create indexes for better performance
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_camp ON users(camp);
-CREATE INDEX idx_users_cohort ON users(cohort_id);
-CREATE INDEX idx_materials_unit_camp ON materials(unit_id, camp);
-CREATE INDEX idx_videos_unit_camp ON videos(unit_id, camp);
-CREATE INDEX idx_projects_unit_camp ON projects(unit_id, camp);
-CREATE INDEX idx_quizzes_unit_camp ON quizzes(unit_id, camp);
-CREATE INDEX idx_words_unit_camp ON words(unit_id, camp);
-CREATE INDEX idx_progress_user_unit ON progress(user_id, unit_number);
-CREATE INDEX idx_quiz_attempts_user_unit ON quiz_attempts(user_id, unit_id);
-CREATE INDEX idx_quiz_responses_attempt ON quiz_responses(attempt_id);
-CREATE INDEX idx_submissions_user_unit ON submissions(user_id, unit_id);
-CREATE INDEX idx_feedback_user ON feedback(user_id);
-CREATE INDEX idx_qa_history_user ON qa_history(user_id);
-CREATE INDEX idx_qa_history_created ON qa_history(created_at);
-CREATE INDEX idx_team_members_team ON team_members(team_id);
-CREATE INDEX idx_team_members_user ON team_members(user_id);
-CREATE INDEX idx_teams_camp ON teams(camp);
-CREATE INDEX idx_tags_group ON tags(tag_group_id);
-CREATE INDEX idx_user_tags_user ON user_tags(user_id);
-CREATE INDEX idx_user_tags_tag ON user_tags(tag_id);
-CREATE INDEX idx_content_tags_content ON content_tags(content_type, content_id);
-CREATE INDEX idx_content_tags_tag ON content_tags(tag_id);
-CREATE INDEX idx_followups_user ON followups(user_id);
-CREATE INDEX idx_followups_date ON followups(followup_date);
-CREATE INDEX idx_cohorts_type ON cohorts(bootcamp_type);
+-- Create indexes for better performance (only if they don't exist)
+DO $$ 
+BEGIN
+    -- Create indexes only if they don't exist
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_email') THEN
+        CREATE INDEX idx_users_email ON users(email);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_username') THEN
+        CREATE INDEX idx_users_username ON users(username);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_camp') THEN
+        CREATE INDEX idx_users_camp ON users(camp);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_cohort') THEN
+        CREATE INDEX idx_users_cohort ON users(cohort_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_materials_unit_camp') THEN
+        CREATE INDEX idx_materials_unit_camp ON materials(unit_id, camp);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_videos_unit_camp') THEN
+        CREATE INDEX idx_videos_unit_camp ON videos(unit_id, camp);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_projects_unit_camp') THEN
+        CREATE INDEX idx_projects_unit_camp ON projects(unit_id, camp);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_quizzes_unit_camp') THEN
+        CREATE INDEX idx_quizzes_unit_camp ON quizzes(unit_id, camp);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_words_unit_camp') THEN
+        CREATE INDEX idx_words_unit_camp ON words(unit_id, camp);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_progress_user_unit') THEN
+        CREATE INDEX idx_progress_user_unit ON progress(user_id, unit_number);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_quiz_attempts_user_unit') THEN
+        CREATE INDEX idx_quiz_attempts_user_unit ON quiz_attempts(user_id, unit_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_quiz_responses_attempt') THEN
+        CREATE INDEX idx_quiz_responses_attempt ON quiz_responses(attempt_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_submissions_user_unit') THEN
+        CREATE INDEX idx_submissions_user_unit ON submissions(user_id, unit_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_feedback_user') THEN
+        CREATE INDEX idx_feedback_user ON feedback(user_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_qa_history_user') THEN
+        CREATE INDEX idx_qa_history_user ON qa_history(user_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_qa_history_created') THEN
+        CREATE INDEX idx_qa_history_created ON qa_history(created_at);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_team_members_team') THEN
+        CREATE INDEX idx_team_members_team ON team_members(team_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_team_members_user') THEN
+        CREATE INDEX idx_team_members_user ON team_members(user_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_teams_camp') THEN
+        CREATE INDEX idx_teams_camp ON teams(camp);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_tags_group') THEN
+        CREATE INDEX idx_tags_group ON tags(tag_group_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_user_tags_user') THEN
+        CREATE INDEX idx_user_tags_user ON user_tags(user_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_user_tags_tag') THEN
+        CREATE INDEX idx_user_tags_tag ON user_tags(tag_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_content_tags_content') THEN
+        CREATE INDEX idx_content_tags_content ON content_tags(content_type, content_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_content_tags_tag') THEN
+        CREATE INDEX idx_content_tags_tag ON content_tags(tag_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_followups_user') THEN
+        CREATE INDEX idx_followups_user ON followups(user_id);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_followups_date') THEN
+        CREATE INDEX idx_followups_date ON followups(followup_date);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cohorts_type') THEN
+        CREATE INDEX idx_cohorts_type ON cohorts(bootcamp_type);
+    END IF;
+END $$;
 
--- Insert default admin user (password: rehabadmin51talk)
-INSERT INTO admin_users (username, password) VALUES 
-('admin', 'scrypt:32768:8:1$EC5MZ0QjvIn83J3W$15020670dcce64b54a6e3108ba44e01f15d4d92557c5dc78f0780abf94eb4dc70fc2f3eab1d1408393076c7231e7c39ca04930c499f6084cc438a71e98c13d95');
-
--- Insert default tag groups
-INSERT INTO tag_groups (name, description) VALUES 
-('Bootcamp Type', 'Tags for different bootcamp types'),
-('Student Type', 'Tags for different student types'),
-('Cohort', 'Tags for different cohorts'),
-('Skill Level', 'Tags for different skill levels');
-
--- Insert default tags
-INSERT INTO tags (tag_group_id, name, description) VALUES 
--- Bootcamp Type tags
-((SELECT id FROM tag_groups WHERE name = 'Bootcamp Type'), 'Chinese', 'Chinese bootcamp participants'),
-((SELECT id FROM tag_groups WHERE name = 'Bootcamp Type'), 'English', 'English bootcamp participants'),
-((SELECT id FROM tag_groups WHERE name = 'Bootcamp Type'), 'Middle East', 'Middle East bootcamp participants'),
--- Student Type tags
-((SELECT id FROM tag_groups WHERE name = 'Student Type'), 'New Student', 'First-time participants'),
-((SELECT id FROM tag_groups WHERE name = 'Student Type'), 'Existing Student', 'Returning participants'),
--- Skill Level tags
-((SELECT id FROM tag_groups WHERE name = 'Skill Level'), 'Beginner', 'Beginner level content'),
-((SELECT id FROM tag_groups WHERE name = 'Skill Level'), 'Intermediate', 'Intermediate level content'),
-((SELECT id FROM tag_groups WHERE name = 'Skill Level'), 'Advanced', 'Advanced level content');
-
--- Insert default cohorts
-INSERT INTO cohorts (name, bootcamp_type, start_date, end_date, description) VALUES 
-('Chinese Cohort 1 (March)', 'Chinese', '2025-03-01', '2025-05-31', 'Chinese AI Bootcamp - Cohort 1 (March 2025)'),
-('Chinese Cohort 2 (May)', 'Chinese', '2025-05-01', '2025-07-31', 'Chinese AI Bootcamp - Cohort 2 (May 2025)'),
-('English Cohort 1 (May)', 'English', '2025-05-01', '2025-07-31', 'English AI Bootcamp - Cohort 1 (May 2025)'),
-('Middle East Cohort 1 (May)', 'Middle East', '2025-05-01', '2025-07-31', 'Middle East AI Bootcamp - Cohort 1 (May 2025)');
-
--- Insert corresponding cohort tags
-INSERT INTO tags (tag_group_id, name, description) VALUES 
-((SELECT id FROM tag_groups WHERE name = 'Cohort'), 'Chinese Cohort 1 (March)', 'Chinese AI Bootcamp - Cohort 1 (March 2025)'),
-((SELECT id FROM tag_groups WHERE name = 'Cohort'), 'Chinese Cohort 2 (May)', 'Chinese AI Bootcamp - Cohort 2 (May 2025)'),
-((SELECT id FROM tag_groups WHERE name = 'Cohort'), 'English Cohort 1 (May)', 'English AI Bootcamp - Cohort 1 (May 2025)'),
-((SELECT id FROM tag_groups WHERE name = 'Cohort'), 'Middle East Cohort 1 (May)', 'Middle East AI Bootcamp - Cohort 1 (May 2025)');
-
--- Create triggers for updating timestamps
+-- Create triggers for updating timestamps (only if function doesn't exist)
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -373,20 +413,237 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create update triggers for all tables with updated_at columns
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_teams_updated_at BEFORE UPDATE ON teams FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_team_scores_updated_at BEFORE UPDATE ON team_scores FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_materials_updated_at BEFORE UPDATE ON materials FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_videos_updated_at BEFORE UPDATE ON videos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_quizzes_updated_at BEFORE UPDATE ON quizzes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_words_updated_at BEFORE UPDATE ON words FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_progress_updated_at BEFORE UPDATE ON progress FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_tag_groups_updated_at BEFORE UPDATE ON tag_groups FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_cohorts_updated_at BEFORE UPDATE ON cohorts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_followups_updated_at BEFORE UPDATE ON followups FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Create update triggers for all tables with updated_at columns (only if they don't exist)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_users_updated_at') THEN
+        CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_teams_updated_at') THEN
+        CREATE TRIGGER update_teams_updated_at BEFORE UPDATE ON teams FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_team_scores_updated_at') THEN
+        CREATE TRIGGER update_team_scores_updated_at BEFORE UPDATE ON team_scores FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_materials_updated_at') THEN
+        CREATE TRIGGER update_materials_updated_at BEFORE UPDATE ON materials FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_videos_updated_at') THEN
+        CREATE TRIGGER update_videos_updated_at BEFORE UPDATE ON videos FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_projects_updated_at') THEN
+        CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_quizzes_updated_at') THEN
+        CREATE TRIGGER update_quizzes_updated_at BEFORE UPDATE ON quizzes FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_words_updated_at') THEN
+        CREATE TRIGGER update_words_updated_at BEFORE UPDATE ON words FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_progress_updated_at') THEN
+        CREATE TRIGGER update_progress_updated_at BEFORE UPDATE ON progress FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_tag_groups_updated_at') THEN
+        CREATE TRIGGER update_tag_groups_updated_at BEFORE UPDATE ON tag_groups FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_tags_updated_at') THEN
+        CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_cohorts_updated_at') THEN
+        CREATE TRIGGER update_cohorts_updated_at BEFORE UPDATE ON cohorts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_followups_updated_at') THEN
+        CREATE TRIGGER update_followups_updated_at BEFORE UPDATE ON followups FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END $$;
+
+-- Insert default admin user (password: rehabadmin51talk) - only if doesn't exist
+INSERT INTO admin_users (username, password) 
+SELECT 'admin', 'scrypt:32768:8:1$EC5MZ0QjvIn83J3W$15020670dcce64b54a6e3108ba44e01f15d4d92557c5dc78f0780abf94eb4dc70fc2f3eab1d1408393076c7231e7c39ca04930c499f6084cc438a71e98c13d95'
+WHERE NOT EXISTS (SELECT 1 FROM admin_users WHERE username = 'admin');
+
+-- Insert default tag groups - only if they don't exist
+INSERT INTO tag_groups (name, description) 
+SELECT 'Bootcamp Type', 'Tags for different bootcamp types'
+WHERE NOT EXISTS (SELECT 1 FROM tag_groups WHERE name = 'Bootcamp Type');
+
+INSERT INTO tag_groups (name, description) 
+SELECT 'Student Type', 'Tags for different student types'
+WHERE NOT EXISTS (SELECT 1 FROM tag_groups WHERE name = 'Student Type');
+
+INSERT INTO tag_groups (name, description) 
+SELECT 'Cohort', 'Tags for different cohorts'
+WHERE NOT EXISTS (SELECT 1 FROM tag_groups WHERE name = 'Cohort');
+
+INSERT INTO tag_groups (name, description) 
+SELECT 'Skill Level', 'Tags for different skill levels'
+WHERE NOT EXISTS (SELECT 1 FROM tag_groups WHERE name = 'Skill Level');
+
+-- Insert default tags - only if they don't exist
+-- Bootcamp Type tags
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Bootcamp Type'), 
+    'Chinese', 
+    'Chinese bootcamp participants'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Bootcamp Type' AND t.name = 'Chinese'
+);
+
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Bootcamp Type'), 
+    'English', 
+    'English bootcamp participants'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Bootcamp Type' AND t.name = 'English'
+);
+
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Bootcamp Type'), 
+    'Middle East', 
+    'Middle East bootcamp participants'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Bootcamp Type' AND t.name = 'Middle East'
+);
+
+-- Student Type tags
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Student Type'), 
+    'New Student', 
+    'First-time participants'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Student Type' AND t.name = 'New Student'
+);
+
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Student Type'), 
+    'Existing Student', 
+    'Returning participants'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Student Type' AND t.name = 'Existing Student'
+);
+
+-- Skill Level tags
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Skill Level'), 
+    'Beginner', 
+    'Beginner level content'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Skill Level' AND t.name = 'Beginner'
+);
+
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Skill Level'), 
+    'Intermediate', 
+    'Intermediate level content'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Skill Level' AND t.name = 'Intermediate'
+);
+
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Skill Level'), 
+    'Advanced', 
+    'Advanced level content'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Skill Level' AND t.name = 'Advanced'
+);
+
+-- Insert default cohorts - only if they don't exist
+INSERT INTO cohorts (name, bootcamp_type, start_date, end_date, description) 
+SELECT 'Chinese Cohort 1 (March)', 'Chinese', '2025-03-01', '2025-05-31', 'Chinese AI Bootcamp - Cohort 1 (March 2025)'
+WHERE NOT EXISTS (SELECT 1 FROM cohorts WHERE name = 'Chinese Cohort 1 (March)');
+
+INSERT INTO cohorts (name, bootcamp_type, start_date, end_date, description) 
+SELECT 'Chinese Cohort 2 (May)', 'Chinese', '2025-05-01', '2025-07-31', 'Chinese AI Bootcamp - Cohort 2 (May 2025)'
+WHERE NOT EXISTS (SELECT 1 FROM cohorts WHERE name = 'Chinese Cohort 2 (May)');
+
+INSERT INTO cohorts (name, bootcamp_type, start_date, end_date, description) 
+SELECT 'English Cohort 1 (May)', 'English', '2025-05-01', '2025-07-31', 'English AI Bootcamp - Cohort 1 (May 2025)'
+WHERE NOT EXISTS (SELECT 1 FROM cohorts WHERE name = 'English Cohort 1 (May)');
+
+INSERT INTO cohorts (name, bootcamp_type, start_date, end_date, description) 
+SELECT 'Middle East Cohort 1 (May)', 'Middle East', '2025-05-01', '2025-07-31', 'Middle East AI Bootcamp - Cohort 1 (May 2025)'
+WHERE NOT EXISTS (SELECT 1 FROM cohorts WHERE name = 'Middle East Cohort 1 (May)');
+
+-- Insert corresponding cohort tags - only if they don't exist
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Cohort'), 
+    'Chinese Cohort 1 (March)', 
+    'Chinese AI Bootcamp - Cohort 1 (March 2025)'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Cohort' AND t.name = 'Chinese Cohort 1 (March)'
+);
+
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Cohort'), 
+    'Chinese Cohort 2 (May)', 
+    'Chinese AI Bootcamp - Cohort 2 (May 2025)'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Cohort' AND t.name = 'Chinese Cohort 2 (May)'
+);
+
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Cohort'), 
+    'English Cohort 1 (May)', 
+    'English AI Bootcamp - Cohort 1 (May 2025)'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Cohort' AND t.name = 'English Cohort 1 (May)'
+);
+
+INSERT INTO tags (tag_group_id, name, description) 
+SELECT 
+    (SELECT id FROM tag_groups WHERE name = 'Cohort'), 
+    'Middle East Cohort 1 (May)', 
+    'Middle East AI Bootcamp - Cohort 1 (May 2025)'
+WHERE NOT EXISTS (
+    SELECT 1 FROM tags t 
+    JOIN tag_groups tg ON t.tag_group_id = tg.id 
+    WHERE tg.name = 'Cohort' AND t.name = 'Middle East Cohort 1 (May)'
+);
 
 -- Display table creation summary
 SELECT 
@@ -398,7 +655,7 @@ WHERE schemaname = 'public'
 ORDER BY tablename;
 
 -- Display success message
-SELECT 'Database schema created successfully! All tables and default data have been inserted.' as status;
+SELECT 'Database schema created/updated successfully! All tables and default data have been inserted.' as status;
 
 -- Show counts of inserted data
 SELECT 
@@ -421,5 +678,3 @@ SELECT
     COUNT(*) as record_count 
 FROM cohorts
 ORDER BY table_name;
-
-ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(32) DEFAULT 'user';
