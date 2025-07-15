@@ -3110,9 +3110,11 @@ def download_file_from_db(filename):
         if conn:
             release_db_connection(conn)
 
+
+
 @app.route("/static/uploads/<path:filename>")
 def serve_static_upload(filename):
-    """Serve uploaded files from database instead of file system."""
+    """Serve uploaded files from database with smart filename matching."""
     
     # Extract just the filename (remove any path prefix)
     clean_filename = os.path.basename(filename)
@@ -3122,22 +3124,64 @@ def serve_static_upload(filename):
         conn = get_db_connection()
         cursor = conn.cursor()
         
-        # Get file from database
+        # Strategy 1: Try exact match
         cursor.execute(
             "SELECT content, content_type FROM stored_documents WHERE filename = %s",
             (clean_filename,)
         )
-        
         result = cursor.fetchone()
+        
+        if not result:
+            # Strategy 2: Try case-insensitive match
+            cursor.execute(
+                "SELECT content, content_type FROM stored_documents WHERE LOWER(filename) = LOWER(%s)",
+                (clean_filename,)
+            )
+            result = cursor.fetchone()
+        
+        if not result:
+            # Strategy 3: Try partial match (remove timestamp prefixes)
+            # Handle filenames like "unit_1_Chinese_20250714_141026_E-51Talk-AI-Unit-one.pdf"
+            # Look for files that end with the same base name
+            base_name = clean_filename.split('_')[-1] if '_' in clean_filename else clean_filename
+            cursor.execute(
+                "SELECT content, content_type FROM stored_documents WHERE filename LIKE %s",
+                (f"%{base_name}",)
+            )
+            result = cursor.fetchone()
+        
+        if not result:
+            # Strategy 4: Try matching the original file name pattern
+            # Look for files that contain key parts of the requested filename
+            name_parts = clean_filename.replace('.pdf', '').replace('.ppt', '').replace('.pptx', '').split('_')
+            for part in name_parts:
+                if len(part) > 3:  # Only use meaningful parts
+                    cursor.execute(
+                        "SELECT content, content_type FROM stored_documents WHERE filename LIKE %s",
+                        (f"%{part}%",)
+                    )
+                    result = cursor.fetchone()
+                    if result:
+                        break
+        
         cursor.close()
         
         if result:
             content, content_type = result
             
-            # Create response with proper headers
+            # Determine the correct content type if not set
+            if not content_type:
+                if clean_filename.lower().endswith('.pdf'):
+                    content_type = 'application/pdf'
+                elif clean_filename.lower().endswith(('.ppt', '.pptx')):
+                    content_type = 'application/vnd.ms-powerpoint'
+                else:
+                    content_type = 'application/octet-stream'
+            
+            # Create response
             response = app.response_class(
                 content,
-                mimetype=content_type or "application/octet-stream",
+                mimetype=content_type,
                 headers={
                     "Content-Disposition": f"inline; filename={clean_filename}",
                     "Cache-Control": "public, max-age=3600"
@@ -3146,21 +3190,49 @@ def serve_static_upload(filename):
             return response
         
     except Exception as e:
-        logger.error(f"Error serving static upload: {str(e)}")
+        logger.error(f"Database error serving {filename}: {str(e)}")
     finally:
         if conn:
             release_db_connection(conn)
     
-    # If not found in database, try file system as fallback
+    # Fallback to file system
     try:
         file_path = os.path.join(UPLOAD_FOLDER, clean_filename)
         if os.path.exists(file_path):
             return send_file(file_path)
     except Exception as e:
-        logger.error(f"File system fallback error: {str(e)}")
+        logger.error(f"File system error: {str(e)}")
     
-    # Return 404 if file not found anywhere
+    # Return 404
     return "File not found", 404
+
+
+# Also add this debug route to see what's in your database
+@app.route("/debug/files")
+@admin_required
+def debug_files():
+    """Debug route to see what files are in the database."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT filename, content_type, upload_date, length(content) as size FROM stored_documents ORDER BY upload_date DESC")
+        files = cursor.fetchall()
+        cursor.close()
+        
+        html = "<h2>Files in Database:</h2><ul>"
+        for filename, content_type, upload_date, size in files:
+            html += f"<li><strong>{filename}</strong> ({content_type}) - {size} bytes - {upload_date}</li>"
+        html += "</ul>"
+        
+        return html
+        
+    except Exception as e:
+        return f"Error: {str(e)}"
+    finally:
+        if conn:
+            release_db_connection(conn)
 
 
 @app.route("/download_material/<path:filename>")
