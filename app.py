@@ -3110,6 +3110,57 @@ def download_file_from_db(filename):
         if conn:
             release_db_connection(conn)
 
+@app.route("/static/uploads/<path:filename>")
+def serve_static_upload(filename):
+    """Serve uploaded files from database instead of file system."""
+    
+    # Extract just the filename (remove any path prefix)
+    clean_filename = os.path.basename(filename)
+    
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get file from database
+        cursor.execute(
+            "SELECT content, content_type FROM stored_documents WHERE filename = %s",
+            (clean_filename,)
+        )
+        
+        result = cursor.fetchone()
+        cursor.close()
+        
+        if result:
+            content, content_type = result
+            
+            # Create response with proper headers
+            response = app.response_class(
+                content,
+                mimetype=content_type or "application/octet-stream",
+                headers={
+                    "Content-Disposition": f"inline; filename={clean_filename}",
+                    "Cache-Control": "public, max-age=3600"
+                }
+            )
+            return response
+        
+    except Exception as e:
+        logger.error(f"Error serving static upload: {str(e)}")
+    finally:
+        if conn:
+            release_db_connection(conn)
+    
+    # If not found in database, try file system as fallback
+    try:
+        file_path = os.path.join(UPLOAD_FOLDER, clean_filename)
+        if os.path.exists(file_path):
+            return send_file(file_path)
+    except Exception as e:
+        logger.error(f"File system fallback error: {str(e)}")
+    
+    # Return 404 if file not found anywhere
+    return "File not found", 404
 
 
 @app.route("/download_material/<path:filename>")
