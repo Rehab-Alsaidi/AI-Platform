@@ -3056,25 +3056,116 @@ def feedback() -> Any:
     return render_template("feedback.html", username=username)
 
 
+@app.route("/download_file/<filename>")
+@login_required
+def download_file_from_db(filename):
+    """Download file from database instead of file system."""
+    if not session.get("authenticated"):
+        return redirect(url_for("password_gate"))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get file from database
+        cursor.execute(
+            "SELECT content, content_type FROM stored_documents WHERE filename = %s",
+            (filename,)
+        )
+        
+        result = cursor.fetchone()
+        cursor.close()
+        
+        if not result:
+            # File not in database, try file system as fallback
+            try:
+                file_path = os.path.join(UPLOAD_FOLDER, filename)
+                if os.path.exists(file_path):
+                    return send_file(file_path, as_attachment=True, download_name=filename)
+            except:
+                pass
+            
+            flash(f"File '{filename}' not found.", "error")
+            return redirect(request.referrer or url_for("dashboard"))
+        
+        content, content_type = result
+        
+        # Create a BytesIO object from the database content
+        file_data = io.BytesIO(content)
+        file_data.seek(0)
+        
+        return send_file(
+            file_data,
+            mimetype=content_type or "application/octet-stream",
+            as_attachment=True,
+            download_name=filename
+        )
+        
+    except Exception as e:
+        logger.error(f"Error downloading file from database: {str(e)}")
+        flash(f"Error downloading file: {str(e)}", "error")
+        return redirect(request.referrer or url_for("dashboard"))
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+
+
 @app.route("/download_material/<path:filename>")
 def download_material(filename: str) -> Any:
-    """Handle material file download with security checks."""
+    """Handle material file download with database support."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
 
     if "user_id" not in session:
         return redirect(url_for("login"))
 
+    # Extract just the filename (remove any path prefix)
+    clean_filename = os.path.basename(filename)
+    
+    # Try database first
+    conn = None
     try:
-        safe_filename = filename.replace("../", "").replace("..\\", "")
-        file_path = os.path.join(UPLOAD_FOLDER, safe_filename)
-
-        return send_file(file_path, as_attachment=True)
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute(
+            "SELECT content, content_type FROM stored_documents WHERE filename = %s",
+            (clean_filename,)
+        )
+        
+        result = cursor.fetchone()
+        cursor.close()
+        
+        if result:
+            content, content_type = result
+            file_data = io.BytesIO(content)
+            file_data.seek(0)
+            
+            return send_file(
+                file_data,
+                mimetype=content_type or "application/octet-stream",
+                as_attachment=True,
+                download_name=clean_filename
+            )
     except Exception as e:
-        logger.error(f"Error downloading file: {str(e)}")
-        flash(f"Error downloading file: {str(e)}", "error")
-        return redirect(request.referrer or url_for("dashboard"))
+        logger.error(f"Database download error: {str(e)}")
+    finally:
+        if conn:
+            release_db_connection(conn)
+    
+    # Fallback to file system
+    try:
+        file_path = os.path.join(UPLOAD_FOLDER, clean_filename)
+        if os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True, download_name=clean_filename)
+    except Exception as e:
+        logger.error(f"File system download error: {str(e)}")
 
+    # File not found anywhere
+    flash(f"File '{clean_filename}' not found.", "error")
+    return redirect(request.referrer or url_for("dashboard"))
 
 # ==============================================
 # AI ASSISTANT ROUTES
