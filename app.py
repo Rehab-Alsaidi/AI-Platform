@@ -3017,6 +3017,42 @@ def debug_quiz_review_test(unit_id: int):
         if conn:
             release_db_connection(conn)
 
+@app.route("/admin/force_qa_reload")
+@admin_required
+def admin_force_qa_reload():
+    """Force QA system to reload from database."""
+    try:
+        # Reset global QA instance
+        global _qa_instance
+        _qa_instance = None
+        
+        # Force reload from qa.py
+        from qa import initialize_qa, create_temp_documents_from_db
+        
+        # Create temp directory from database
+        temp_dir = create_temp_documents_from_db()
+        
+        # Initialize fresh QA system
+        qa_system = initialize_qa(temp_dir)
+        
+        return f"""
+        <div style="font-family: monospace; padding: 20px; background: #d4edda;">
+            <h2>✅ QA System Force Reload Complete!</h2>
+            <p>Temporary directory: {temp_dir}</p>
+            <p>QA system reinitialized with database documents.</p>
+            <p><strong>Wait 30 seconds, then test AI assistant!</strong></p>
+            <p><a href="/debug/qa_system">🔍 Check QA Status</a></p>
+            <p><a href="/ai_assistant">🤖 Test AI Assistant</a></p>
+        </div>
+        """
+    except Exception as e:
+        return f"""
+        <div style="font-family: monospace; padding: 20px; background: #f8d7da;">
+            <h2>❌ Force Reload Failed!</h2>
+            <p>Error: {str(e)}</p>
+        </div>
+        """
+        
 
 @app.route("/admin/fix_all_user_tags")
 @admin_required
