@@ -30,6 +30,177 @@ logger = logging.getLogger(__name__)
 # FIXED DATABASE CONNECTION FOR RAILWAY
 # ============================================================================
 
+def get_db_connection():
+    """Get database connection for Railway deployment with better error handling."""
+    try:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+
+        # Try to get DATABASE_URL first (Railway standard)
+        database_url = os.getenv("DATABASE_URL")
+        if database_url:
+            # Replace postgres:// with postgresql:// if needed
+            if database_url.startswith("postgres://"):
+                database_url = database_url.replace("postgres://", "postgresql://", 1)
+            conn = psycopg2.connect(database_url)
+            logger.info("✅ Connected to Railway database via DATABASE_URL")
+            return conn
+
+        # Fallback to individual environment variables
+        conn = psycopg2.connect(
+            host=os.getenv("DB_HOST", "localhost"),
+            port=os.getenv("DB_PORT", "5432"),
+            database=os.getenv("DB_NAME", "fiftyone_learning"),
+            user=os.getenv("DB_USER", "admin"),
+            password=os.getenv("DB_PASSWORD", "admin123"),
+        )
+        logger.info("✅ Connected to database via individual env vars")
+        return conn
+    except Exception as e:
+        logger.error(f"❌ Database connection error: {e}")
+        return None
+
+
+def ensure_stored_documents_table():
+    """Ensure the stored_documents table exists."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        if not conn:
+            return False
+
+        cursor = conn.cursor()
+
+        # Create table if it doesn't exist
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS stored_documents (
+                id SERIAL PRIMARY KEY,
+                filename VARCHAR(255) NOT NULL,
+                content BYTEA NOT NULL,
+                content_type VARCHAR(100),
+                upload_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(filename)
+            )
+        """
+        )
+        conn.commit()
+        cursor.close()
+        logger.info("✅ Stored documents table ensured")
+        return True
+
+    except Exception as e:
+        logger.error(f"❌ Error ensuring stored_documents table: {str(e)}")
+        return False
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_documents_from_database() -> List[Dict[str, Any]]:
+    """FIXED: Get documents from database with proper error handling."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        if not conn:
+            logger.error("❌ No database connection available")
+            return []
+
+        cursor = conn.cursor()
+
+        # Ensure table exists
+        if not ensure_stored_documents_table():
+            logger.error("❌ Could not ensure stored_documents table exists")
+            return []
+
+        # Get documents
+        cursor.execute(
+            """
+            SELECT filename, content, content_type, upload_date
+            FROM stored_documents
+            ORDER BY upload_date DESC
+        """
+        )
+
+        documents = cursor.fetchall()
+        cursor.close()
+
+        logger.info(f"📄 Retrieved {len(documents)} documents from database")
+
+        # Return in expected format
+        result = []
+        for filename, content, content_type, upload_date in documents:
+            if content:  # Only include documents with content
+                result.append((filename, content, content_type))
+
+        return result
+
+    except Exception as e:
+        logger.error(f"❌ Error getting documents from database: {str(e)}")
+        return []
+    finally:
+        if conn:
+            conn.close()
+
+
+def create_temp_documents_from_db() -> str:
+    """FIXED: Create temporary directory with documents from database."""
+    try:
+        # Create temporary directory
+        temp_dir = tempfile.mkdtemp(prefix="railway_qa_docs_")
+        logger.info(f"📁 Created temp directory: {temp_dir}")
+
+        # Get documents from database
+        documents = get_documents_from_database()
+
+        if not documents:
+            logger.warning("⚠️ No documents found in database")
+            # Create a placeholder file so the system doesn't crash
+            placeholder_content = """# Welcome to 51Talk AI Learning Platform
+
+This is a placeholder document. Please upload your course materials through the admin panel.
+
+## How to upload documents:
+1. Go to /admin/upload_document
+2. Upload PDF, PPT, or text files
+3. The AI assistant will automatically learn from your materials
+
+## Available features:
+- Course material Q&A
+- Interactive learning assistance
+- Multi-language support
+- Progress tracking
+"""
+            with open(os.path.join(temp_dir, "placeholder.txt"), "w", encoding="utf-8") as f:
+                f.write(placeholder_content)
+            logger.info("📄 Created placeholder document")
+            return temp_dir
+
+        # Save documents to temp directory
+        saved_count = 0
+        for filename, content, content_type in documents:
+            if content:
+                try:
+                    file_path = os.path.join(temp_dir, filename)
+                    with open(file_path, "wb") as f:
+                        f.write(content)
+                    saved_count += 1
+                    logger.info(f"📄 Extracted document: {filename}")
+                except Exception as e:
+                    logger.error(f"❌ Error saving {filename}: {str(e)}")
+
+        logger.info(f"✅ Created temporary documents directory with {saved_count} files")
+        return temp_dir
+
+    except Exception as e:
+        logger.error(f"❌ Error creating temp documents directory: {str(e)}")
+        # Return empty temp directory with placeholder
+        temp_dir = tempfile.mkdtemp(prefix="railway_qa_docs_empty_")
+        with open(os.path.join(temp_dir, "error.txt"), "w", encoding="utf-8") as f:
+            f.write(f"Error loading documents: {str(e)}")
+        return temp_dir
+
+
 def get_openrouter_config():
     """Get OpenRouter configuration with better error handling."""
     try:
@@ -390,6 +561,7 @@ class VectorStore:
                     # Mark as complete - we don't need actual vector store for OpenRouter/GPT
                     self._initialization_complete = True
                     self._is_initializing = False
+                    logger.info(f"✅ Vector store initialized with {len(self.document_chunks)} chunks")
 
             except Exception as e:
                 self._initialization_error = str(e)
@@ -411,8 +583,8 @@ class VectorStore:
         raise TimeoutError("Vector store initialization timed out")
 
     def is_ready(self) -> bool:
-        """For OpenRouter/GPT mode, ready when document chunks are loaded."""
-        return self._initialization_complete and len(self.document_chunks) > 0
+        """Ready when initialization is complete."""
+        return self._initialization_complete
 
 
 class MockRetriever:
@@ -503,10 +675,10 @@ class DocumentQA:
             logger.error("❌ OpenRouter API not configured properly")
 
         self.greetings = {
-            'hi': "Hello! I'm your AI learning assistant powered by GPT. I can help you with course materials, explain concepts, or just chat about your studies. What would you like to know?",
-            'hello': "Hi there! I'm here to help with your learning journey using GPT. You can ask me about course topics, request explanations, or get study tips. How can I assist you today?",
-            'hey': "Hey! Great to see you here. I'm your GPT-powered AI tutor ready to help with anything you're studying. What's on your mind?",
-            'good morning': "Good morning! Ready to learn something new today? I'm here to help with your course materials using GPT.",
+            'hi': "Hello! I'm your AI learning assistant. I can help you with course materials, explain concepts, or just chat about your studies. What would you like to know?",
+            'hello': "Hi there! I'm here to help with your learning journey. You can ask me about course topics, request explanations, or get study tips. How can I assist you today?",
+            'hey': "Hey! Great to see you here. I'm your AI tutor ready to help with anything you're studying. What's on your mind?",
+            'good morning': "Good morning! Ready to learn something new today? I'm here to help with your course materials.",
             'good afternoon': "Good afternoon! How's your learning going today? I'm here to help with explanations or questions.",
             'good evening': "Good evening! Perfect time for some learning. What would you like to explore?"
         }
@@ -522,6 +694,8 @@ class DocumentQA:
 
         question = question.strip()
         question_lower = question.lower()
+        
+        logger.info(f"🤖 Processing question: {question[:50]}...")
 
         try:
             conversation_type = self._detect_conversation_type(question_lower)
@@ -544,6 +718,8 @@ class DocumentQA:
 
         except Exception as e:
             logger.error(f"❌ Error in answer_question: {str(e)}")
+            import traceback
+            logger.error(f"❌ Full traceback: {traceback.format_exc()}")
             return {
                 "answer": "I encountered an error, but I'm still here to help! Could you try rephrasing your question?",
                 "sources": [],
@@ -586,14 +762,21 @@ class DocumentQA:
     ) -> Dict[str, Any]:
         """FIXED Handle document questions for Railway deployment."""
         try:
+            logger.info("🔍 Starting document question processing...")
+            
+            # Check 1: OpenRouter GPT availability
             if not self.gpt_llm:
+                logger.error("❌ OpenRouter GPT is not configured")
                 return {
-                    "answer": "❌ OpenRouter GPT is not properly configured. Please check your API settings in the environment variables.",
+                    "answer": "❌ OpenRouter GPT is not properly configured. Please check your OPENROUTER_API_KEY environment variable.",
                     "sources": [],
                     "conversation_type": "error",
                 }
+            logger.info("✅ OpenRouter GPT is available")
 
+            # Check 2: Vector store readiness
             if not self.vector_store_manager.is_ready():
+                logger.error("❌ Vector store is not ready")
                 if self.vector_store_manager._is_initializing:
                     return {
                         "answer": "⏳ I'm currently loading course materials from the database. Please wait a moment and try again.",
@@ -601,61 +784,103 @@ class DocumentQA:
                         "conversation_type": "loading",
                     }
                 else:
+                    error_msg = self.vector_store_manager._initialization_error
+                    logger.error(f"❌ Vector store error: {error_msg}")
                     return {
-                        "answer": "I don't have access to course materials right now. Please ensure documents are uploaded to the documents directory.",
+                        "answer": "📄 I don't have any course materials uploaded yet. Please upload some documents through the admin panel (/admin/upload_document), and I'll be able to help you with course-specific questions!",
                         "sources": [],
-                        "conversation_type": "error"
+                        "conversation_type": "no_documents",
                     }
-            
-            # Get the mock retriever for OpenRouter/GPT mode
-            retriever = self.vector_store_manager.get_vector_store(timeout=10)
-            if not retriever:
+            logger.info("✅ Vector store is ready")
+
+            # Check 3: Get retriever
+            try:
+                retriever = self.vector_store_manager.get_vector_store(timeout=10)
+                if not retriever:
+                    logger.error("❌ Failed to get retriever")
+                    return {
+                        "answer": "❌ I'm having trouble accessing course materials. Please try again.",
+                        "sources": [],
+                        "conversation_type": "error",
+                    }
+                logger.info("✅ Retriever obtained successfully")
+            except Exception as retriever_error:
+                logger.error(f"❌ Retriever error: {str(retriever_error)}")
                 return {
-                    "answer": "❌ I'm having trouble accessing course materials. Please try again.",
+                    "answer": "📄 I don't have any course materials uploaded yet. Please upload some documents through the admin panel (/admin/upload_document), and I'll be able to help you with course-specific questions!",
                     "sources": [],
-                    "conversation_type": "error",
+                    "conversation_type": "no_documents",
                 }
 
-            # Get relevant documents
-            docs = retriever.get_relevant_documents(question, search_kwargs={"k": 6})
-            
+            # Check 4: Get relevant documents
+            try:
+                logger.info("🔍 Searching for relevant documents...")
+                docs = retriever.get_relevant_documents(question, search_kwargs={"k": 6})
+                logger.info(f"✅ Found {len(docs)} relevant documents")
+            except Exception as search_error:
+                logger.error(f"❌ Document search error: {str(search_error)}")
+                # Fall back to general knowledge
+                answer = self._generate_gpt_response_general(question, user_id)
+                return {"answer": answer, "sources": [], "conversation_type": "general"}
+
             # Enhanced search with keywords
             keywords = self._extract_keywords(question)
             if keywords:
                 keyword_query = " ".join(keywords)
-                additional_docs = retriever.get_relevant_documents(keyword_query, search_kwargs={"k": 4})
-                seen_contents = {doc.page_content if hasattr(doc, "page_content") else doc.get("page_content", "") for doc in docs}
-                for doc in additional_docs:
-                    content = doc.page_content if hasattr(doc, "page_content") else doc.get("page_content", "")
-                    if content not in seen_contents:
-                        docs.append(doc)
-                        seen_contents.add(content)
+                try:
+                    additional_docs = retriever.get_relevant_documents(keyword_query, search_kwargs={"k": 4})
+                    seen_contents = {doc.page_content if hasattr(doc, "page_content") else doc.get("page_content", "") for doc in docs}
+                    for doc in additional_docs:
+                        content = doc.page_content if hasattr(doc, "page_content") else doc.get("page_content", "")
+                        if content not in seen_contents:
+                            docs.append(doc)
+                            seen_contents.add(content)
+                except Exception as keyword_error:
+                    logger.warning(f"⚠️ Keyword search failed: {str(keyword_error)}")
             
+            # Check 5: Handle no documents case
             if not docs:
-                # If no relevant documents found, still try to answer using GPT general knowledge
-                logger.info("No relevant documents found, using GPT general knowledge")
-                answer = self._generate_gpt_response_general(question, user_id)
+                logger.info("⚠️ No relevant documents found")
+                documents_in_db = get_documents_from_database()
+                if not documents_in_db:
+                    return {
+                        "answer": "📄 I don't have any course materials uploaded yet. Please upload some documents through the admin panel (/admin/upload_document), and I'll be able to help you with course-specific questions!",
+                        "sources": [],
+                        "conversation_type": "no_documents",
+                    }
+                else:
+                    logger.info("🤖 Using GPT general knowledge (no document matches)")
+                    answer = self._generate_gpt_response_general(question, user_id)
+                    return {"answer": answer, "sources": [], "conversation_type": "general"}
+
+            # Check 6: Prepare context and generate response
+            try:
+                logger.info("📝 Preparing context from documents...")
+                context = self._prepare_context(docs)
+                sources = self._extract_sources(docs)
+                logger.info(f"✅ Context prepared, length: {len(context)} chars, sources: {len(sources)}")
+                
+                logger.info("🤖 Generating GPT response...")
+                answer = self._generate_gpt_response(question, context, user_id)
+                logger.info(f"✅ GPT response generated, length: {len(answer)} chars")
+                
                 return {
                     "answer": answer,
-                    "sources": [],
-                    "conversation_type": "general"
+                    "sources": sources,
+                    "conversation_type": "document_based",
                 }
-            
-            # Prepare context and generate response
-            context = self._prepare_context(docs)
-            sources = self._extract_sources(docs)
-            answer = self._generate_gpt_response(question, context, user_id)
-
-            return {
-                "answer": answer,
-                "sources": sources,
-                "conversation_type": "document_based",
-            }
+            except Exception as generation_error:
+                logger.error(f"❌ Response generation error: {str(generation_error)}")
+                # Fall back to general knowledge
+                answer = self._generate_gpt_response_general(question, user_id)
+                return {"answer": answer, "sources": [], "conversation_type": "general"}
 
         except Exception as e:
-            logger.error(f"❌ Document question error: {str(e)}")
+            logger.error(f"❌ Outer exception in document question handling: {str(e)}")
+            import traceback
+            logger.error(f"❌ Full traceback: {traceback.format_exc()}")
             return {
-                "answer": "❌ I encountered an error while processing your question. Please try again.",
+                "answer": "I encountered an error, but I'm still here to help! Could you try rephrasing your question?",
                 "sources": [],
                 "conversation_type": "error",
             }
@@ -663,97 +888,35 @@ class DocumentQA:
     def _generate_gpt_response_general(self, question: str, user_id: str = None) -> str:
         """Generate response using GPT without course materials."""
         if not self.gpt_llm:
-            return "[Error: OpenRouter GPT not configured. Please check your API settings.]"
+            return "[Error: OpenRouter not configured. Please set OPENROUTER_API_KEY environment variable.]"
         
-        prompt = f"""You are a helpful AI learning assistant for an educational platform. The user is asking about a topic that wasn't found in the course materials.
+        prompt = f"""You are a helpful AI learning assistant for the 51Talk AI Learning Platform. 
 
-Please provide a helpful, educational response based on your general knowledge. Be clear that this information is not from the specific course materials.
+Please provide a helpful, educational response to this question: {question}
 
-Student Question: {question}
-
-Please provide a helpful, educational response:"""
+Keep your response clear, educational, and helpful for a student."""
 
         try:
             response = self.gpt_llm.generate_response(prompt)
-            response += "\n\n*Note: This response is based on general knowledge since I couldn't find specific information about this topic in your course materials.*"
+            if not response or response.startswith("[Error") or response.startswith("[Authentication"):
+                return "I'm having trouble connecting to my language model. Please check that the OpenRouter API key is configured correctly and has sufficient credits."
+            
+            response += "\n\n*Note: This response is based on general knowledge. Upload course materials for more specific help!*"
             return response
         except Exception as e:
             logger.error(f"❌ Error generating general GPT response: {e}")
-            return "I encountered an issue generating a response. Please try again."
+            return f"I encountered an issue generating a response. Please check the OpenRouter API configuration. Error: {str(e)}"
 
     def _extract_keywords(self, question: str) -> List[str]:
         import string
-
         stop_words = {
-            "the",
-            "a",
-            "an",
-            "and",
-            "or",
-            "but",
-            "in",
-            "on",
-            "at",
-            "to",
-            "for",
-            "of",
-            "with",
-            "by",
-            "is",
-            "are",
-            "was",
-            "were",
-            "be",
-            "been",
-            "being",
-            "have",
-            "has",
-            "had",
-            "do",
-            "does",
-            "did",
-            "will",
-            "would",
-            "could",
-            "should",
-            "may",
-            "might",
-            "must",
-            "can",
-            "what",
-            "where",
-            "when",
-            "why",
-            "how",
-            "who",
-            "which",
-            "this",
-            "that",
-            "these",
-            "those",
-            "i",
-            "you",
-            "he",
-            "she",
-            "it",
-            "we",
-            "they",
-            "me",
-            "him",
-            "her",
-            "us",
-            "them",
-            "my",
-            "your",
-            "his",
-            "her",
-            "its",
-            "our",
-            "their",
+            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
+            "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "do", "does", "did",
+            "will", "would", "could", "should", "may", "might", "must", "can", "what", "where", "when",
+            "why", "how", "who", "which", "this", "that", "these", "those", "i", "you", "he", "she", "it",
+            "we", "they", "me", "him", "her", "us", "them", "my", "your", "his", "her", "its", "our", "their",
         }
-        question_clean = question.lower().translate(
-            str.maketrans("", "", string.punctuation)
-        )
+        question_clean = question.lower().translate(str.maketrans("", "", string.punctuation))
         words = question_clean.split()
         keywords = [word for word in words if word not in stop_words and len(word) > 2]
         return keywords[:5]
@@ -827,6 +990,9 @@ Please provide a helpful, educational response based on the course materials abo
 
         try:
             response = self.gpt_llm.generate_response(prompt)
+            
+            if not response or response.startswith("[Error") or response.startswith("[Authentication"):
+                return "I'm having trouble connecting to my language model. Please check that the OpenRouter API key is configured correctly and has sufficient credits."
 
             # Cache response
             if len(self.response_cache) >= self.cache_max_size:
@@ -838,7 +1004,7 @@ Please provide a helpful, educational response based on the course materials abo
             return response
         except Exception as e:
             logger.error(f"❌ Error generating GPT response: {e}")
-            return "[Error] I encountered an issue generating a response. Please try again."
+            return "[Error] I encountered an issue generating a response. Please check your OpenRouter API configuration."
 
     def get_status(self) -> Dict[str, Any]:
         """Get status for Railway deployment."""
@@ -925,7 +1091,7 @@ def cleanup_qa():
 if __name__ == "__main__":
     try:
         print("🚀 Starting QA System Test with OpenRouter GPT...")
-        qa = DocumentQA("documents")
+        qa = DocumentQA()
         status = qa.get_status()
         print("QA System Status:", json.dumps(status, indent=2))
 
@@ -936,10 +1102,9 @@ if __name__ == "__main__":
             response = qa.answer_question("What is artificial intelligence?")
             print(f"\n🤖 AI Question Response: {response['answer']}")
         else:
-            print("⏳ QA system is not ready. Add documents to the 'documents' directory.")
+            print("⏳ QA system is not ready. Check your configuration.")
             
     except Exception as e:
         print(f"❌ Test failed: {str(e)}")
         import traceback
-
         traceback.print_exc()

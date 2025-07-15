@@ -8611,7 +8611,131 @@ def admin_edit_cohort(cohort_id):
     release_db_connection(conn)
     return render_template("admin/add_cohort.html", cohort=cohort)
 
+"""
+Add this debug route to your app.py to test the QA system
+"""
 
+@app.route("/debug/qa_test")
+@admin_required
+def debug_qa_test():
+    """Debug endpoint to test QA system step by step"""
+    debug_info = []
+    
+    try:
+        # Test 1: Check OpenRouter config
+        debug_info.append("=== OpenRouter Configuration ===")
+        import os
+        api_key = os.getenv("OPENROUTER_API_KEY")
+        model = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+        
+        debug_info.append(f"API Key exists: {bool(api_key)}")
+        if api_key:
+            debug_info.append(f"API Key length: {len(api_key)} chars")
+            debug_info.append(f"API Key starts with: {api_key[:10]}...")
+        debug_info.append(f"Model: {model}")
+        
+        # Test 2: Check database documents
+        debug_info.append("\n=== Database Documents ===")
+        from qa import get_documents_from_database
+        docs = get_documents_from_database()
+        debug_info.append(f"Documents in database: {len(docs)}")
+        for i, (filename, content, content_type) in enumerate(docs):
+            debug_info.append(f"  {i+1}. {filename} ({len(content)} bytes, {content_type})")
+        
+        # Test 3: Test temp directory creation
+        debug_info.append("\n=== Temp Directory ===")
+        from qa import create_temp_documents_from_db
+        temp_dir = create_temp_documents_from_db()
+        debug_info.append(f"Temp directory: {temp_dir}")
+        
+        if os.path.exists(temp_dir):
+            files = os.listdir(temp_dir)
+            debug_info.append(f"Files in temp dir: {files}")
+        
+        # Test 4: Test OpenRouter API call
+        debug_info.append("\n=== OpenRouter API Test ===")
+        if api_key:
+            try:
+                from qa import OpenRouterLLM
+                llm = OpenRouterLLM(api_key, model)
+                test_response = llm.generate_response("Hello, this is a test.")
+                debug_info.append(f"✅ API Response: {test_response[:100]}...")
+            except Exception as api_error:
+                debug_info.append(f"❌ API Error: {str(api_error)}")
+        else:
+            debug_info.append("❌ No API key to test")
+        
+        # Test 5: Test QA system initialization
+        debug_info.append("\n=== QA System Test ===")
+        try:
+            qa_system = get_qa_system()
+            if not qa_system:
+                debug_info.append("Initializing new QA system...")
+                from qa import initialize_qa
+                qa_system = initialize_qa()
+            
+            if qa_system:
+                debug_info.append("✅ QA system exists")
+                debug_info.append(f"GPT LLM available: {qa_system.gpt_llm is not None}")
+                debug_info.append(f"Vector store ready: {qa_system.vector_store_manager.is_ready()}")
+                
+                # Test a simple question
+                debug_info.append("\n=== Test Question ===")
+                response = qa_system.answer_question("What is artificial intelligence?", user_id="debug")
+                debug_info.append(f"Answer type: {response['conversation_type']}")
+                debug_info.append(f"Answer: {response['answer'][:200]}...")
+                debug_info.append(f"Sources: {len(response['sources'])}")
+                
+            else:
+                debug_info.append("❌ QA system not available")
+                
+        except Exception as qa_error:
+            debug_info.append(f"❌ QA Error: {str(qa_error)}")
+            import traceback
+            debug_info.append(f"Traceback: {traceback.format_exc()}")
+        
+    except Exception as e:
+        debug_info.append(f"❌ Debug Error: {str(e)}")
+        import traceback
+        debug_info.append(f"Traceback: {traceback.format_exc()}")
+    
+    return "<pre>" + "\n".join(debug_info) + "</pre>"
+
+
+@app.route("/debug/simple_test")
+@admin_required  
+def debug_simple_test():
+    """Simple test to check if basic QA works"""
+    try:
+        # Force reload QA system
+        global _qa_instance
+        _qa_instance = None
+        
+        from qa import initialize_qa
+        qa_system = initialize_qa()
+        
+        if not qa_system:
+            return "❌ Failed to initialize QA system"
+        
+        # Test simple question
+        response = qa_system.answer_question("Hello")
+        
+        return f"""
+        <div style="font-family: monospace; padding: 20px;">
+            <h2>🧪 Simple QA Test Result</h2>
+            <p><strong>Question:</strong> Hello</p>
+            <p><strong>Answer:</strong> {response['answer']}</p>
+            <p><strong>Type:</strong> {response['conversation_type']}</p>
+            <p><strong>Sources:</strong> {len(response['sources'])}</p>
+            
+            <h3>System Status:</h3>
+            <pre>{json.dumps(qa_system.get_status(), indent=2)}</pre>
+        </div>
+        """
+    except Exception as e:
+        return f"❌ Error: {str(e)}"
+    
+    
 def get_all_cohorts():
     """Return all active cohorts for dropdowns."""
     conn = None
