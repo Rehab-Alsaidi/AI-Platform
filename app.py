@@ -7770,7 +7770,6 @@ def admin_force_qa_reload():
         </div>
         """
 
-# ADD THIS ROUTE TO CHECK WHAT'S IN THE DATABASE
 @app.route("/admin/check_database_documents")
 @admin_required
 def admin_check_database_documents():
@@ -7796,7 +7795,7 @@ def admin_check_database_documents():
                 <p><a href="/admin/test_database_storage">🔧 Create Table & Test</a></p>
             </div>
             """
-        
+
         # Get all documents
         cursor.execute("""
             SELECT id, filename, content_type, upload_date, length(content) as size_bytes
@@ -7807,12 +7806,27 @@ def admin_check_database_documents():
         
         cursor.close()
         release_db_connection(conn)
-        
+
+        # Build rows safely
+        rows_html = ""
+        for doc in documents:
+            rows_html += f"""
+                <tr>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[0]}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[1]}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[2] or "Unknown"}</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[4] / 1024:.1f} KB</td>
+                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else "Unknown"}</td>
+                </tr>
+            """
+
+        # Final HTML
         html = f"""
         <div style="font-family: monospace; padding: 20px; background: #f8f9fa;">
             <h2>📋 Database Documents Report</h2>
             <p><strong>Table exists:</strong> ✅ Yes</p>
             <p><strong>Document count:</strong> {len(documents)}</p>
+            {'<p style="color: orange;">⚠️ No documents found in database!</p>' if not documents else ''}
             
             {f'''
             <h3>📄 Documents in Database:</h3>
@@ -7824,26 +7838,17 @@ def admin_check_database_documents():
                     <th style="border: 1px solid #dee2e6; padding: 8px;">Size</th>
                     <th style="border: 1px solid #dee2e6; padding: 8px;">Upload Date</th>
                 </tr>
-                {"".join(f'''
-                <tr>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[0]}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[1]}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[2] or "Unknown"}</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[4] / 1024:.1f} KB</td>
-                    <td style="border: 1px solid #dee2e6; padding: 8px;">{doc[3].strftime("%Y-%m-%d %H:%M:%S") if doc[3] else "Unknown"}</td>
-                </tr>
-                ''' for doc in documents)}
+                {rows_html}
             </table>
-            ''' if documents else '<p style="color: orange;">⚠️ No documents found in database!</p>'}
+            ''' if documents else ''}
             
             <br>
             <p><a href="/admin/upload_document" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">📤 Upload Document</a></p>
             <p><a href="/debug/qa_system" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">🔍 Check QA Status</a></p>
         </div>
         """
-        
         return html
-        
+
     except Exception as e:
         return f"""
         <div style="font-family: monospace; padding: 20px; background: #f8d7da;">
@@ -7851,6 +7856,8 @@ def admin_check_database_documents():
             <p>Error: {str(e)}</p>
         </div>
         """
+
+    
 @app.route("/admin/rebuild_qa_system")
 @admin_required
 def admin_rebuild_qa() -> Any:
@@ -8735,7 +8742,7 @@ def debug_simple_test():
     except Exception as e:
         return f"❌ Error: {str(e)}"
     
-    
+
 def get_all_cohorts():
     """Return all active cohorts for dropdowns."""
     conn = None
