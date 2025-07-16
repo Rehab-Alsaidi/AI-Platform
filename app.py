@@ -62,6 +62,7 @@ logger = logging.getLogger(__name__)
 # Load environment variables
 load_dotenv()
 
+_followup_system_initialized = False
 
 def validate_app_environment():
     """Validate all required environment variables at startup."""
@@ -1265,6 +1266,58 @@ def admin_export_data():
             release_db_connection(conn)
 
 
+def create_followup_table():
+    """Create the followup_emails table for tracking follow-up emails."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS followup_emails (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                sent_by VARCHAR(255) NOT NULL,
+                sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                email_type VARCHAR(50) NOT NULL DEFAULT 'assignment_reminder',
+                subject VARCHAR(255),
+                success BOOLEAN DEFAULT TRUE,
+                error_message TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Create index for faster queries
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_followup_emails_user_id ON followup_emails(user_id)
+        """)
+        
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_followup_emails_sent_at ON followup_emails(sent_at)
+        """)
+        
+        conn.commit()
+        cursor.close()
+        logger.info("Follow-up emails table created successfully")
+        
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        logger.error(f"Error creating follow-up table: {str(e)}")
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+
+@app.before_request
+def initialize_followup_system():
+    """Initialize the follow-up system on first request."""
+    global _followup_system_initialized
+    if not _followup_system_initialized:
+        create_followup_table()
+        _followup_system_initialized = True
+
+
 def export_to_csv(data, student_types, selected_tags):
     """Export data to CSV format."""
     try:
@@ -1409,7 +1462,7 @@ def export_to_pdf(data, student_types, selected_tags):
         flash(f"Error creating PDF export: {str(e)}", "error")
         return redirect(url_for("admin_export_advanced"))
     
-    
+
 # ==============================================
 # APPLICATION HOOKS
 # ==============================================
@@ -8290,6 +8343,49 @@ def admin_delete_document(filename: str) -> Any:
 
     return redirect(url_for("admin_manage_documents"))
 
+@app.route("/admin/setup_followup_system")
+@admin_required
+def setup_followup_system():
+    """Setup the follow-up email system."""
+    try:
+        create_followup_table()
+        flash("Follow-up email system initialized successfully!", "success")
+    except Exception as e:
+        flash(f"Error setting up follow-up system: {str(e)}", "error")
+    
+    return redirect(url_for("admin_dashboard"))
+
+
+@app.route("/admin/followup_history")
+@admin_required
+def admin_followup_history():
+    """View follow-up email history."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            SELECT fe.*, u.username, u.email
+            FROM followup_emails fe
+            JOIN users u ON fe.user_id = u.id
+            ORDER BY fe.sent_at DESC
+            LIMIT 100
+        """)
+        
+        followups = cursor.fetchall()
+        cursor.close()
+        
+        return render_template("admin/followup_history.html", followups=followups)
+        
+    except Exception as e:
+        logger.error(f"Error getting follow-up history: {str(e)}")
+        flash(f"Error loading follow-up history: {str(e)}", "error")
+        return redirect(url_for("admin_dashboard"))
+    finally:
+        if conn:
+            release_db_connection(conn)
+
 
 @app.route("/admin/force_qa_reload")
 @admin_required
@@ -8772,6 +8868,172 @@ def admin_export_advanced():
         if conn:
             release_db_connection(conn)
 
+
+@app.route("/admin/send_followup_email", methods=["POST"])
+@admin_required
+def send_followup_email():
+    """Send a gentle follow-up email to a student."""
+    try:
+        data = request.get_json()
+        user_id = data.get('user_id')
+        username = data.get('username')
+        email = data.get('email')
+        
+        if not all([user_id, username, email]):
+            return jsonify({"success": False, "error": "Missing required data"}), 400
+        
+        # Get user details from database
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        cursor.execute("""
+            SELECT u.*, 
+                   COUNT(s.id) as submission_count,
+                   COUNT(qa.id) as quiz_attempts,
+                   MAX(s.submitted_at) as last_submission
+            FROM users u
+            LEFT JOIN submissions s ON u.id = s.user_id
+            LEFT JOIN quiz_attempts qa ON u.id = qa.user_id
+            WHERE u.id = %s
+            GROUP BY u.id
+        """, (user_id,))
+        
+        user = cursor.fetchone()
+        if not user:
+            return jsonify({"success": False, "error": "User not found"}), 404
+        
+        # Create personalized email content
+        subject = "Friendly Reminder - Your Learning Journey with 51Talk AI"
+        
+        # Determine appropriate greeting and content based on user's camp
+        camp_specific_content = {
+            "Chinese": "中文训练营",
+            "English": "English Bootcamp", 
+            "Middle East": "Middle East Bootcamp"
+        }
+        
+        camp_name = camp_specific_content.get(user['camp'], "AI Bootcamp")
+        
+        # Create email body
+        email_body = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .header {{ background-color: #4CAF50; color: white; padding: 20px; text-align: center; }}
+                .content {{ padding: 20px; }}
+                .footer {{ background-color: #f8f9fa; padding: 15px; text-align: center; color: #666; }}
+                .highlight {{ background-color: #e8f5e9; padding: 10px; border-left: 4px solid #4CAF50; margin: 15px 0; }}
+                .button {{ background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>51Talk AI Learning Platform</h2>
+                <p>Your Learning Journey Continues</p>
+            </div>
+            
+            <div class="content">
+                <p>Hi {username},</p>
+                
+                <p>I hope this message finds you well! I wanted to reach out with a friendly reminder about your learning journey in our <strong>{camp_name}</strong>.</p>
+                
+                <div class="highlight">
+                    <p><strong>We noticed you haven't submitted any assignments yet</strong>, and we wanted to make sure you have everything you need to succeed.</p>
+                </div>
+                
+                <p>Here's what you can do right now:</p>
+                <ul>
+                    <li>📚 <strong>Access your course materials</strong> - Log in to review the latest lessons</li>
+                    <li>🎯 <strong>Complete assignments</strong> - Start with the unit exercises at your own pace</li>
+                    <li>💬 <strong>Ask our AI assistant</strong> - Get instant help with any questions</li>
+                    <li>🧪 <strong>Take quizzes</strong> - Test your understanding and track your progress</li>
+                </ul>
+                
+                <p>Remember, learning is a journey, not a race. Every expert was once a beginner, and every step forward is progress worth celebrating.</p>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <a href="{url_for('dashboard', _external=True)}" class="button">
+                        Continue Your Learning Journey
+                    </a>
+                </div>
+                
+                <p><strong>Need help or have questions?</strong> Don't hesitate to reach out! We're here to support you every step of the way.</p>
+                
+                <p>You've got this! 🚀</p>
+                
+                <p>Best regards,<br>
+                <strong>51Talk AI Learning Team</strong><br>
+                <em>Supporting your AI learning journey</em></p>
+            </div>
+            
+            <div class="footer">
+                <p>This is an automated reminder to help you stay on track with your learning goals.</p>
+                <p>If you have any questions or need assistance, please don't hesitate to contact us.</p>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Create plain text version for email clients that don't support HTML
+        text_body = f"""
+        Hi {username},
+
+        I hope this message finds you well! I wanted to reach out with a friendly reminder about your learning journey in our {camp_name}.
+
+        We noticed you haven't submitted any assignments yet, and we wanted to make sure you have everything you need to succeed.
+
+        Here's what you can do right now:
+        - Access your course materials - Log in to review the latest lessons
+        - Complete assignments - Start with the unit exercises at your own pace  
+        - Ask our AI assistant - Get instant help with any questions
+        - Take quizzes - Test your understanding and track your progress
+
+        Remember, learning is a journey, not a race. Every expert was once a beginner, and every step forward is progress worth celebrating.
+
+        Need help or have questions? Don't hesitate to reach out! We're here to support you every step of the way.
+
+        You've got this!
+
+        Best regards,
+        51Talk AI Learning Team
+        Supporting your AI learning journey
+
+        Visit your dashboard: {url_for('dashboard', _external=True)}
+        """
+        
+        # Send email
+        msg = Message(subject, recipients=[email])
+        msg.body = text_body
+        msg.html = email_body
+        
+        mail.send(msg)
+        
+        # Log the follow-up in database (optional - for tracking)
+        try:
+            cursor.execute("""
+                INSERT INTO followup_emails (user_id, sent_by, sent_at, email_type, subject)
+                VALUES (%s, %s, CURRENT_TIMESTAMP, %s, %s)
+            """, (user_id, session.get('admin_username', 'admin'), 'assignment_reminder', subject))
+            conn.commit()
+        except Exception as log_error:
+            # If logging fails, don't fail the whole operation
+            logger.warning(f"Failed to log follow-up email: {str(log_error)}")
+        
+        cursor.close()
+        release_db_connection(conn)
+        
+        logger.info(f"Follow-up email sent to {username} ({email}) by {session.get('admin_username', 'admin')}")
+        
+        return jsonify({
+            "success": True, 
+            "message": f"Follow-up email sent successfully to {username}!"
+        })
+        
+    except Exception as e:
+        logger.error(f"Error sending follow-up email: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
+    
 
 @app.route("/admin/add_content_unified", methods=["GET", "POST"])
 @admin_required
@@ -9466,6 +9728,7 @@ if __name__ == "__main__":
         initialize_enhanced_qa_system()
         init_db_pool()
         validate_app_environment()
+        create_followup_table()  # Add this line to initialize followup system
         print("Starting Flask application with enhanced QA system...")
         # Set maximum upload size to 200MB
         app.config["MAX_CONTENT_LENGTH"] = 200 * 1024 * 1024  # 200 MB
