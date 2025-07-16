@@ -12,14 +12,17 @@
           <div class="mb-3">
             <label class="form-label">Student Type</label>
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="student_type" value="existing" id="student_existing">
+              <input class="form-check-input" type="checkbox" name="student_type" value="existing" id="student_existing" 
+                     {% if "existing" in current_filters.student_types %}checked{% endif %}>
               <label class="form-check-label" for="student_existing">Existing Students</label>
             </div>
             <div class="form-check">
-              <input class="form-check-input" type="checkbox" name="student_type" value="new" id="student_new">
+              <input class="form-check-input" type="checkbox" name="student_type" value="new" id="student_new"
+                     {% if "new" in current_filters.student_types %}checked{% endif %}>
               <label class="form-check-label" for="student_new">New Students</label>
             </div>
           </div>
+          
           <!-- Tags -->
           <div class="mb-3">
             <label class="form-label">Tags</label>
@@ -28,14 +31,16 @@
               <label class="form-check-label" for="tag_all"><strong>All</strong></label>
             </div>
             <hr class="my-2">
-            <div class="ps-2" style="max-height: 120px; overflow-y: auto;">
+            <div class="ps-2" style="max-height: 200px; overflow-y: auto;">
               {% if available_tags %}
                 {% for group, tags in available_tags.items() %}
                   <div class="mb-1"><strong>{{ group }}</strong></div>
                   <div class="ps-2 mb-2">
                     {% for tag in tags %}
                     <div class="form-check">
-                      <input class="form-check-input tag-checkbox" type="checkbox" name="tags" value="{{ tag.name }}" id="tag_{{ tag.name|replace(' ', '_') }}">
+                      <input class="form-check-input tag-checkbox" type="checkbox" name="tags" value="{{ tag.name }}" 
+                             id="tag_{{ tag.name|replace(' ', '_') }}"
+                             {% if tag.name in current_filters.selected_tags %}checked{% endif %}>
                       <label class="form-check-label" for="tag_{{ tag.name|replace(' ', '_') }}">{{ tag.name }}</label>
                     </div>
                     {% endfor %}
@@ -44,88 +49,213 @@
               {% endif %}
             </div>
           </div>
-          <button type="submit" class="btn btn-primary w-100 mb-2"><i class="fas fa-filter me-1"></i>Apply Filters</button>
-          <button type="button" class="btn btn-outline-secondary w-100" onclick="resetExportFilters()">Reset Filters</button>
+          
+          <button type="submit" class="btn btn-primary w-100 mb-2">
+            <i class="fas fa-filter me-1"></i>Apply Filters
+          </button>
+          <button type="button" class="btn btn-outline-secondary w-100" onclick="resetExportFilters()">
+            <i class="fas fa-times me-1"></i>Reset Filters
+          </button>
         </form>
+        
+        <!-- Export Actions -->
+        <hr class="my-3">
+        <div class="d-grid gap-2">
+          <button class="btn btn-success" onclick="exportToCSV()">
+            <i class="fas fa-download me-1"></i>Export to CSV
+          </button>
+          <button class="btn btn-info" onclick="exportToPDF()">
+            <i class="fas fa-file-pdf me-1"></i>Export to PDF
+          </button>
+        </div>
       </div>
     </div>
+    
     <!-- Main Content -->
     <div class="col-lg-9">
+      <!-- Summary Cards -->
       <div class="row mb-4">
         <div class="col-md-4">
           <div class="card text-center p-3">
-            <h5>Assignment Submission Rate</h5>
-            <div class="display-4">{{ summary.assignment_rate }}%</div>
-            <div class="text-muted">({{ summary.assignment_submitted }}/{{ summary.assignment_total }})</div>
+            <h6 class="card-title">Assignment Submission Rate</h6>
+            <div class="display-4 text-primary">{{ summary.assignment_rate }}%</div>
+            <div class="text-muted">
+              {{ summary.assignment_submitted }} out of {{ summary.assignment_total }} users
+            </div>
+            <div class="progress mt-2">
+              <div class="progress-bar bg-primary" role="progressbar" style="width: {{ summary.assignment_rate }}%"></div>
+            </div>
           </div>
         </div>
+        
         <div class="col-md-4">
           <div class="card text-center p-3">
-            <h5>Challenge Assignment Submission Rate</h5>
-            <div class="display-4">{{ summary.challenge_rate }}%</div>
-            <div class="text-muted">({{ summary.challenge_submitted }}/{{ summary.challenge_total }})</div>
+            <h6 class="card-title">Quiz Completion Rate</h6>
+            <div class="display-4 text-success">{{ summary.challenge_rate }}%</div>
+            <div class="text-muted">
+              {{ summary.challenge_submitted }} out of {{ summary.challenge_total }} users
+            </div>
+            <div class="progress mt-2">
+              <div class="progress-bar bg-success" role="progressbar" style="width: {{ summary.challenge_rate }}%"></div>
+            </div>
           </div>
         </div>
+        
         <div class="col-md-4">
           <div class="card text-center p-3">
-            <h5>Assignment Submission Rate Trend</h5>
-            <div class="display-6">{{ summary.trend_text }}</div>
+            <h6 class="card-title">Submission Rate Trend</h6>
+            <div class="display-6 
+              {% if summary.trend_text.startswith('↑') %}text-success
+              {% elif summary.trend_text.startswith('↓') %}text-danger
+              {% else %}text-secondary{% endif %}">
+              {{ summary.trend_text }}
+            </div>
+            <div class="text-muted">vs. previous 30 days</div>
           </div>
         </div>
       </div>
-      <!-- List of Students to Follow Up -->
+      
+      <!-- Students to Follow Up -->
       <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+            Students to Follow Up 
+            <span class="badge bg-warning ms-2">{{ followup_students|length }}</span>
+          </h5>
+        </div>
         <div class="card-body">
-          <h5 class="card-title">List of Students to Follow Up <span class="text-muted">(Pending Submission)</span></h5>
           {% if followup_students %}
-          <ul class="list-group">
-            {% for student in followup_students %}
-            <li class="list-group-item">{{ student.name }}</li>
-            {% endfor %}
-          </ul>
+            <div class="row">
+              {% for student in followup_students %}
+                <div class="col-md-6 col-lg-4 mb-2">
+                  <div class="d-flex align-items-center">
+                    <i class="fas fa-user-clock text-warning me-2"></i>
+                    <div>
+                      <strong>{{ student.username }}</strong>
+                      <br>
+                      <small class="text-muted">{{ student.camp or 'No camp' }}</small>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
           {% else %}
-          <div class="text-muted">No students to follow up.</div>
+            <div class="text-center text-muted py-3">
+              <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+              <p>Great! No students need follow-up.</p>
+            </div>
           {% endif %}
         </div>
       </div>
+      
       <!-- Student Assignment Details Table -->
       <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">
+            <i class="fas fa-table me-2"></i>Student Assignment Details
+          </h5>
+        </div>
         <div class="card-body">
-          <h5 class="card-title mb-3">Student Assignment Details</h5>
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Department</th>
-                <th>Cohort</th>
-                <th>Assignment Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for student in assignment_details %}
-              <tr>
-                <td>{{ student.name }}</td>
-                <td>{{ student.department }}</td>
-                <td>{{ student.cohort }}</td>
-                <td><a href="{{ student.assignment_link }}">Click to view</a></td>
-              </tr>
-              {% else %}
-              <tr><td colspan="4" class="text-center">No assignment details found.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
+          {% if assignment_details %}
+            <div class="table-responsive">
+              <table class="table table-striped table-hover">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Name</th>
+                    <th>Department</th>
+                    <th>Cohort</th>
+                    <th>Submissions</th>
+                    <th>Quiz Attempts</th>
+                    <th>Last Activity</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for student in assignment_details %}
+                  <tr>
+                    <td>
+                      <strong>{{ student.name }}</strong>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary">{{ student.department }}</span>
+                    </td>
+                    <td>{{ student.cohort }}</td>
+                    <td>
+                      <span class="badge {% if student.submission_count > 0 %}bg-success{% else %}bg-warning{% endif %}">
+                        {{ student.submission_count }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="badge {% if student.quiz_attempts > 0 %}bg-info{% else %}bg-secondary{% endif %}">
+                        {{ student.quiz_attempts }}
+                      </span>
+                    </td>
+                    <td>
+                      <small class="text-muted">{{ student.last_submission }}</small>
+                    </td>
+                    <td>
+                      <a href="/admin/users" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye"></i>
+                      </a>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="fas fa-inbox fa-2x mb-2"></i>
+              <p>No assignment details found with current filters.</p>
+            </div>
+          {% endif %}
         </div>
       </div>
     </div>
   </div>
 </div>
+
 <script>
 function resetExportFilters() {
   document.getElementById('exportFilterForm').reset();
+  document.getElementById('exportFilterForm').submit();
 }
+
 function toggleAllTags(allBox) {
   const checkboxes = document.querySelectorAll('.tag-checkbox');
   checkboxes.forEach(cb => { cb.checked = allBox.checked; });
 }
+
+function exportToCSV() {
+  const params = new URLSearchParams(window.location.search);
+  params.set('format', 'csv');
+  window.location.href = '/admin/export_data?' + params.toString();
+}
+
+function exportToPDF() {
+  const params = new URLSearchParams(window.location.search);
+  params.set('format', 'pdf');
+  window.location.href = '/admin/export_data?' + params.toString();
+}
+
+// Auto-check "All" if all tags are manually selected
+document.addEventListener('DOMContentLoaded', function() {
+  const tagCheckboxes = document.querySelectorAll('.tag-checkbox');
+  const allTagsCheckbox = document.getElementById('tag_all');
+  
+  tagCheckboxes.forEach(cb => {
+    cb.addEventListener('change', function() {
+      const checkedTags = document.querySelectorAll('.tag-checkbox:checked');
+      allTagsCheckbox.checked = checkedTags.length === tagCheckboxes.length;
+    });
+  });
+  
+  // Check if all tags are already selected on page load
+  const checkedTags = document.querySelectorAll('.tag-checkbox:checked');
+  if (checkedTags.length === tagCheckboxes.length && tagCheckboxes.length > 0) {
+    allTagsCheckbox.checked = true;
+  }
+});
 </script>
 {% endblock %}

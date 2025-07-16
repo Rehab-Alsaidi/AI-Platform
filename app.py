@@ -1046,32 +1046,370 @@ def track_qa_request(user_id: str, response_time: float, success: bool):
 # ===============================================
 # metrics endpoints
 # ===============================================
-# Add metrics endpoint
+
 @app.route("/metrics")
 @admin_required
 def metrics():
     """Application metrics for monitoring (visual dashboard)."""
-    avg_response_time = (
-        sum(app_metrics["response_times"]) / len(app_metrics["response_times"])
-        if app_metrics["response_times"]
-        else 0
-    )
-    metrics_data = {
-        "qa_requests_total": app_metrics["qa_requests"],
-        "qa_errors_total": app_metrics["qa_errors"],
-        "qa_success_rate": (
-            (app_metrics["qa_requests"] - app_metrics["qa_errors"])
-            / app_metrics["qa_requests"]
+    try:
+        # Calculate QA metrics from app_metrics
+        avg_response_time = (
+            sum(app_metrics["response_times"]) / len(app_metrics["response_times"])
+            if app_metrics["response_times"]
+            else 0
+        )
+        
+        success_rate = (
+            (app_metrics["qa_requests"] - app_metrics["qa_errors"]) / app_metrics["qa_requests"]
             if app_metrics["qa_requests"] > 0
             else 0
-        ),
-        "avg_response_time_seconds": round(avg_response_time, 2),
-        "active_users_count": len(app_metrics["active_users"]),
-        "timestamp": datetime.utcnow().isoformat(),
-    }
-    return render_template("admin/metrics_dashboard.html", metrics=metrics_data)
+        )
+        
+        # Get additional stats from database
+        conn = None
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            
+            # Get today's QA activity
+            cursor.execute("""
+                SELECT COUNT(*) FROM qa_history 
+                WHERE DATE(created_at) = CURRENT_DATE
+            """)
+            today_qa = cursor.fetchone()[0] or 0
+            
+            # Get total QA requests (all time)
+            cursor.execute("SELECT COUNT(*) FROM qa_history")
+            total_qa_requests = cursor.fetchone()[0] or 0
+            
+            # Get active users today
+            cursor.execute("""
+                SELECT COUNT(DISTINCT user_id) FROM qa_history 
+                WHERE DATE(created_at) = CURRENT_DATE
+            """)
+            today_active_users = cursor.fetchone()[0] or 0
+            
+            # Get total users
+            cursor.execute("SELECT COUNT(*) FROM users")
+            total_users = cursor.fetchone()[0] or 0
+            
+            # Get quiz attempts today
+            cursor.execute("""
+                SELECT COUNT(*) FROM quiz_attempts 
+                WHERE DATE(attempted_at) = CURRENT_DATE
+            """)
+            today_quiz_attempts = cursor.fetchone()[0] or 0
+            
+            cursor.close()
+            
+        except Exception as db_error:
+            logger.error(f"Database error in metrics: {str(db_error)}")
+            today_qa = 0
+            total_qa_requests = 0
+            today_active_users = 0
+            total_users = 0
+            today_quiz_attempts = 0
+        finally:
+            if conn:
+                release_db_connection(conn)
+        
+        # Get QA system status
+        qa_system_status = "Unknown"
+        document_count = 0
+        try:
+            from qa import get_system_status
+            status = get_system_status()
+            if status.get("ready"):
+                qa_system_status = "Ready"
+                document_count = status.get("document_count", 0)
+            elif status.get("initializing"):
+                qa_system_status = "Initializing"
+            elif status.get("error"):
+                qa_system_status = f"Error: {status.get('error')}"
+            else:
+                qa_system_status = "Not Ready"
+        except Exception as qa_error:
+            logger.error(f"QA status error: {str(qa_error)}")
+            qa_system_status = "Error"
+        
+        # Prepare metrics data for template
+        metrics_data = {
+            # QA Metrics (from app_metrics)
+            "qa_requests_total": app_metrics["qa_requests"],
+            "qa_errors_total": app_metrics["qa_errors"],
+            "qa_success_rate": success_rate,
+            "avg_response_time_seconds": round(avg_response_time, 2),
+            "active_users_count": len(app_metrics["active_users"]),
+            
+            # Additional metrics from database
+            "total_qa_requests_db": total_qa_requests,
+            "today_qa_requests": today_qa,
+            "today_active_users": today_active_users,
+            "total_users": total_users,
+            "today_quiz_attempts": today_quiz_attempts,
+            
+            # System metrics
+            "qa_system_status": qa_system_status,
+            "document_count": document_count,
+            
+            # Timestamp
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        }
+        
+        return render_template("admin/metrics_dashboard.html", metrics=metrics_data)
+        
+    except Exception as e:
+        logger.error(f"Error in metrics dashboard: {str(e)}")
+        # Return safe default values
+        metrics_data = {
+            "qa_requests_total": 0,
+            "qa_errors_total": 0,
+            "qa_success_rate": 0,
+            "avg_response_time_seconds": 0,
+            "active_users_count": 0,
+            "total_qa_requests_db": 0,
+            "today_qa_requests": 0,
+            "today_active_users": 0,
+            "total_users": 0,
+            "today_quiz_attempts": 0,
+            "qa_system_status": "Error",
+            "document_count": 0,
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
+        }
+        return render_template("admin/metrics_dashboard.html", metrics=metrics_data)
 
 
+@app.route("/admin/export_data", methods=["GET"])
+@admin_required
+def admin_export_data():
+    """Export filtered data to CSV or PDF."""
+    
+    # Get filter parameters
+    student_types = request.args.getlist("student_type")
+    selected_tags = request.args.getlist("tags")
+    format_type = request.args.get("format", "csv")
+    
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Build WHERE clause for filters
+        where_conditions = []
+        params = []
+        
+        if student_types:
+            where_conditions.append("u.student_type = ANY(%s)")
+            params.append(student_types)
+        
+        if selected_tags:
+            where_conditions.append("""
+                EXISTS (
+                    SELECT 1 FROM user_tags ut 
+                    JOIN tags t ON ut.tag_id = t.id 
+                    WHERE ut.user_id = u.id AND t.name = ANY(%s)
+                )
+            """)
+            params.append(selected_tags)
+        
+        where_clause = ""
+        if where_conditions:
+            where_clause = "WHERE " + " AND ".join(where_conditions)
+        
+        # Get detailed user data for export
+        cursor.execute(f"""
+            SELECT 
+                u.id,
+                u.username,
+                u.email,
+                u.camp,
+                u.student_type,
+                u.cohort_name,
+                u.created_at,
+                u.email_verified,
+                COUNT(DISTINCT s.id) as submission_count,
+                COUNT(DISTINCT qa.id) as quiz_attempts,
+                COUNT(DISTINCT qh.id) as qa_questions,
+                MAX(s.submitted_at) as last_submission,
+                MAX(qa.attempted_at) as last_quiz_attempt,
+                MAX(qh.created_at) as last_qa_activity,
+                STRING_AGG(DISTINCT t.name, ', ') as user_tags
+            FROM users u
+            LEFT JOIN submissions s ON u.id = s.user_id
+            LEFT JOIN quiz_attempts qa ON u.id = qa.user_id
+            LEFT JOIN qa_history qh ON u.id = qh.user_id
+            LEFT JOIN user_tags ut ON u.id = ut.user_id
+            LEFT JOIN tags t ON ut.tag_id = t.id
+            {where_clause}
+            GROUP BY u.id, u.username, u.email, u.camp, u.student_type, u.cohort_name, u.created_at, u.email_verified
+            ORDER BY u.username
+        """, params)
+        
+        export_data = cursor.fetchall()
+        cursor.close()
+        
+        if format_type == "csv":
+            return export_to_csv(export_data, student_types, selected_tags)
+        elif format_type == "pdf":
+            return export_to_pdf(export_data, student_types, selected_tags)
+        else:
+            flash("Invalid export format", "error")
+            return redirect(url_for("admin_export_advanced"))
+            
+    except Exception as e:
+        logger.error(f"Error in export_data: {str(e)}")
+        flash(f"Error exporting data: {str(e)}", "error")
+        return redirect(url_for("admin_export_advanced"))
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+
+def export_to_csv(data, student_types, selected_tags):
+    """Export data to CSV format."""
+    try:
+        # Create CSV in memory
+        output = io.StringIO()
+        writer = csv.writer(output)
+        
+        # Write headers
+        headers = [
+            "ID", "Username", "Email", "Camp", "Student Type", "Cohort", 
+            "Registered", "Email Verified", "Submissions", "Quiz Attempts", 
+            "QA Questions", "Last Submission", "Last Quiz", "Last QA Activity", "Tags"
+        ]
+        writer.writerow(headers)
+        
+        # Write data rows
+        for row in data:
+            writer.writerow([
+                row["id"],
+                row["username"],
+                row["email"],
+                row["camp"] or "No camp",
+                row["student_type"] or "Unknown",
+                row["cohort_name"] or "No cohort",
+                row["created_at"].strftime("%Y-%m-%d") if row["created_at"] else "Unknown",
+                "Yes" if row["email_verified"] else "No",
+                row["submission_count"],
+                row["quiz_attempts"],
+                row["qa_questions"],
+                row["last_submission"].strftime("%Y-%m-%d") if row["last_submission"] else "Never",
+                row["last_quiz_attempt"].strftime("%Y-%m-%d") if row["last_quiz_attempt"] else "Never",
+                row["last_qa_activity"].strftime("%Y-%m-%d") if row["last_qa_activity"] else "Never",
+                row["user_tags"] or "No tags"
+            ])
+        
+        # Create filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filter_desc = []
+        if student_types:
+            filter_desc.append(f"types_{'_'.join(student_types)}")
+        if selected_tags:
+            filter_desc.append(f"tags_{len(selected_tags)}")
+        
+        filter_suffix = "_".join(filter_desc) if filter_desc else "all"
+        filename = f"student_export_{filter_suffix}_{timestamp}.csv"
+        
+        # Create response
+        output.seek(0)
+        return app.response_class(
+            output.getvalue(),
+            mimetype="text/csv",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        logger.error(f"Error creating CSV: {str(e)}")
+        flash(f"Error creating CSV export: {str(e)}", "error")
+        return redirect(url_for("admin_export_advanced"))
+
+
+def export_to_pdf(data, student_types, selected_tags):
+    """Export data to PDF format (simplified HTML to PDF)."""
+    try:
+        # Create HTML content
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Student Export Report</title>
+            <style>
+                body {{ font-family: Arial, sans-serif; margin: 20px; }}
+                table {{ border-collapse: collapse; width: 100%; }}
+                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
+                th {{ background-color: #f2f2f2; }}
+                .header {{ margin-bottom: 20px; }}
+                .filter-info {{ background-color: #f8f9fa; padding: 10px; margin-bottom: 20px; }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>Student Export Report</h1>
+                <p>Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            </div>
+            
+            <div class="filter-info">
+                <h3>Applied Filters:</h3>
+                <p><strong>Student Types:</strong> {', '.join(student_types) if student_types else 'All'}</p>
+                <p><strong>Tags:</strong> {', '.join(selected_tags) if selected_tags else 'All'}</p>
+                <p><strong>Total Records:</strong> {len(data)}</p>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Camp</th>
+                        <th>Student Type</th>
+                        <th>Cohort</th>
+                        <th>Submissions</th>
+                        <th>Quiz Attempts</th>
+                        <th>QA Questions</th>
+                    </tr>
+                </thead>
+                <tbody>
+        """
+        
+        for row in data:
+            html_content += f"""
+                <tr>
+                    <td>{row['username']}</td>
+                    <td>{row['email']}</td>
+                    <td>{row['camp'] or 'No camp'}</td>
+                    <td>{row['student_type'] or 'Unknown'}</td>
+                    <td>{row['cohort_name'] or 'No cohort'}</td>
+                    <td>{row['submission_count']}</td>
+                    <td>{row['quiz_attempts']}</td>
+                    <td>{row['qa_questions']}</td>
+                </tr>
+            """
+        
+        html_content += """
+                </tbody>
+            </table>
+        </body>
+        </html>
+        """
+        
+        # Create filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"student_export_{timestamp}.html"
+        
+        # Return HTML (can be converted to PDF by browser)
+        return app.response_class(
+            html_content,
+            mimetype="text/html",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
+        
+    except Exception as e:
+        logger.error(f"Error creating PDF: {str(e)}")
+        flash(f"Error creating PDF export: {str(e)}", "error")
+        return redirect(url_for("admin_export_advanced"))
+    
+    
 # ==============================================
 # APPLICATION HOOKS
 # ==============================================
@@ -8244,60 +8582,195 @@ def ensure_specific_cohort_tags():
 @app.route("/admin/export_advanced", methods=["GET", "POST"])
 @admin_required
 def admin_export_advanced():
-    """Advanced export with full tag-based filtering."""
-    if request.method == "POST":
-        export_type = request.form.get("export_type")  # progress, users, feedback
-        selected_tags = request.form.getlist("filter_tags")
-
-        # Handle POST logic here if needed
-        flash("Export functionality not yet implemented", "info")
-        return redirect(url_for("admin_export_advanced"))
-
-    # GET - show form with available tags and all required context
-    available_tags = get_available_tags_grouped()
-    # Add placeholder or real data for required variables
-    summary = {
-        "assignment_rate": 0,
-        "assignment_submitted": 0,
-        "assignment_total": 0,
-        "challenge_rate": 0,
-        "challenge_submitted": 0,
-        "challenge_total": 0,
-        "trend_text": "No data",
-    }
-    followup_students = []
-    assignment_details = []
-    # Try to get cohorts, course_units, tags from DB
+    """Advanced export with real data calculations."""
+    
+    # Get filter parameters
+    student_types = request.args.getlist("student_type")
+    selected_tags = request.args.getlist("tags")
+    
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Build WHERE clause for filters
+        where_conditions = []
+        params = []
+        
+        if student_types:
+            where_conditions.append("u.student_type = ANY(%s)")
+            params.append(student_types)
+        
+        if selected_tags:
+            where_conditions.append("""
+                EXISTS (
+                    SELECT 1 FROM user_tags ut 
+                    JOIN tags t ON ut.tag_id = t.id 
+                    WHERE ut.user_id = u.id AND t.name = ANY(%s)
+                )
+            """)
+            params.append(selected_tags)
+        
+        where_clause = ""
+        if where_conditions:
+            where_clause = "WHERE " + " AND ".join(where_conditions)
+        
+        # Calculate assignment submission rates
+        cursor.execute(f"""
+            SELECT 
+                COUNT(*) as total_users,
+                COUNT(CASE WHEN s.id IS NOT NULL THEN 1 END) as users_with_submissions,
+                COUNT(DISTINCT s.id) as total_submissions
+            FROM users u
+            LEFT JOIN submissions s ON u.id = s.user_id
+            {where_clause}
+        """, params)
+        
+        assignment_stats = cursor.fetchone()
+        
+        # Calculate assignment rate
+        total_users = assignment_stats["total_users"] or 0
+        users_with_submissions = assignment_stats["users_with_submissions"] or 0
+        assignment_rate = round((users_with_submissions / total_users * 100) if total_users > 0 else 0, 1)
+        
+        # Calculate quiz completion rates (challenge assignments)
+        cursor.execute(f"""
+            SELECT 
+                COUNT(DISTINCT u.id) as total_users,
+                COUNT(DISTINCT qa.user_id) as users_with_quiz_attempts
+            FROM users u
+            LEFT JOIN quiz_attempts qa ON u.id = qa.user_id AND qa.score IS NOT NULL
+            {where_clause}
+        """, params)
+        
+        quiz_stats = cursor.fetchone()
+        quiz_total = quiz_stats["total_users"] or 0
+        quiz_completed = quiz_stats["users_with_quiz_attempts"] or 0
+        challenge_rate = round((quiz_completed / quiz_total * 100) if quiz_total > 0 else 0, 1)
+        
+        # Get students who need follow-up (no submissions)
+        cursor.execute(f"""
+            SELECT DISTINCT u.id, u.username, u.email, u.camp
+            FROM users u
+            LEFT JOIN submissions s ON u.id = s.user_id
+            {where_clause}
+            {'AND' if where_clause else 'WHERE'} s.id IS NULL
+            ORDER BY u.username
+            LIMIT 50
+        """, params)
+        
+        followup_students = cursor.fetchall()
+        
+        # Get assignment details for all users
+        cursor.execute(f"""
+            SELECT 
+                u.username as name,
+                u.camp as department,
+                COALESCE(u.cohort_name, 'No Cohort') as cohort,
+                COUNT(s.id) as submission_count,
+                COUNT(qa.id) as quiz_attempts,
+                MAX(s.submitted_at) as last_submission
+            FROM users u
+            LEFT JOIN submissions s ON u.id = s.user_id
+            LEFT JOIN quiz_attempts qa ON u.id = qa.user_id
+            {where_clause}
+            GROUP BY u.id, u.username, u.camp, u.cohort_name
+            ORDER BY u.username
+        """, params)
+        
+        assignment_details_raw = cursor.fetchall()
+        
+        # Format assignment details
+        assignment_details = []
+        for row in assignment_details_raw:
+            assignment_details.append({
+                "name": row["name"],
+                "department": row["department"] or "Unknown",
+                "cohort": row["cohort"],
+                "assignment_link": f"/admin/user_progress/{row['name']}",
+                "submission_count": row["submission_count"],
+                "quiz_attempts": row["quiz_attempts"],
+                "last_submission": row["last_submission"].strftime("%Y-%m-%d") if row["last_submission"] else "Never"
+            })
+        
+        # Calculate trend (simple comparison with last 30 days)
+        cursor.execute("""
+            SELECT 
+                COUNT(CASE WHEN submitted_at >= NOW() - INTERVAL '30 days' THEN 1 END) as recent_submissions,
+                COUNT(CASE WHEN submitted_at >= NOW() - INTERVAL '60 days' AND submitted_at < NOW() - INTERVAL '30 days' THEN 1 END) as previous_submissions
+            FROM submissions s
+            JOIN users u ON s.user_id = u.id
+            """ + (where_clause.replace("WHERE", "WHERE") if where_clause else ""))
+        
+        trend_data = cursor.fetchone()
+        recent = trend_data["recent_submissions"] or 0
+        previous = trend_data["previous_submissions"] or 0
+        
+        if previous > 0:
+            trend_pct = round(((recent - previous) / previous) * 100, 1)
+            if trend_pct > 0:
+                trend_text = f"↑ {trend_pct}%"
+            elif trend_pct < 0:
+                trend_text = f"↓ {abs(trend_pct)}%"
+            else:
+                trend_text = "→ 0%"
+        else:
+            trend_text = "No data"
+        
+        # Build summary
+        summary = {
+            "assignment_rate": assignment_rate,
+            "assignment_submitted": users_with_submissions,
+            "assignment_total": total_users,
+            "challenge_rate": challenge_rate,
+            "challenge_submitted": quiz_completed,
+            "challenge_total": quiz_total,
+            "trend_text": trend_text,
+        }
+        
+        cursor.close()
+        
+        # Get available data for filters
+        available_tags = get_available_tags_grouped()
+        
+        # Get cohorts
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT name FROM cohorts WHERE is_active = TRUE ORDER BY name")
         cohorts = cursor.fetchall()
+        
+        # Get course units
         cursor.execute("SELECT DISTINCT unit_id FROM materials ORDER BY unit_id")
         course_units_result = cursor.fetchall()
         course_units = [row["unit_id"] for row in course_units_result]
+        
+        # Get tags
         cursor.execute("SELECT name FROM tags WHERE is_active = TRUE ORDER BY name")
         tags = cursor.fetchall()
+        
         cursor.close()
+        
+        return render_template(
+            "admin/export_advanced.html",
+            available_tags=available_tags,
+            summary=summary,
+            followup_students=followup_students,
+            assignment_details=assignment_details,
+            cohorts=cohorts,
+            course_units=course_units,
+            tags=tags,
+            current_filters={
+                "student_types": student_types,
+                "selected_tags": selected_tags
+            }
+        )
+        
     except Exception as e:
-        logger.error(f"Error loading export_advanced context: {str(e)}")
-        cohorts = []
-        course_units = []
-        tags = []
+        logger.error(f"Error in export_advanced: {str(e)}")
+        flash(f"Error loading export data: {str(e)}", "error")
+        return redirect(url_for("admin_dashboard"))
     finally:
         if conn:
             release_db_connection(conn)
-    return render_template(
-        "admin/export_advanced.html",
-        available_tags=available_tags,
-        summary=summary,
-        followup_students=followup_students,
-        assignment_details=assignment_details,
-        cohorts=cohorts,
-        course_units=course_units,
-        tags=tags,
-    )
 
 
 @app.route("/admin/add_content_unified", methods=["GET", "POST"])

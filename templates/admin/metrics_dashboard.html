@@ -2,58 +2,246 @@
 {% block title %}Metrics Dashboard{% endblock %}
 {% block content %}
 <div class="container-fluid mt-4">
-    <h1 class="page-title mb-4">Application Metrics</h1>
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card bg-dark text-white shadow">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="page-title">Application Metrics</h1>
+        <button class="btn btn-primary" onclick="location.reload()">
+            <i class="fas fa-sync-alt"></i> Refresh
+        </button>
+    </div>
+    
+    <!-- QA System Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-robot mr-2"></i>Total QA Requests</h5>
-                    <h2 class="display-4">{{ metrics.qa_requests_total }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card bg-dark text-white shadow">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-exclamation-triangle mr-2 text-danger"></i>QA Errors</h5>
-                    <h2 class="display-4 text-danger">{{ metrics.qa_errors_total }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 mb-4">
-            <div class="card bg-dark text-white shadow">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-users mr-2 text-success"></i>Active Users</h5>
-                    <h2 class="display-4 text-success">{{ metrics.active_users_count }}</h2>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-4">
-            <div class="card bg-dark text-white shadow">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-percentage mr-2 text-info"></i>QA Success Rate</h5>
-                    <div class="d-flex align-items-center mb-2">
-                        <span class="h3 mb-0 mr-3">{{ (metrics.qa_success_rate * 100) | round(1) }}%</span>
-                        <div class="progress flex-grow-1" style="height: 1.5rem;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: {{ (metrics.qa_success_rate * 100) | round(1) }}%;" aria-valuenow="{{ (metrics.qa_success_rate * 100) | round(1) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    <h5 class="card-title">
+                        <i class="fas fa-robot me-2"></i>QA System Status
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">Status:</span>
+                                {% if metrics.qa_system_status == "Ready" %}
+                                    <span class="badge bg-success">{{ metrics.qa_system_status }}</span>
+                                {% elif metrics.qa_system_status == "Initializing" %}
+                                    <span class="badge bg-warning">{{ metrics.qa_system_status }}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{{ metrics.qa_system_status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="me-2">Documents Loaded:</span>
+                            <strong>{{ metrics.document_count }}</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <span class="me-2">Last Updated:</span>
+                            <small class="text-muted">{{ metrics.timestamp }}</small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6 mb-4">
-            <div class="card bg-dark text-white shadow">
+    </div>
+    
+    <!-- Main Metrics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-primary text-white shadow">
                 <div class="card-body">
-                    <h5 class="card-title"><i class="fas fa-stopwatch mr-2 text-warning"></i>Avg. Response Time</h5>
-                    <h2 class="display-4 text-warning">{{ metrics.avg_response_time_seconds }}s</h2>
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">QA Requests (Session)</h6>
+                            <h2 class="display-4">{{ metrics.qa_requests_total }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-question-circle fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card bg-success text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total QA Requests</h6>
+                            <h2 class="display-4">{{ metrics.total_qa_requests_db }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-database fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card bg-warning text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">QA Errors (Session)</h6>
+                            <h2 class="display-4">{{ metrics.qa_errors_total }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="card bg-info text-white shadow">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active Users (Session)</h6>
+                            <h2 class="display-4">{{ metrics.active_users_count }}</h2>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x opacity-50"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="card bg-dark text-white mt-4">
-        <div class="card-body text-right">
-            <small class="text-muted">Last updated: {{ metrics.timestamp }}</small>
+    
+    <!-- Performance Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-percentage me-2 text-success"></i>QA Success Rate
+                    </h5>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="h3 mb-0 me-3">{{ (metrics.qa_success_rate * 100) | round(1) }}%</span>
+                        <div class="progress flex-grow-1" style="height: 1.5rem;">
+                            <div class="progress-bar 
+                                {% if metrics.qa_success_rate >= 0.9 %}bg-success
+                                {% elif metrics.qa_success_rate >= 0.7 %}bg-warning
+                                {% else %}bg-danger{% endif %}" 
+                                role="progressbar" 
+                                style="width: {{ (metrics.qa_success_rate * 100) | round(1) }}%;">
+                            </div>
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        {{ metrics.qa_requests_total - metrics.qa_errors_total }} successful / {{ metrics.qa_requests_total }} total
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-stopwatch me-2 text-primary"></i>Average Response Time
+                    </h5>
+                    <div class="d-flex align-items-center">
+                        <span class="h3 mb-0">{{ metrics.avg_response_time_seconds }}s</span>
+                        <div class="ms-3">
+                            {% if metrics.avg_response_time_seconds < 2 %}
+                                <span class="badge bg-success">Fast</span>
+                            {% elif metrics.avg_response_time_seconds < 5 %}
+                                <span class="badge bg-warning">Moderate</span>
+                            {% else %}
+                                <span class="badge bg-danger">Slow</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <small class="text-muted">Based on {{ metrics.qa_requests_total }} requests</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Daily Activity -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Today's QA Activity</h5>
+                    <div class="display-6 text-primary">{{ metrics.today_qa_requests }}</div>
+                    <small class="text-muted">Questions Asked</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Today's Active Users</h5>
+                    <div class="display-6 text-success">{{ metrics.today_active_users }}</div>
+                    <small class="text-muted">out of {{ metrics.total_users }} total</small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Today's Quiz Attempts</h5>
+                    <div class="display-6 text-warning">{{ metrics.today_quiz_attempts }}</div>
+                    <small class="text-muted">Quiz Completions</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Actions</h5>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <a href="/admin/qa_status" class="btn btn-outline-primary">
+                            <i class="fas fa-robot"></i> Check QA Status
+                        </a>
+                        <a href="/admin/manage_documents" class="btn btn-outline-secondary">
+                            <i class="fas fa-file-alt"></i> Manage Documents
+                        </a>
+                        <a href="/admin/force_qa_reload" class="btn btn-outline-warning">
+                            <i class="fas fa-sync-alt"></i> Force QA Reload
+                        </a>
+                        <a href="/ai_assistant" class="btn btn-outline-success">
+                            <i class="fas fa-comment"></i> Test AI Assistant
+                        </a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+// Auto-refresh every 30 seconds
+setTimeout(() => {
+    location.reload();
+}, 30000);
+
+// Add a small indicator showing auto-refresh
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshBtn = document.querySelector('[onclick="location.reload()"]');
+    if (refreshBtn) {
+        let countdown = 30;
+        const interval = setInterval(() => {
+            countdown--;
+            if (countdown <= 0) {
+                clearInterval(interval);
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Refreshing...';
+            } else {
+                refreshBtn.innerHTML = `<i class="fas fa-sync-alt"></i> Refresh (${countdown}s)`;
+            }
+        }, 1000);
+    }
+});
+</script>
 {% endblock %}
