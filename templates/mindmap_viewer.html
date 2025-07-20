@@ -1,0 +1,694 @@
+{% extends 'base.html' %}
+
+{% block title %}Unit {{ unit_id }} Mindmap | 51Talk AI Learning{% endblock %}
+
+{% block additional_css %}
+<style>
+    #mindmapContainer {
+        width: 100%;
+        height: 600px;
+        background: rgba(26, 26, 31, 0.8);
+        border: 1px solid rgba(107, 114, 128, 0.2);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    #mindmapSvg {
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, rgba(139, 92, 246, 0.05) 0%, rgba(26, 26, 31, 0.9) 100%);
+    }
+
+    .mindmap-controls {
+        background: rgba(32, 33, 43, 0.9);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .control-group {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+    }
+
+    .control-btn {
+        background: rgba(107, 114, 128, 0.2);
+        border: 1px solid rgba(107, 114, 128, 0.3);
+        color: var(--text-color);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .control-btn:hover {
+        background: rgba(139, 92, 246, 0.3);
+        border-color: var(--accent-purple);
+    }
+
+    .control-btn.active {
+        background: var(--accent-purple);
+        border-color: var(--accent-purple);
+        color: white;
+    }
+
+    /* Mindmap Node Styles */
+    .node-circle {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .node-circle.central {
+        fill: var(--accent-purple);
+        stroke: var(--purple-light);
+        stroke-width: 3;
+    }
+
+    .node-circle.branch {
+        fill: var(--accent-teal);
+        stroke: var(--accent-cyan);
+        stroke-width: 2;
+    }
+
+    .node-circle.leaf {
+        fill: var(--accent-blue);
+        stroke: var(--info-color);
+        stroke-width: 1;
+    }
+
+    .node-circle:hover {
+        filter: brightness(1.3);
+        stroke-width: 4;
+    }
+
+    .node-text {
+        fill: var(--text-color);
+        font-size: 12px;
+        font-weight: 500;
+        text-anchor: middle;
+        pointer-events: none;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .node-text.central {
+        font-size: 16px;
+        font-weight: 700;
+        fill: white;
+    }
+
+    .node-text.branch {
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .link {
+        fill: none;
+        stroke: rgba(107, 114, 128, 0.6);
+        stroke-width: 2;
+        transition: all 0.3s ease;
+    }
+
+    .link:hover {
+        stroke: var(--accent-purple);
+        stroke-width: 3;
+    }
+
+    /* Info Panel */
+    .info-panel {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: rgba(32, 33, 43, 0.95);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 8px;
+        padding: 1rem;
+        max-width: 300px;
+        display: none;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .info-panel h5 {
+        color: var(--accent-purple);
+        margin-bottom: 0.5rem;
+    }
+
+    .info-panel p {
+        color: var(--text-color);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .expand-btn {
+        background: var(--gradient-purple);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .expand-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Loading Animation */
+    .loading-node {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    /* Legend */
+    .legend {
+        background: rgba(32, 33, 43, 0.8);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .legend-circle {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        margin-right: 0.75rem;
+    }
+
+    .legend-text {
+        color: var(--text-color);
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="fas fa-project-diagram mr-2" style="color: var(--accent-purple);"></i>Unit {{ unit_id }} Mindmap</h2>
+                <p class="text-muted">Interactive AI-generated learning mindmap for {{ user_camp }} camp</p>
+            </div>
+            <div>
+                <a href="{{ url_for('mindmap_home') }}" class="btn btn-secondary mr-2">
+                    <i class="fas fa-arrow-left mr-1"></i> Back to Selection
+                </a>
+                <a href="{{ url_for('unit', unit_id=unit_id) }}" class="btn btn-primary">
+                    <i class="fas fa-book mr-1"></i> View Unit Materials
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mindmap Controls -->
+<div class="mindmap-controls">
+    <div class="control-group">
+        <button class="control-btn active" id="zoomFit" onclick="resetZoom()">
+            <i class="fas fa-expand-arrows-alt mr-1"></i> Fit to Screen
+        </button>
+        <button class="control-btn" id="zoomIn" onclick="zoomIn()">
+            <i class="fas fa-search-plus mr-1"></i> Zoom In
+        </button>
+        <button class="control-btn" id="zoomOut" onclick="zoomOut()">
+            <i class="fas fa-search-minus mr-1"></i> Zoom Out
+        </button>
+    </div>
+    
+    <div class="control-group">
+        <button class="control-btn" id="refreshMindmap" onclick="regenerateMindmap()">
+            <i class="fas fa-sync-alt mr-1"></i> Regenerate
+        </button>
+        <button class="control-btn" id="fullscreen" onclick="toggleFullscreen()">
+            <i class="fas fa-expand mr-1"></i> Fullscreen
+        </button>
+    </div>
+</div>
+
+<!-- Mindmap Container -->
+<div class="row">
+    <div class="col-md-9">
+        <div id="mindmapContainer">
+            <svg id="mindmapSvg"></svg>
+            
+            <!-- Info Panel -->
+            <div id="infoPanel" class="info-panel">
+                <h5 id="nodeTitle">Node Title</h5>
+                <p id="nodeDescription">Click on nodes to explore more details...</p>
+                <button class="expand-btn" id="expandNode" onclick="expandCurrentNode()">
+                    <i class="fas fa-plus mr-1"></i> Expand Node
+                </button>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div id="mindmapLoading" class="text-center" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: none;">
+                <div class="spinner-border text-purple" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-2" style="color: var(--text-color);">Loading mindmap...</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <!-- Legend -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle mr-2"></i>Legend</h5>
+            </div>
+            <div class="card-body">
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-circle" style="background: var(--accent-purple);"></div>
+                        <span class="legend-text">Central Topic</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-circle" style="background: var(--accent-teal);"></div>
+                        <span class="legend-text">Main Concepts</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-circle" style="background: var(--accent-blue);"></div>
+                        <span class="legend-text">Details & Examples</span>
+                    </div>
+                </div>
+                
+                <hr style="border-color: rgba(107, 114, 128, 0.2);">
+                
+                <h6 style="color: var(--text-color); margin-bottom: 1rem;">Instructions:</h6>
+                <ul style="color: var(--accent-gray); font-size: 0.85rem;">
+                    <li>Click nodes to see details</li>
+                    <li>Drag to pan around</li>
+                    <li>Use mouse wheel to zoom</li>
+                    <li>Click "Expand" to generate more details</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-bar mr-2"></i>Mindmap Stats</h5>
+            </div>
+            <div class="card-body">
+                <div class="stat-item">
+                    <i class="fas fa-circle" style="color: var(--accent-purple);"></i>
+                    <div>
+                        <div class="stat-number" id="totalNodes">0</div>
+                        <div class="stat-label">Total Nodes</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-file-alt" style="color: var(--accent-teal);"></i>
+                    <div>
+                        <div class="stat-number">{{ material_count }}</div>
+                        <div class="stat-label">Source Materials</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script>
+// Mindmap variables
+let mindmapData = null;
+let svg, g, simulation;
+let currentSelectedNode = null;
+let zoom;
+
+// Initialize mindmap on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMindmap();
+    loadMindmapData();
+});
+
+function initializeMindmap() {
+    const container = d3.select("#mindmapContainer");
+    const width = container.node().getBoundingClientRect().width;
+    const height = container.node().getBoundingClientRect().height;
+    
+    svg = d3.select("#mindmapSvg")
+        .attr("width", width)
+        .attr("height", height);
+    
+    // Add zoom behavior
+    zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on("zoom", (event) => {
+            g.attr("transform", event.transform);
+        });
+    
+    svg.call(zoom);
+    
+    // Main group for all mindmap elements
+    g = svg.append("g");
+    
+    // Add drag behavior to svg for panning
+    svg.on("click", function(event) {
+        if (event.target === this) {
+            hideInfoPanel();
+        }
+    });
+}
+
+function loadMindmapData() {
+    showLoading();
+    
+    // Check if mindmap data is already cached
+    const cachedData = sessionStorage.getItem(`mindmap_unit_{{ unit_id }}`);
+    if (cachedData) {
+        mindmapData = JSON.parse(cachedData);
+        renderMindmap(mindmapData);
+        hideLoading();
+        return;
+    }
+    
+    // Load from server
+    fetch(`/api/generate_mindmap/{{ unit_id }}`)
+        .then(response => response.json())
+        .then(data => {
+            hideLoading();
+            if (data.success) {
+                mindmapData = data.mindmap;
+                sessionStorage.setItem(`mindmap_unit_{{ unit_id }}`, JSON.stringify(mindmapData));
+                renderMindmap(mindmapData);
+            } else {
+                showError(data.error || 'Failed to load mindmap');
+            }
+        })
+        .catch(error => {
+            hideLoading();
+            console.error('Error:', error);
+            showError('Failed to load mindmap');
+        });
+}
+
+function renderMindmap(data) {
+    // Clear existing content
+    g.selectAll("*").remove();
+    
+    // Prepare data for D3
+    const nodes = [];
+    const links = [];
+    
+    // Central node
+    const centralNode = {
+        id: 'central',
+        name: data.central_topic,
+        type: 'central',
+        x: 0,
+        y: 0,
+        fx: 0,
+        fy: 0
+    };
+    nodes.push(centralNode);
+    
+    // Branch nodes
+    data.branches.forEach((branch, branchIndex) => {
+        const branchNode = {
+            id: `branch_${branchIndex}`,
+            name: branch.name,
+            type: 'branch',
+            branchIndex: branchIndex
+        };
+        nodes.push(branchNode);
+        
+        // Link to central
+        links.push({
+            source: 'central',
+            target: `branch_${branchIndex}`
+        });
+        
+        // Child nodes
+        if (branch.children) {
+            branch.children.forEach((child, childIndex) => {
+                const childNode = {
+                    id: `child_${branchIndex}_${childIndex}`,
+                    name: child.name,
+                    type: 'leaf',
+                    parent: `branch_${branchIndex}`,
+                    childType: child.type || 'detail'
+                };
+                nodes.push(childNode);
+                
+                // Link to parent branch
+                links.push({
+                    source: `branch_${branchIndex}`,
+                    target: `child_${branchIndex}_${childIndex}`
+                });
+            });
+        }
+    });
+    
+    // Update stats
+    document.getElementById('totalNodes').textContent = nodes.length;
+    
+    // Create force simulation
+    simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(0, 0))
+        .force("collision", d3.forceCollide().radius(30));
+    
+    // Create links
+    const link = g.append("g")
+        .selectAll("line")
+        .data(links)
+        .enter().append("line")
+        .attr("class", "link");
+    
+    // Create nodes
+    const node = g.append("g")
+        .selectAll("g")
+        .data(nodes)
+        .enter().append("g")
+        .attr("class", "node")
+        .call(d3.drag()
+            .on("start", dragstarted)
+            .on("drag", dragged)
+            .on("end", dragended));
+    
+    // Add circles to nodes
+    node.append("circle")
+        .attr("class", d => `node-circle ${d.type}`)
+        .attr("r", d => {
+            if (d.type === 'central') return 30;
+            if (d.type === 'branch') return 20;
+            return 15;
+        })
+        .on("click", function(event, d) {
+            showNodeInfo(d);
+            event.stopPropagation();
+        });
+    
+    // Add text to nodes
+    node.append("text")
+        .attr("class", d => `node-text ${d.type}`)
+        .attr("dy", "0.35em")
+        .text(d => {
+            if (d.name.length > 15) {
+                return d.name.substring(0, 15) + "...";
+            }
+            return d.name;
+        });
+    
+    // Add title for full text on hover
+    node.append("title")
+        .text(d => d.name);
+    
+    // Update positions on simulation tick
+    simulation.on("tick", () => {
+        link
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+        
+        node
+            .attr("transform", d => `translate(${d.x},${d.y})`);
+    });
+    
+    // Center the view
+    setTimeout(() => {
+        resetZoom();
+    }, 1000);
+}
+
+function showNodeInfo(node) {
+    currentSelectedNode = node;
+    
+    const panel = document.getElementById('infoPanel');
+    const title = document.getElementById('nodeTitle');
+    const description = document.getElementById('nodeDescription');
+    
+    title.textContent = node.name;
+    
+    let desc = `Type: ${node.type.charAt(0).toUpperCase() + node.type.slice(1)}`;
+    if (node.childType) {
+        desc += `\nCategory: ${node.childType}`;
+    }
+    description.textContent = desc;
+    
+    panel.style.display = 'block';
+}
+
+function hideInfoPanel() {
+    document.getElementById('infoPanel').style.display = 'none';
+    currentSelectedNode = null;
+}
+
+function expandCurrentNode() {
+    if (!currentSelectedNode) return;
+    
+    const expandBtn = document.getElementById('expandNode');
+    expandBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Expanding...';
+    expandBtn.disabled = true;
+    
+    fetch('/api/expand_node', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            node_name: currentSelectedNode.name,
+            unit_id: {{ unit_id }},
+            context: mindmapData.central_topic
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        expandBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Expand Node';
+        expandBtn.disabled = false;
+        
+        if (data.success) {
+            // Add new nodes to mindmap
+            addExpandedNodes(currentSelectedNode, data.expanded_nodes);
+        } else {
+            alert('Failed to expand node: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        expandBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Expand Node';
+        expandBtn.disabled = false;
+        console.error('Error:', error);
+        alert('Failed to expand node');
+    });
+}
+
+function addExpandedNodes(parentNode, newNodes) {
+    // This would add new nodes to the existing mindmap
+    // For simplicity, we'll show an alert for now
+    alert(`Added ${newNodes.length} new details to "${parentNode.name}"`);
+    
+    // In a full implementation, you would:
+    // 1. Add new nodes to the data structure
+    // 2. Update the simulation with new nodes and links
+    // 3. Animate the new nodes appearing
+}
+
+// Control functions
+function resetZoom() {
+    const container = d3.select("#mindmapContainer");
+    const width = container.node().getBoundingClientRect().width;
+    const height = container.node().getBoundingClientRect().height;
+    
+    svg.transition().duration(750).call(
+        zoom.transform,
+        d3.zoomIdentity.translate(width / 2, height / 2).scale(0.8)
+    );
+}
+
+function zoomIn() {
+    svg.transition().duration(300).call(
+        zoom.scaleBy, 1.5
+    );
+}
+
+function zoomOut() {
+    svg.transition().duration(300).call(
+        zoom.scaleBy, 1 / 1.5
+    );
+}
+
+function regenerateMindmap() {
+    if (confirm('Regenerate the mindmap? This will create a new AI analysis.')) {
+        sessionStorage.removeItem(`mindmap_unit_{{ unit_id }}`);
+        loadMindmapData();
+    }
+}
+
+function toggleFullscreen() {
+    const container = document.getElementById('mindmapContainer');
+    if (document.fullscreenElement) {
+        document.exitFullscreen();
+    } else {
+        container.requestFullscreen();
+    }
+}
+
+// Drag functions
+function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+}
+
+function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+}
+
+function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    if (d.type !== 'central') {
+        d.fx = null;
+        d.fy = null;
+    }
+}
+
+// Utility functions
+function showLoading() {
+    document.getElementById('mindmapLoading').style.display = 'block';
+}
+
+function hideLoading() {
+    document.getElementById('mindmapLoading').style.display = 'none';
+}
+
+function showError(message) {
+    const container = document.getElementById('mindmapContainer');
+    container.innerHTML = `
+        <div class="text-center" style="padding: 2rem; color: var(--text-color);">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--warning-color); margin-bottom: 1rem;"></i>
+            <h4>Error Loading Mindmap</h4>
+            <p>${message}</p>
+            <button class="btn btn-primary" onclick="loadMindmapData()">
+                <i class="fas fa-retry mr-1"></i> Try Again
+            </button>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

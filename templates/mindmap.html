@@ -1,0 +1,356 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Mindmap Generator | 51Talk AI Learning{% endblock %}
+
+{% block additional_css %}
+<style>
+    .mindmap-hero {
+        background: var(--gradient-mixed);
+        color: white;
+        padding: 3rem 0;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .mindmap-hero h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .mindmap-hero p {
+        font-size: 1.2rem;
+        opacity: 0.9;
+    }
+
+    .unit-selection-card {
+        background: rgba(32, 33, 43, 0.7);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(107, 114, 128, 0.2);
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .unit-selection-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(107, 114, 128, 0.15);
+        border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .unit-card {
+        background: rgba(26, 26, 31, 0.6);
+        border: 1px solid rgba(107, 114, 128, 0.15);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .unit-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .unit-card:hover::before {
+        left: 100%;
+    }
+
+    .unit-card:hover {
+        border-color: rgba(139, 92, 246, 0.4);
+        background: rgba(26, 26, 31, 0.8);
+        transform: translateX(5px);
+    }
+
+    .unit-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--accent-purple);
+        margin-bottom: 0.5rem;
+    }
+
+    .unit-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .unit-description {
+        color: var(--accent-gray);
+        margin-bottom: 1rem;
+    }
+
+    .material-count {
+        background: rgba(139, 92, 246, 0.2);
+        color: var(--purple-light);
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .generate-btn {
+        background: var(--gradient-purple);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .generate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        color: white;
+    }
+
+    .features-section {
+        background: rgba(32, 33, 43, 0.5);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: rgba(26, 26, 31, 0.4);
+        border-radius: 8px;
+        border-left: 3px solid var(--accent-teal);
+    }
+
+    .feature-item i {
+        font-size: 1.5rem;
+        color: var(--accent-teal);
+        margin-right: 1rem;
+        width: 2rem;
+        text-align: center;
+    }
+
+    .feature-text {
+        color: var(--text-color);
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+
+    .loading-content {
+        background: var(--card-bg);
+        padding: 2rem;
+        border-radius: 12px;
+        text-align: center;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid rgba(139, 92, 246, 0.3);
+        border-top: 4px solid var(--accent-purple);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mindmap-hero">
+    <div class="container">
+        <h1><i class="fas fa-project-diagram mr-3"></i>AI Mindmap Generator</h1>
+        <p>Transform your learning materials into interactive, AI-powered mindmaps</p>
+        <small>Camp: <strong>{{ user_camp }}</strong></small>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card unit-selection-card">
+            <div class="card-header">
+                <h4><i class="fas fa-brain mr-2"></i>Select Unit for Mindmap Generation</h4>
+            </div>
+            <div class="card-body">
+                {% if available_units %}
+                    {% for unit in available_units %}
+                    <div class="unit-card" onclick="generateMindmap({{ unit.unit_id }})">
+                        <div class="row align-items-center">
+                            <div class="col-md-2 text-center">
+                                <div class="unit-number">{{ unit.unit_id }}</div>
+                            </div>
+                            <div class="col-md-7">
+                                <div class="unit-title">Unit {{ unit.unit_id }} Mindmap</div>
+                                <div class="unit-description">
+                                    Explore the key concepts and relationships in Unit {{ unit.unit_id }} through an interactive AI-generated mindmap
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-right">
+                                <div class="material-count mb-2">
+                                    <i class="fas fa-file-alt mr-1"></i>
+                                    {{ unit.material_count }} Materials
+                                </div>
+                                <button class="generate-btn">
+                                    <i class="fas fa-magic mr-1"></i> Generate Mindmap
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-folder-open" style="font-size: 4rem; color: var(--accent-gray); opacity: 0.5;"></i>
+                        <h4 class="mt-3" style="color: var(--accent-gray);">No Materials Available</h4>
+                        <p style="color: var(--accent-gray);">There are no learning materials available for your camp yet.</p>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left mr-1"></i> Back to Dashboard
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="fas fa-info-circle mr-2"></i>How It Works</h4>
+            </div>
+            <div class="card-body">
+                <div class="features-section">
+                    <div class="feature-item">
+                        <i class="fas fa-robot"></i>
+                        <div class="feature-text">
+                            <strong>AI Analysis</strong><br>
+                            Our AI analyzes your learning materials to identify key concepts
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <i class="fas fa-network-wired"></i>
+                        <div class="feature-text">
+                            <strong>Smart Connections</strong><br>
+                            Automatically maps relationships between different topics
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <i class="fas fa-mouse-pointer"></i>
+                        <div class="feature-text">
+                            <strong>Interactive</strong><br>
+                            Click to expand nodes and explore deeper concepts
+                        </div>
+                    </div>
+                    
+                    <div class="feature-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <div class="feature-text">
+                            <strong>Learning Focus</strong><br>
+                            Designed specifically for your camp's curriculum
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">
+                <h4><i class="fas fa-tips mr-2"></i>Tips</h4>
+            </div>
+            <div class="card-body">
+                <ul style="color: var(--text-color);">
+                    <li class="mb-2">Start with units you've already studied for better mindmaps</li>
+                    <li class="mb-2">Click on any node to expand and see more details</li>
+                    <li class="mb-2">Use mindmaps for quick review before quizzes</li>
+                    <li class="mb-2">Generate new mindmaps as you learn more content</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <h4 style="color: var(--text-color);">Generating Your Mindmap</h4>
+        <p style="color: var(--accent-gray);">Our AI is analyzing your learning materials...</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function generateMindmap(unitId) {
+    // Show loading overlay
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    // Make API call to generate mindmap
+    fetch(`/api/generate_mindmap/${unitId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            if (data.success) {
+                // Redirect to mindmap viewer
+                window.location.href = `/mindmap/${unitId}`;
+            } else {
+                alert('Error generating mindmap: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            console.error('Error:', error);
+            alert('Error generating mindmap. Please try again.');
+        });
+}
+
+// Add click effects
+document.addEventListener('DOMContentLoaded', function() {
+    const unitCards = document.querySelectorAll('.unit-card');
+    
+    unitCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateX(5px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateX(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}

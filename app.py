@@ -9711,6 +9711,300 @@ def get_all_cohorts():
         if conn:
             release_db_connection(conn)
 
+# ==============================================
+# MindMap Routes
+# ==============================================
+
+# Add these routes to your app.py file
+
+@app.route("/mindmap")
+@login_required
+@camp_required
+def mindmap_home():
+    """Display mindmap interface with unit selection."""
+    if not session.get("authenticated"):
+        return redirect(url_for("password_gate"))
+    
+    username = session["username"]
+    user_id = session["user_id"]
+    user_camp = session.get("user_camp")
+    
+    # Get available units that have materials for this user's camp
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get units with materials for user's camp
+        cursor.execute("""
+            SELECT DISTINCT unit_id, COUNT(*) as material_count
+            FROM materials m
+            WHERE m.camp = %s OR EXISTS (
+                SELECT 1 FROM content_tags ct
+                JOIN tags t ON ct.tag_id = t.id
+                JOIN tag_groups tg ON t.tag_group_id = tg.id
+                WHERE ct.content_type = 'material' 
+                AND ct.content_id = m.id
+                AND tg.name = 'Bootcamp Type'
+                AND t.name = %s
+            )
+            GROUP BY unit_id
+            ORDER BY unit_id
+        """, (user_camp, user_camp))
+        
+        available_units = cursor.fetchall()
+        cursor.close()
+        
+        return render_template(
+            "mindmap.html", 
+            username=username,
+            available_units=available_units,
+            user_camp=user_camp
+        )
+        
+    except Exception as e:
+        logger.error(f"Mindmap home error: {str(e)}")
+        flash(f"Error loading mindmap: {str(e)}", "error")
+        return redirect(url_for("dashboard"))
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+
+@app.route("/api/generate_mindmap/<int:unit_id>")
+@login_required
+@camp_required
+def generate_mindmap_api(unit_id):
+    """Generate mindmap data using AI analysis of materials."""
+    user_id = session["user_id"]
+    user_camp = session.get("user_camp")
+    
+    try:
+        # Get materials for this unit and user's camp
+        materials = get_content_with_tag_filtering("material", unit_id, user_id)
+        
+        if not materials:
+            return jsonify({
+                "success": False,
+                "error": "No materials found for this unit"
+            })
+        
+        # Combine all material content for AI analysis
+        combined_content = f"Unit {unit_id} Learning Materials:\n\n"
+        for material in materials:
+            combined_content += f"Title: {material['title']}\n"
+            if material.get('content'):
+                combined_content += f"Content: {material['content']}\n\n"
+        
+        # Use existing QA system to generate mindmap structure
+        qa_system = get_qa_system()
+        
+        if not qa_system:
+            return jsonify({
+                "success": False,
+                "error": "AI system not available"
+            })
+        
+        # Generate mindmap prompt
+        mindmap_prompt = f"""
+        Based on the following learning materials, create a structured mindmap with key concepts and their relationships. 
+        
+        Please analyze this content and return a JSON structure for a mindmap with:
+        - A central topic
+        - Main branches (key concepts)
+        - Sub-branches (details/examples)
+        - Keep it educational and organized
+        
+        Content to analyze:
+        {combined_content[:3000]}  # Limit content length
+        
+        Please respond with a JSON structure like:
+        {{
+            "central_topic": "Unit {unit_id} Main Topic",
+            "branches": [
+                {{
+                    "name": "Key Concept 1",
+                    "children": [
+                        {{"name": "Detail 1", "type": "detail"}},
+                        {{"name": "Detail 2", "type": "detail"}}
+                    ]
+                }},
+                {{
+                    "name": "Key Concept 2", 
+                    "children": [
+                        {{"name": "Example 1", "type": "example"}},
+                        {{"name": "Example 2", "type": "example"}}
+                    ]
+                }}
+            ]
+        }}
+        """
+        
+        # Get AI response
+        response = qa_system.answer_question(mindmap_prompt, user_id=str(user_id))
+        ai_answer = response.get("answer", "")
+        
+        # Try to extract JSON from AI response
+        try:
+            # Look for JSON structure in the response
+            import re
+            json_match = re.search(r'\{.*\}', ai_answer, re.DOTALL)
+            if json_match:
+                mindmap_data = json.loads(json_match.group())
+            else:
+                # Fallback: create basic structure from materials
+                mindmap_data = create_fallback_mindmap(materials, unit_id)
+        except:
+            # Create fallback mindmap if AI parsing fails
+            mindmap_data = create_fallback_mindmap(materials, unit_id)
+        
+        # Cache the mindmap data (optional - store in session or database)
+        session[f"mindmap_unit_{unit_id}"] = mindmap_data
+        
+        return jsonify({
+            "success": True,
+            "mindmap": mindmap_data,
+            "unit_id": unit_id
+        })
+        
+    except Exception as e:
+        logger.error(f"Generate mindmap error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
+
+
+def create_fallback_mindmap(materials, unit_id):
+    """Create a simple fallback mindmap structure from materials."""
+    mindmap = {
+        "central_topic": f"Unit {unit_id} Learning",
+        "branches": []
+    }
+    
+    for material in materials[:5]:  # Limit to 5 materials
+        branch = {
+            "name": material['title'],
+            "children": []
+        }
+        
+        # Add basic children based on content
+        if material.get('content'):
+            content_words = material['content'][:200].split()
+            if len(content_words) > 10:
+                branch["children"].append({
+                    "name": "Key Concepts",
+                    "type": "concept"
+                })
+                branch["children"].append({
+                    "name": "Learning Objectives", 
+                    "type": "objective"
+                })
+        
+        mindmap["branches"].append(branch)
+    
+    return mindmap
+
+
+@app.route("/api/expand_node", methods=["POST"])
+@login_required
+@camp_required
+def expand_mindmap_node():
+    """Expand a specific mindmap node with AI-generated details."""
+    try:
+        data = request.get_json()
+        node_name = data.get("node_name")
+        unit_id = data.get("unit_id")
+        context = data.get("context", "")
+        
+        if not all([node_name, unit_id]):
+            return jsonify({
+                "success": False,
+                "error": "Missing required parameters"
+            })
+        
+        # Use AI to expand the node
+        qa_system = get_qa_system()
+        if not qa_system:
+            return jsonify({
+                "success": False,
+                "error": "AI system not available"
+            })
+        
+        expand_prompt = f"""
+        For the learning topic "{node_name}" in Unit {unit_id}, provide 3-5 detailed sub-topics or key points that students should understand. 
+        
+        Context: {context}
+        
+        Please respond with a simple JSON array of objects like:
+        [
+            {{"name": "Sub-topic 1", "type": "subtopic"}},
+            {{"name": "Sub-topic 2", "type": "subtopic"}},
+            {{"name": "Sub-topic 3", "type": "subtopic"}}
+        ]
+        """
+        
+        response = qa_system.answer_question(expand_prompt, user_id=str(session["user_id"]))
+        ai_answer = response.get("answer", "")
+        
+        # Try to extract JSON array
+        try:
+            import re
+            json_match = re.search(r'\[.*\]', ai_answer, re.DOTALL)
+            if json_match:
+                expanded_nodes = json.loads(json_match.group())
+            else:
+                # Fallback
+                expanded_nodes = [
+                    {"name": f"{node_name} - Detail 1", "type": "detail"},
+                    {"name": f"{node_name} - Detail 2", "type": "detail"},
+                    {"name": f"{node_name} - Detail 3", "type": "detail"}
+                ]
+        except:
+            expanded_nodes = [
+                {"name": f"{node_name} - Key Point 1", "type": "detail"},
+                {"name": f"{node_name} - Key Point 2", "type": "detail"}
+            ]
+        
+        return jsonify({
+            "success": True,
+            "expanded_nodes": expanded_nodes
+        })
+        
+    except Exception as e:
+        logger.error(f"Expand node error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
+
+
+@app.route("/mindmap/<int:unit_id>")
+@login_required
+@camp_required  
+def view_mindmap(unit_id):
+    """View interactive mindmap for a specific unit."""
+    if not session.get("authenticated"):
+        return redirect(url_for("password_gate"))
+    
+    username = session["username"]
+    user_camp = session.get("user_camp")
+    
+    # Check if user has access to this unit
+    user_id = session["user_id"]
+    materials = get_content_with_tag_filtering("material", unit_id, user_id)
+    
+    if not materials:
+        flash(f"No materials available for Unit {unit_id} in your camp.", "error")
+        return redirect(url_for("mindmap_home"))
+    
+    return render_template(
+        "mindmap_viewer.html",
+        username=username,
+        unit_id=unit_id,
+        user_camp=user_camp,
+        material_count=len(materials)
+    )
 
 if __name__ == "__main__":
     try:

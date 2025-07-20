@@ -403,6 +403,19 @@ select:focus {
     margin-bottom: 1rem;
 }
 
+.btn-purple {
+    background: var(--gradient-purple);
+    color: white;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    border: none;
+}
+
+.btn-purple:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    color: white;
+}
+
 .alert-success {
     background: rgba(16, 185, 129, 0.15);
     color: #34d399;
