@@ -390,7 +390,7 @@
 {% block scripts %}
 <script>
 let selectedContentType = 'material';
-let unitsData = {{ available_units | tojsonhtml }};
+let unitsData = {{ available_units | tojson | safe }};
 
 // Content type descriptions
 const contentDescriptions = {
