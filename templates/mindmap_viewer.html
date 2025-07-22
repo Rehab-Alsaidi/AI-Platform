@@ -205,8 +205,18 @@
     <div class="col-md-12">
         <div class="d-flex justify-content-between align-items-center">
             <div>
-                <h2><i class="fas fa-project-diagram mr-2" style="color: var(--accent-purple);"></i>Unit {{ unit_id }} Mindmap</h2>
-                <p class="text-muted">Interactive AI-generated learning mindmap for {{ user_camp }} camp</p>
+                <h2><i class="fas fa-project-diagram mr-2" style="color: var(--accent-purple);"></i>Unit {{ unit_id }} 
+                {% if content_type == 'word' %}
+                    <span style="color: var(--accent-teal);">Vocabulary</span>
+                {% else %}
+                    Materials
+                {% endif %}
+                Mindmap</h2>
+                <p class="text-muted">Interactive AI-generated {{ content_label }} mindmap for {{ user_camp }} camp</p>
+                <span class="badge badge-{% if content_type == 'word' %}info{% else %}primary{% endif %} mr-2">
+                    <i class="fas fa-{% if content_type == 'word' %}spell-check{% else %}file-alt{% endif %} mr-1"></i>
+                    {{ content_count }} {{ content_label.title() }}
+                </span>
             </div>
             <div>
                 <a href="{{ url_for('mindmap_home') }}" class="btn btn-secondary mr-2">
@@ -299,6 +309,11 @@
                     <li>Drag to pan around</li>
                     <li>Use mouse wheel to zoom</li>
                     <li>Click "Expand" to generate more details</li>
+                    {% if content_type == 'word' %}
+                    <li>Explore vocabulary relationships</li>
+                    {% else %}
+                    <li>Discover concept connections</li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
@@ -317,10 +332,17 @@
                     </div>
                 </div>
                 <div class="stat-item">
-                    <i class="fas fa-file-alt" style="color: var(--accent-teal);"></i>
+                    <i class="fas fa-{% if content_type == 'word' %}spell-check{% else %}file-alt{% endif %}" style="color: var(--accent-teal);"></i>
                     <div>
-                        <div class="stat-number">{{ material_count }}</div>
-                        <div class="stat-label">Source Materials</div>
+                        <div class="stat-number">{{ content_count }}</div>
+                        <div class="stat-label">Source {{ content_label.title() }}</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-tag" style="color: var(--accent-blue);"></i>
+                    <div>
+                        <div class="stat-number">{{ content_type.title() }}</div>
+                        <div class="stat-label">Content Type</div>
                     </div>
                 </div>
             </div>
@@ -376,8 +398,13 @@ function initializeMindmap() {
 function loadMindmapData() {
     showLoading();
     
+    // Get content type from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const contentType = urlParams.get('content_type') || 'material';
+    
     // Check if mindmap data is already cached
-    const cachedData = sessionStorage.getItem(`mindmap_unit_{{ unit_id }}`);
+    const cacheKey = `mindmap_unit_{{ unit_id }}_${contentType}`;
+    const cachedData = sessionStorage.getItem(cacheKey);
     if (cachedData) {
         mindmapData = JSON.parse(cachedData);
         renderMindmap(mindmapData);
@@ -385,14 +412,14 @@ function loadMindmapData() {
         return;
     }
     
-    // Load from server
-    fetch(`/api/generate_mindmap/{{ unit_id }}`)
+    // Load from server with content type parameter
+    fetch(`/api/generate_mindmap/{{ unit_id }}?content_type=${contentType}`)
         .then(response => response.json())
         .then(data => {
             hideLoading();
             if (data.success) {
                 mindmapData = data.mindmap;
-                sessionStorage.setItem(`mindmap_unit_{{ unit_id }}`, JSON.stringify(mindmapData));
+                sessionStorage.setItem(cacheKey, JSON.stringify(mindmapData));
                 renderMindmap(mindmapData);
             } else {
                 showError(data.error || 'Failed to load mindmap');
@@ -566,6 +593,9 @@ function expandCurrentNode() {
     expandBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Expanding...';
     expandBtn.disabled = true;
     
+    const urlParams = new URLSearchParams(window.location.search);
+    const contentType = urlParams.get('content_type') || 'material';
+    
     fetch('/api/expand_node', {
         method: 'POST',
         headers: {
@@ -574,6 +604,7 @@ function expandCurrentNode() {
         body: JSON.stringify({
             node_name: currentSelectedNode.name,
             unit_id: {{ unit_id }},
+            content_type: contentType,
             context: mindmapData.central_topic
         })
     })
@@ -634,7 +665,10 @@ function zoomOut() {
 
 function regenerateMindmap() {
     if (confirm('Regenerate the mindmap? This will create a new AI analysis.')) {
-        sessionStorage.removeItem(`mindmap_unit_{{ unit_id }}`);
+        const urlParams = new URLSearchParams(window.location.search);
+        const contentType = urlParams.get('content_type') || 'material';
+        const cacheKey = `mindmap_unit_{{ unit_id }}_${contentType}`;
+        sessionStorage.removeItem(cacheKey);
         loadMindmapData();
     }
 }

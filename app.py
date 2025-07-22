@@ -229,6 +229,14 @@ TRANSLATIONS = {
         "explanation": "Explanation",
         "back_to_unit": "Back to Unit",
         "quiz": "Quiz",
+        "mindmap": "Mindmap",
+        "ai_mindmap": "AI Mindmap", 
+        "generate_mindmap": "Generate Mindmap",
+        "view_mindmap": "View Mindmap",
+        "interactive_mindmap": "Interactive Mindmap",
+        "mindmap_generator": "Mindmap Generator",
+        "mindmap_analysis": "AI is analyzing your materials",
+        "mindmap_ready": "Mindmap ready for exploration",
     },
     "zh": {
         "welcome": "51Talk 智能中心",
@@ -311,6 +319,14 @@ TRANSLATIONS = {
         "explanation": "解释",
         "back_to_unit": "返回单元",
         "quiz": "测验",
+        "mindmap": "思维导图",
+        "ai_mindmap": "AI思维导图", 
+       "generate_mindmap": "生成思维导图",
+       "view_mindmap": "查看思维导图",
+       "interactive_mindmap": "交互式思维导图",
+       "mindmap_generator": "思维导图生成器",
+       "mindmap_analysis": "AI正在分析您的材料",
+       "mindmap_ready": "思维导图准备就绪",
     },
     "ar": {
         "welcome": "51Talk مركز الذكاءالاصطناعي",
@@ -393,6 +409,14 @@ TRANSLATIONS = {
         "explanation": "التفسير",
         "back_to_unit": "العودة إلى الوحدة",
         "quiz": "اختبار",
+        "mindmap": "خريطة ذهنية",
+       "ai_mindmap": "خريطة ذهنية بالذكاء الاصطناعي", 
+       "generate_mindmap": "إنشاء خريطة ذهنية",
+       "view_mindmap": "عرض الخريطة الذهنية",
+       "interactive_mindmap": "خريطة ذهنية تفاعلية",
+       "mindmap_generator": "مولد الخرائط الذهنية",
+       "mindmap_analysis": "الذكاء الاصطناعي يحلل موادك",
+       "mindmap_ready": "الخريطة الذهنية جاهزة للاستكشاف",
     },
 }
 
@@ -2189,6 +2213,43 @@ def select_camp() -> Any:
                 release_db_connection(conn)
 
     return render_template("select_camp.html", camps=CAMPS)
+
+def create_fallback_words_mindmap(words, unit_id):
+    """Create a simple fallback mindmap structure from vocabulary words."""
+    mindmap = {
+        "central_topic": f"Unit {unit_id} Vocabulary",
+        "branches": []
+    }
+    
+    # Group words by sections if available
+    sections = {}
+    for word in words[:10]:  # Limit to 10 words
+        section = word.get('section', 1)
+        if section not in sections:
+            sections[section] = []
+        sections[section].append(word)
+    
+    for section_num, section_words in sections.items():
+        branch = {
+            "name": f"Section {section_num}",
+            "children": []
+        }
+        
+        for word in section_words:
+            child = {
+                "name": word['word'],
+                "type": "vocabulary"
+            }
+            
+            # Add definition if available
+            if word.get('daily_definition'):
+                child['definition'] = word['daily_definition'][:50] + "..." if len(word['daily_definition']) > 50 else word['daily_definition']
+            
+            branch["children"].append(child)
+        
+        mindmap["branches"].append(branch)
+    
+    return mindmap
 
 
 # ==============================================
@@ -9715,13 +9776,11 @@ def get_all_cohorts():
 # MindMap Routes
 # ==============================================
 
-# Add these routes to your app.py file
-
 @app.route("/mindmap")
 @login_required
 @camp_required
 def mindmap_home():
-    """Display mindmap interface with unit selection."""
+    """Display mindmap interface with unit selection for both materials and words."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
     
@@ -9729,36 +9788,67 @@ def mindmap_home():
     user_id = session["user_id"]
     user_camp = session.get("user_camp")
     
-    # Get available units that have materials for this user's camp
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         
-        # Get units with materials for user's camp
+        # Get units with both materials and words counts for user's camp
         cursor.execute("""
-            SELECT DISTINCT unit_id, COUNT(*) as material_count
-            FROM materials m
-            WHERE m.camp = %s OR EXISTS (
-                SELECT 1 FROM content_tags ct
-                JOIN tags t ON ct.tag_id = t.id
-                JOIN tag_groups tg ON t.tag_group_id = tg.id
-                WHERE ct.content_type = 'material' 
-                AND ct.content_id = m.id
-                AND tg.name = 'Bootcamp Type'
-                AND t.name = %s
+            WITH unit_materials AS (
+                SELECT DISTINCT unit_id, COUNT(*) as material_count
+                FROM materials m
+                WHERE m.camp = %s OR EXISTS (
+                    SELECT 1 FROM content_tags ct
+                    JOIN tags t ON ct.tag_id = t.id
+                    JOIN tag_groups tg ON t.tag_group_id = tg.id
+                    WHERE ct.content_type = 'material' 
+                    AND ct.content_id = m.id
+                    AND tg.name = 'Bootcamp Type'
+                    AND t.name = %s
+                )
+                GROUP BY unit_id
+            ),
+            unit_words AS (
+                SELECT DISTINCT unit_id, COUNT(*) as word_count
+                FROM words w
+                WHERE w.camp = %s OR EXISTS (
+                    SELECT 1 FROM content_tags ct
+                    JOIN tags t ON ct.tag_id = t.id
+                    JOIN tag_groups tg ON t.tag_group_id = tg.id
+                    WHERE ct.content_type = 'word' 
+                    AND ct.content_id = w.id
+                    AND tg.name = 'Bootcamp Type'
+                    AND t.name = %s
+                )
+                GROUP BY unit_id
             )
-            GROUP BY unit_id
-            ORDER BY unit_id
-        """, (user_camp, user_camp))
+            SELECT 
+                COALESCE(um.unit_id, uw.unit_id) as unit_id,
+                COALESCE(um.material_count, 0) as material_count,
+                COALESCE(uw.word_count, 0) as word_count
+            FROM unit_materials um
+            FULL OUTER JOIN unit_words uw ON um.unit_id = uw.unit_id
+            WHERE COALESCE(um.material_count, 0) > 0 OR COALESCE(uw.word_count, 0) > 0
+            ORDER BY COALESCE(um.unit_id, uw.unit_id)
+        """, (user_camp, user_camp, user_camp, user_camp))
         
         available_units = cursor.fetchall()
         cursor.close()
         
+        # Convert to list of dictionaries for JSON serialization
+        units_list = []
+        for unit in available_units:
+            units_list.append({
+                'unit_id': unit['unit_id'],
+                'material_count': unit['material_count'],
+                'word_count': unit['word_count']
+            })
+        
         return render_template(
             "mindmap.html", 
             username=username,
-            available_units=available_units,
+            available_units=units_list,
             user_camp=user_camp
         )
         
@@ -9771,30 +9861,57 @@ def mindmap_home():
             release_db_connection(conn)
 
 
+
 @app.route("/api/generate_mindmap/<int:unit_id>")
 @login_required
 @camp_required
 def generate_mindmap_api(unit_id):
-    """Generate mindmap data using AI analysis of materials."""
+    """Generate mindmap data using AI analysis of materials or words."""
     user_id = session["user_id"]
     user_camp = session.get("user_camp")
     
+    # Get content type from query parameter (default to 'material')
+    content_type = request.args.get('content_type', 'material')
+    
+    # Validate content type
+    if content_type not in ['material', 'word']:
+        return jsonify({
+            "success": False,
+            "error": "Invalid content type. Must be 'material' or 'word'"
+        })
+    
     try:
-        # Get materials for this unit and user's camp
-        materials = get_content_with_tag_filtering("material", unit_id, user_id)
+        # Get content based on type
+        if content_type == 'material':
+            content_items = get_content_with_tag_filtering("material", unit_id, user_id)
+            content_label = "materials"
+        else:  # content_type == 'word'
+            content_items = get_content_with_tag_filtering("word", unit_id, user_id)
+            content_label = "vocabulary words"
         
-        if not materials:
+        if not content_items:
             return jsonify({
                 "success": False,
-                "error": "No materials found for this unit"
+                "error": f"No {content_label} found for this unit"
             })
         
-        # Combine all material content for AI analysis
-        combined_content = f"Unit {unit_id} Learning Materials:\n\n"
-        for material in materials:
-            combined_content += f"Title: {material['title']}\n"
-            if material.get('content'):
-                combined_content += f"Content: {material['content']}\n\n"
+        # Combine all content for AI analysis
+        combined_content = f"Unit {unit_id} {content_label.title()}:\n\n"
+        
+        if content_type == 'material':
+            for item in content_items:
+                combined_content += f"Title: {item['title']}\n"
+                if item.get('content'):
+                    combined_content += f"Content: {item['content']}\n\n"
+        else:  # words
+            for item in content_items:
+                combined_content += f"Word: {item['word']}\n"
+                if item.get('daily_definition'):
+                    combined_content += f"Definition: {item['daily_definition']}\n"
+                if item.get('one_sentence_version'):
+                    combined_content += f"Summary: {item['one_sentence_version']}\n"
+                if item.get('life_metaphor'):
+                    combined_content += f"Metaphor: {item['life_metaphor']}\n\n"
         
         # Use existing QA system to generate mindmap structure
         qa_system = get_qa_system()
@@ -9805,40 +9922,61 @@ def generate_mindmap_api(unit_id):
                 "error": "AI system not available"
             })
         
-        # Generate mindmap prompt
-        mindmap_prompt = f"""
-        Based on the following learning materials, create a structured mindmap with key concepts and their relationships. 
-        
-        Please analyze this content and return a JSON structure for a mindmap with:
-        - A central topic
-        - Main branches (key concepts)
-        - Sub-branches (details/examples)
-        - Keep it educational and organized
-        
-        Content to analyze:
-        {combined_content[:3000]}  # Limit content length
-        
-        Please respond with a JSON structure like:
-        {{
-            "central_topic": "Unit {unit_id} Main Topic",
-            "branches": [
-                {{
-                    "name": "Key Concept 1",
-                    "children": [
-                        {{"name": "Detail 1", "type": "detail"}},
-                        {{"name": "Detail 2", "type": "detail"}}
-                    ]
-                }},
-                {{
-                    "name": "Key Concept 2", 
-                    "children": [
-                        {{"name": "Example 1", "type": "example"}},
-                        {{"name": "Example 2", "type": "example"}}
-                    ]
-                }}
-            ]
-        }}
-        """
+        # Generate mindmap prompt based on content type
+        if content_type == 'material':
+            mindmap_prompt = f"""
+            Based on the following learning materials, create a structured mindmap with key concepts and their relationships.
+            
+            Please analyze this content and return a JSON structure for a mindmap with:
+            - A central topic
+            - Main branches (key concepts)
+            - Sub-branches (details/examples)
+            - Keep it educational and organized
+            
+            Content to analyze:
+            {combined_content[:3000]}
+            
+            Please respond with a JSON structure like:
+            {{
+                "central_topic": "Unit {unit_id} Learning Materials",
+                "branches": [
+                    {{
+                        "name": "Key Concept 1",
+                        "children": [
+                            {{"name": "Detail 1", "type": "detail"}},
+                            {{"name": "Detail 2", "type": "detail"}}
+                        ]
+                    }}
+                ]
+            }}
+            """
+        else:  # words
+            mindmap_prompt = f"""
+            Based on the following vocabulary words and their definitions, create a structured mindmap showing word relationships and concepts.
+            
+            Please analyze this vocabulary content and return a JSON structure for a mindmap with:
+            - A central topic about vocabulary
+            - Main branches (word categories or themes)
+            - Sub-branches (individual words and their key meanings)
+            - Keep it focused on vocabulary learning
+            
+            Vocabulary to analyze:
+            {combined_content[:3000]}
+            
+            Please respond with a JSON structure like:
+            {{
+                "central_topic": "Unit {unit_id} Vocabulary",
+                "branches": [
+                    {{
+                        "name": "Word Category 1",
+                        "children": [
+                            {{"name": "Word 1", "type": "vocabulary"}},
+                            {{"name": "Word 2", "type": "vocabulary"}}
+                        ]
+                    }}
+                ]
+            }}
+            """
         
         # Get AI response
         response = qa_system.answer_question(mindmap_prompt, user_id=str(user_id))
@@ -9852,19 +9990,27 @@ def generate_mindmap_api(unit_id):
             if json_match:
                 mindmap_data = json.loads(json_match.group())
             else:
-                # Fallback: create basic structure from materials
-                mindmap_data = create_fallback_mindmap(materials, unit_id)
+                # Fallback: create basic structure from content
+                if content_type == 'material':
+                    mindmap_data = create_fallback_mindmap(content_items, unit_id)
+                else:
+                    mindmap_data = create_fallback_words_mindmap(content_items, unit_id)
         except:
             # Create fallback mindmap if AI parsing fails
-            mindmap_data = create_fallback_mindmap(materials, unit_id)
+            if content_type == 'material':
+                mindmap_data = create_fallback_mindmap(content_items, unit_id)
+            else:
+                mindmap_data = create_fallback_words_mindmap(content_items, unit_id)
         
         # Cache the mindmap data (optional - store in session or database)
-        session[f"mindmap_unit_{unit_id}"] = mindmap_data
+        session[f"mindmap_unit_{unit_id}_{content_type}"] = mindmap_data
         
         return jsonify({
             "success": True,
             "mindmap": mindmap_data,
-            "unit_id": unit_id
+            "unit_id": unit_id,
+            "content_type": content_type,
+            "content_count": len(content_items)
         })
         
     except Exception as e:
@@ -9875,35 +10021,43 @@ def generate_mindmap_api(unit_id):
         })
 
 
-def create_fallback_mindmap(materials, unit_id):
-    """Create a simple fallback mindmap structure from materials."""
+def create_fallback_words_mindmap(words, unit_id):
+    """Create a simple fallback mindmap structure from vocabulary words."""
     mindmap = {
-        "central_topic": f"Unit {unit_id} Learning",
+        "central_topic": f"Unit {unit_id} Vocabulary",
         "branches": []
     }
     
-    for material in materials[:5]:  # Limit to 5 materials
+    # Group words by sections if available
+    sections = {}
+    for word in words[:10]:  # Limit to 10 words
+        section = word.get('section', 1)
+        if section not in sections:
+            sections[section] = []
+        sections[section].append(word)
+    
+    for section_num, section_words in sections.items():
         branch = {
-            "name": material['title'],
+            "name": f"Section {section_num}",
             "children": []
         }
         
-        # Add basic children based on content
-        if material.get('content'):
-            content_words = material['content'][:200].split()
-            if len(content_words) > 10:
-                branch["children"].append({
-                    "name": "Key Concepts",
-                    "type": "concept"
-                })
-                branch["children"].append({
-                    "name": "Learning Objectives", 
-                    "type": "objective"
-                })
+        for word in section_words:
+            child = {
+                "name": word['word'],
+                "type": "vocabulary"
+            }
+            
+            # Add definition if available
+            if word.get('daily_definition'):
+                child['definition'] = word['daily_definition'][:50] + "..." if len(word['daily_definition']) > 50 else word['daily_definition']
+            
+            branch["children"].append(child)
         
         mindmap["branches"].append(branch)
     
     return mindmap
+
 
 
 @app.route("/api/expand_node", methods=["POST"])
@@ -9915,12 +10069,20 @@ def expand_mindmap_node():
         data = request.get_json()
         node_name = data.get("node_name")
         unit_id = data.get("unit_id")
+        content_type = data.get("content_type", "material")
         context = data.get("context", "")
         
         if not all([node_name, unit_id]):
             return jsonify({
                 "success": False,
                 "error": "Missing required parameters"
+            })
+        
+        # Validate content type
+        if content_type not in ['material', 'word']:
+            return jsonify({
+                "success": False,
+                "error": "Invalid content type"
             })
         
         # Use AI to expand the node
@@ -9931,18 +10093,39 @@ def expand_mindmap_node():
                 "error": "AI system not available"
             })
         
-        expand_prompt = f"""
-        For the learning topic "{node_name}" in Unit {unit_id}, provide 3-5 detailed sub-topics or key points that students should understand. 
-        
-        Context: {context}
-        
-        Please respond with a simple JSON array of objects like:
-        [
-            {{"name": "Sub-topic 1", "type": "subtopic"}},
-            {{"name": "Sub-topic 2", "type": "subtopic"}},
-            {{"name": "Sub-topic 3", "type": "subtopic"}}
-        ]
-        """
+        # Create appropriate expand prompt based on content type
+        if content_type == 'material':
+            expand_prompt = f"""
+            For the learning topic "{node_name}" in Unit {unit_id}, provide 3-5 detailed sub-topics or key points that students should understand. 
+            
+            Context: {context}
+            
+            Focus on educational concepts, theories, and practical applications related to this topic.
+            
+            Please respond with a simple JSON array of objects like:
+            [
+                {{"name": "Sub-topic 1", "type": "concept"}},
+                {{"name": "Sub-topic 2", "type": "theory"}},
+                {{"name": "Sub-topic 3", "type": "application"}}
+            ]
+            """
+        else:  # content_type == 'word'
+            expand_prompt = f"""
+            For the vocabulary term "{node_name}" in Unit {unit_id}, provide 3-5 related concepts such as:
+            - Synonyms or related words
+            - Usage examples
+            - Contextual applications
+            - Related grammatical forms
+            
+            Context: {context}
+            
+            Please respond with a simple JSON array of objects like:
+            [
+                {{"name": "Related concept 1", "type": "synonym"}},
+                {{"name": "Usage example 1", "type": "example"}},
+                {{"name": "Application 1", "type": "application"}}
+            ]
+            """
         
         response = qa_system.answer_question(expand_prompt, user_id=str(session["user_id"]))
         ai_answer = response.get("answer", "")
@@ -9954,16 +10137,24 @@ def expand_mindmap_node():
             if json_match:
                 expanded_nodes = json.loads(json_match.group())
             else:
-                # Fallback
-                expanded_nodes = [
-                    {"name": f"{node_name} - Detail 1", "type": "detail"},
-                    {"name": f"{node_name} - Detail 2", "type": "detail"},
-                    {"name": f"{node_name} - Detail 3", "type": "detail"}
-                ]
+                # Fallback based on content type
+                if content_type == 'material':
+                    expanded_nodes = [
+                        {"name": f"{node_name} - Key Concept 1", "type": "concept"},
+                        {"name": f"{node_name} - Key Concept 2", "type": "concept"},
+                        {"name": f"{node_name} - Application", "type": "application"}
+                    ]
+                else:
+                    expanded_nodes = [
+                        {"name": f"{node_name} - Definition", "type": "definition"},
+                        {"name": f"{node_name} - Example", "type": "example"},
+                        {"name": f"{node_name} - Usage", "type": "usage"}
+                    ]
         except:
+            # Create fallback nodes
             expanded_nodes = [
-                {"name": f"{node_name} - Key Point 1", "type": "detail"},
-                {"name": f"{node_name} - Key Point 2", "type": "detail"}
+                {"name": f"{node_name} - Detail 1", "type": "detail"},
+                {"name": f"{node_name} - Detail 2", "type": "detail"}
             ]
         
         return jsonify({
@@ -9983,19 +10174,32 @@ def expand_mindmap_node():
 @login_required
 @camp_required  
 def view_mindmap(unit_id):
-    """View interactive mindmap for a specific unit."""
+    """View interactive mindmap for a specific unit with content type support."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
     
     username = session["username"]
     user_camp = session.get("user_camp")
-    
-    # Check if user has access to this unit
     user_id = session["user_id"]
-    materials = get_content_with_tag_filtering("material", unit_id, user_id)
     
-    if not materials:
-        flash(f"No materials available for Unit {unit_id} in your camp.", "error")
+    # Get content type from query parameter (default to 'material')
+    content_type = request.args.get('content_type', 'material')
+    
+    # Validate content type
+    if content_type not in ['material', 'word']:
+        flash("Invalid content type", "error")
+        return redirect(url_for("mindmap_home"))
+    
+    # Check if user has access to this unit's content
+    if content_type == 'material':
+        content_items = get_content_with_tag_filtering("material", unit_id, user_id)
+        content_label = "materials"
+    else:
+        content_items = get_content_with_tag_filtering("word", unit_id, user_id)
+        content_label = "vocabulary words"
+    
+    if not content_items:
+        flash(f"No {content_label} available for Unit {unit_id} in your camp.", "error")
         return redirect(url_for("mindmap_home"))
     
     return render_template(
@@ -10003,8 +10207,11 @@ def view_mindmap(unit_id):
         username=username,
         unit_id=unit_id,
         user_camp=user_camp,
-        material_count=len(materials)
+        content_count=len(content_items),
+        content_type=content_type,
+        content_label=content_label
     )
+
 
 if __name__ == "__main__":
     try:
