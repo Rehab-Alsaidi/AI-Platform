@@ -8,34 +8,57 @@
         <div class="card mb-4 quiz-card">
             <div class="card-header bg-primary text-white">
                 <h3><i class="fas fa-question-circle mr-2"></i>Quiz for Unit {{ unit_id }}</h3>
+                <small class="opacity-75">{{ total_questions }} Questions - 70% needed to pass</small>
             </div>
             <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
                 <div class="motivation-card mb-4">
                     <i class="fas fa-lightbulb mr-2"></i>
                     <h5 class="mb-2">Tip of the Day</h5>
-                    <p class="mb-0">{{ motivation }}</p>
+                    <p class="mb-0">Take your time to read each question carefully. You can only take this quiz once!</p>
                 </div>
                 
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle mr-2"></i>
-                    <strong>Instructions:</strong> Answer all questions and click submit. You need to get at least 3 out of 5 questions correct to pass.
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Important:</strong> This quiz can only be taken once. You need to score 70% or higher to pass.
                 </div>
                 
-                <form method="POST">
+                <form method="POST" id="quizForm">
                     {% for question in questions %}
-                    <div class="card mb-4 question-card">
+                    <div class="card mb-4 question-card" data-question-id="{{ question.id }}">
                         <div class="card-header">
                             <h5 class="mb-0">
                                 <span class="badge badge-primary mr-2">{{ loop.index }}</span>
-                                {{ question.question }}
+                                Question {{ loop.index }} of {{ total_questions }}
                             </h5>
                         </div>
                         <div class="card-body">
+                            <div class="question-text mb-3">
+                                <p><strong>{{ question.question }}</strong></p>
+                            </div>
+                            
                             <div class="options-container">
                                 {% for option in question.options %}
-                                <div class="custom-control custom-radio mb-3">
-                                    <input type="radio" id="q{{ question.id }}_option{{ loop.index0 }}" name="q{{ question.id }}" value="{{ loop.index0 }}" class="custom-control-input" required>
+                                <div class="custom-control custom-radio mb-3 option-wrapper">
+                                    <!-- FIXED: Using correct field name format -->
+                                    <input type="radio" 
+                                           id="q{{ question.id }}_option{{ loop.index0 }}" 
+                                           name="question_{{ question.id }}" 
+                                           value="{{ loop.index0 }}" 
+                                           class="custom-control-input" 
+                                           required>
                                     <label class="custom-control-label" for="q{{ question.id }}_option{{ loop.index0 }}">
+                                        <span class="option-letter">{{ ['A', 'B', 'C', 'D'][loop.index0] }}.</span>
                                         {{ option }}
                                     </label>
                                 </div>
@@ -45,12 +68,41 @@
                     </div>
                     {% endfor %}
                     
-                    <div class="text-center">
-                        <button type="submit" class="btn btn-primary btn-lg px-5 animate-pulse">
-                            <i class="fas fa-check-circle mr-2"></i>Submit Answers
+                    <div class="text-center mt-4">
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+                        </div>
+                        <p class="text-muted mb-3">
+                            <span id="answeredCount">0</span> of {{ total_questions }} questions answered
+                        </p>
+                        
+                        <button type="button" class="btn btn-outline-secondary mr-2" id="reviewBtn">
+                            <i class="fas fa-eye mr-2"></i>Review Answers
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-lg px-5" id="submitBtn">
+                            <i class="fas fa-check-circle mr-2"></i>Submit Quiz
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Review Your Answers</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="reviewContent">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Continue Editing</button>
+                <button type="button" class="btn btn-primary" id="confirmSubmit">Submit Quiz</button>
             </div>
         </div>
     </div>
@@ -60,8 +112,8 @@
 {% block additional_css %}
 <style>
 .custom-control-input:checked ~ .custom-control-label::before {
-    background-color: var(--accent-color);
-    border-color: var(--accent-color);
+    background-color: var(--accent-color, #007bff);
+    border-color: var(--accent-color, #007bff);
 }
 
 .custom-radio .custom-control-label::before {
@@ -69,22 +121,39 @@
 }
 
 .custom-control-label {
-    padding: 8px;
+    padding: 12px 16px;
     border-radius: 8px;
-    transition: background-color 0.3s;
+    transition: all 0.3s;
     cursor: pointer;
+    border: 1px solid #e9ecef;
+    display: block;
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.custom-control-label:hover {
+    background-color: #f8f9fa;
+    border-color: #007bff;
 }
 
 .custom-control-input:checked ~ .custom-control-label {
-    background-color: rgba(187, 134, 252, 0.1);
+    background-color: rgba(0, 123, 255, 0.1);
+    border-color: #007bff;
+    font-weight: 500;
+}
+
+.option-letter {
+    font-weight: bold;
+    color: #007bff;
+    margin-right: 8px;
 }
 
 .options-container {
-    padding: 10px;
+    padding: 10px 0;
 }
 
 .badge-primary {
-    background-color: var(--accent-color);
+    background-color: var(--accent-color, #007bff);
 }
 
 .motivation-card {
@@ -103,17 +172,204 @@
 }
 
 .question-card {
-    border-left: 4px solid var(--accent-color);
+    border-left: 4px solid var(--accent-color, #007bff);
+    transition: all 0.3s ease;
 }
 
-.animate-pulse {
-    animation: pulse 2s infinite;
+.question-card.answered {
+    border-left-color: #28a745;
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
+.question-card.answered .card-header {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+}
+
+.progress-bar {
+    background-color: #28a745;
+    transition: width 0.3s ease;
+}
+
+.custom-control {
+    position: relative;
+    display: block;
+    min-height: 1.5rem;
+    padding-left: 0;
+}
+
+.custom-control-input {
+    position: absolute;
+    left: 0;
+    z-index: -1;
+    width: 1rem;
+    height: 1.25rem;
+    opacity: 0;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+    color: #fff;
+    border-color: #007bff;
+    background-color: #007bff;
+}
+
+.custom-control-label::before {
+    position: absolute;
+    top: 0.25rem;
+    left: -1.5rem;
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    pointer-events: none;
+    content: "";
+    background-color: #fff;
+    border: 1px solid #adb5bd;
+    border-radius: 0.25rem;
+}
+
+.custom-control-label::after {
+    position: absolute;
+    top: 0.25rem;
+    left: -1.5rem;
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    content: "";
+    background: no-repeat 50% / 50% 50%;
+}
+
+.custom-radio .custom-control-label::before {
+    border-radius: 50%;
+}
+
+.custom-radio .custom-control-input:checked ~ .custom-control-label::after {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+@media (max-width: 768px) {
+    .custom-control-label {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .option-letter {
+        margin-right: 6px;
+    }
 }
 </style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('quizForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const reviewBtn = document.getElementById('reviewBtn');
+    const progressBar = document.getElementById('progressBar');
+    const answeredCount = document.getElementById('answeredCount');
+    const totalQuestions = {{ total_questions }};
+    
+    // Track answered questions
+    function updateProgress() {
+        const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
+        const percentage = (answeredQuestions / totalQuestions) * 100;
+        
+        progressBar.style.width = percentage + '%';
+        answeredCount.textContent = answeredQuestions;
+        
+        // Update visual feedback
+        document.querySelectorAll('.question-card').forEach(card => {
+            const questionId = card.dataset.questionId;
+            const hasAnswer = card.querySelector('input[type="radio"]:checked');
+            
+            if (hasAnswer) {
+                card.classList.add('answered');
+            } else {
+                card.classList.remove('answered');
+            }
+        });
+        
+        // Enable/disable submit button
+        submitBtn.disabled = answeredQuestions < totalQuestions;
+        if (answeredQuestions === totalQuestions) {
+            submitBtn.classList.add('animate-pulse');
+        } else {
+            submitBtn.classList.remove('animate-pulse');
+        }
+    }
+    
+    // Listen for radio button changes
+    document.querySelectorAll('input[type="radio"]').forEach(radio => {
+        radio.addEventListener('change', updateProgress);
+    });
+    
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const answeredQuestions = document.querySelectorAll('input[type="radio"]:checked').length;
+        if (answeredQuestions < totalQuestions) {
+            alert(`Please answer all questions. You have answered ${answeredQuestions} out of ${totalQuestions} questions.`);
+            return;
+        }
+        
+        if (confirm('Are you sure you want to submit your quiz? You can only take this quiz once!')) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+            
+            // Debug: Log form data
+            console.log('Submitting quiz with data:');
+            const formData = new FormData(form);
+            for (let pair of formData.entries()) {
+                console.log(pair[0] + ': ' + pair[1]);
+            }
+            
+            form.submit();
+        }
+    });
+    
+    // Review functionality
+    reviewBtn.addEventListener('click', function() {
+        const reviewContent = document.getElementById('reviewContent');
+        let html = '<div class="list-group">';
+        
+        document.querySelectorAll('.question-card').forEach((card, index) => {
+            const questionText = card.querySelector('.question-text p').textContent.trim();
+            const selectedAnswer = card.querySelector('input[type="radio"]:checked');
+            const questionNum = index + 1;
+            
+            html += `
+                <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">Question ${questionNum}</h6>
+                        <small>${selectedAnswer ? 'Answered' : 'Not answered'}</small>
+                    </div>
+                    <p class="mb-1">${questionText}</p>
+                    <small class="text-muted">
+                        ${selectedAnswer ? selectedAnswer.nextElementSibling.textContent.trim() : 'No answer selected'}
+                    </small>
+                </div>
+            `;
+        });
+        
+        html += '</div>';
+        reviewContent.innerHTML = html;
+        
+        const modal = new bootstrap.Modal(document.getElementById('reviewModal'));
+        modal.show();
+    });
+    
+    // Confirm submit from modal
+    document.getElementById('confirmSubmit').addEventListener('click', function() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('reviewModal'));
+        modal.hide();
+        
+        setTimeout(() => {
+            form.dispatchEvent(new Event('submit'));
+        }, 300);
+    });
+    
+    // Initial progress update
+    updateProgress();
+});
+</script>
 {% endblock %}

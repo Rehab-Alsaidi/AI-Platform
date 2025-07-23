@@ -3093,7 +3093,7 @@ def unit(unit_id: int) -> Any:
 @login_required
 @camp_required
 def quiz(unit_id: int) -> Any:
-    """FIXED quiz route with correct table names"""
+    """COMPLETE WORKING quiz route with detailed debugging"""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
     
@@ -3104,7 +3104,7 @@ def quiz(unit_id: int) -> Any:
     conn = None
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
 
         # Check if user has already attempted the quiz
         cursor.execute(
@@ -3120,24 +3120,18 @@ def quiz(unit_id: int) -> Any:
         attempt = cursor.fetchone()
 
         # If user has already attempted, redirect to review
-        if attempt and attempt[1] is not None:
+        if attempt and attempt['score'] is not None:
             return redirect(url_for("quiz_review", unit_id=unit_id))
 
-        # Get quiz questions for this unit using direct database query
-        # Using cursor with RealDictCursor for easier data handling
-        cursor.close()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        # Get quiz questions with proper filtering
+        # Get quiz questions for this unit
         cursor.execute(
             """
             SELECT DISTINCT q.* FROM quizzes q
             WHERE q.unit_id = %s 
             AND (
-                -- Match main camp field (backward compatibility)
                 q.camp = %s 
+                OR q.camp = 'both'
                 OR 
-                -- Match any bootcamp type tag assigned to this quiz
                 EXISTS (
                     SELECT 1 FROM content_tags ct
                     JOIN tags t ON ct.tag_id = t.id
@@ -3161,14 +3155,30 @@ def quiz(unit_id: int) -> Any:
 
         # Handle POST request (quiz submission)
         if request.method == "POST":
+            logger.info(f"Processing quiz submission for user {user_id}, unit {unit_id}")
+            logger.info(f"Form data received: {dict(request.form)}")
+            
             try:
-                # Get user answers from form
+                # Get user answers from form - FIXED LOGIC
                 user_answers = {}
                 for quiz_question in quizzes:
-                    answer_key = f"question_{quiz_question['id']}"
+                    question_id = quiz_question['id']
+                    # Look for answer with question ID
+                    answer_key = f"question_{question_id}"
                     user_answer = request.form.get(answer_key)
-                    if user_answer is not None:
-                        user_answers[quiz_question['id']] = int(user_answer)
+                    
+                    logger.info(f"Question {question_id}: Looking for key '{answer_key}', found: {user_answer}")
+                    
+                    if user_answer is not None and user_answer != "":
+                        try:
+                            user_answers[question_id] = int(user_answer)
+                        except ValueError:
+                            logger.error(f"Invalid answer format for question {question_id}: {user_answer}")
+                            user_answers[question_id] = None
+                    else:
+                        user_answers[question_id] = None
+
+                logger.info(f"Processed user answers: {user_answers}")
 
                 # Calculate score
                 correct_answers = 0
@@ -3184,6 +3194,7 @@ def quiz(unit_id: int) -> Any:
                     (user_id, unit_id, 0, False),  # Temporary values, will update later
                 )
                 attempt_id = cursor.fetchone()['id']
+                logger.info(f"Created quiz attempt with ID: {attempt_id}")
 
                 # Process each question and save responses
                 for quiz_question in quizzes:
@@ -3191,9 +3202,18 @@ def quiz(unit_id: int) -> Any:
                     correct_answer = quiz_question['correct_answer']
                     user_answer = user_answers.get(question_id)
                     
-                    is_correct = (user_answer == correct_answer) if user_answer is not None else False
-                    if is_correct:
-                        correct_answers += 1
+                    logger.info(f"Question {question_id}: User answer: {user_answer}, Correct: {correct_answer}")
+                    
+                    is_correct = False
+                    if user_answer is not None:
+                        is_correct = (user_answer == correct_answer)
+                        if is_correct:
+                            correct_answers += 1
+                            logger.info(f"Question {question_id}: CORRECT!")
+                        else:
+                            logger.info(f"Question {question_id}: Wrong - user said {user_answer}, correct is {correct_answer}")
+                    else:
+                        logger.info(f"Question {question_id}: No answer provided")
 
                     # Save individual question response
                     cursor.execute(
@@ -3207,6 +3227,8 @@ def quiz(unit_id: int) -> Any:
                 # Calculate final score and pass status
                 score = round((correct_answers / total_questions) * 100) if total_questions > 0 else 0
                 passed = score >= 70  # 70% passing grade
+                
+                logger.info(f"Final score: {correct_answers}/{total_questions} = {score}% (passed: {passed})")
 
                 # Update quiz attempt with final score
                 cursor.execute(
@@ -3235,13 +3257,17 @@ def quiz(unit_id: int) -> Any:
                     update_team_score(user_id, 10)  # Award 10 points for passing quiz
 
                 conn.commit()
+                logger.info("Quiz submission completed successfully")
 
-                flash(f"Quiz completed! Your score: {score}%", "success" if passed else "warning")
+                message = f"Quiz completed! Your score: {score}% ({correct_answers}/{total_questions} correct)"
+                flash(message, "success" if passed else "warning")
                 return redirect(url_for("quiz_review", unit_id=unit_id))
 
             except Exception as submit_error:
                 conn.rollback()
                 logger.error(f"Quiz submission error: {str(submit_error)}")
+                import traceback
+                logger.error(f"Full traceback: {traceback.format_exc()}")
                 flash("Error submitting quiz. Please try again.", "error")
 
         # Handle GET request (show quiz)
@@ -3256,6 +3282,7 @@ def quiz(unit_id: int) -> Any:
                 'explanation': quiz.get('explanation', ''),
             })
 
+        logger.info(f"Displaying quiz with {len(quiz_questions)} questions")
         cursor.close()
 
         return render_template(
@@ -3269,6 +3296,8 @@ def quiz(unit_id: int) -> Any:
 
     except Exception as e:
         logger.error(f"Quiz page error: {str(e)}")
+        import traceback
+        logger.error(f"Full traceback: {traceback.format_exc()}")
         flash(f"An error occurred loading the quiz: {str(e)}", "error")
         return redirect(url_for("unit", unit_id=unit_id))
     finally:
