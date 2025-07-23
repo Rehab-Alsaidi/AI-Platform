@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="{{ current_language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ get_text('change_username') }} - 51Talk AI Learning</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .form-control {
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: border-color 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(45deg, #5a6fd8, #6a4190);
+        }
+        .btn-secondary {
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-weight: 600;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6c757d;
+            z-index: 10;
+        }
+        .password-toggle:hover {
+            color: #495057;
+        }
+        .input-group-password {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="card">
+                    <div class="card-body p-5">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-user-edit fa-3x text-primary mb-3"></i>
+                            <h2 class="h3 mb-0">{{ get_text('change_username') }}</h2>
+                            <p class="text-muted">{{ get_text('update_your_username') }}</p>
+                        </div>
+
+                        <!-- Flash Messages -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                        <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }} me-2"></i>
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" action="{{ url_for('change_username') }}">
+                            <!-- Current Username Display -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-user me-2"></i>{{ get_text('current_username') }}
+                                </label>
+                                <div class="form-control-plaintext bg-light p-3 rounded">
+                                    <strong>{{ current_username }}</strong>
+                                </div>
+                            </div>
+
+                            <!-- New Username Input -->
+                            <div class="mb-4">
+                                <label for="new_username" class="form-label fw-bold">
+                                    <i class="fas fa-user-plus me-2"></i>{{ get_text('new_username') }}
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="new_username" 
+                                       name="new_username" 
+                                       placeholder="{{ get_text('enter_new_username') }}"
+                                       required 
+                                       minlength="3"
+                                       maxlength="50"
+                                       pattern="[a-zA-Z0-9_]+"
+                                       title="{{ get_text('username_requirements') }}">
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    {{ get_text('username_help_text') }}
+                                </div>
+                            </div>
+
+                            <!-- Password Confirmation -->
+                            <div class="mb-4">
+                                <label for="password" class="form-label fw-bold">
+                                    <i class="fas fa-lock me-2"></i>{{ get_text('confirm_with_password') }}
+                                </label>
+                                <div class="input-group-password">
+                                    <input type="password" 
+                                           class="form-control" 
+                                           id="password" 
+                                           name="password" 
+                                           placeholder="{{ get_text('enter_current_password') }}"
+                                           required>
+                                    <span class="password-toggle" onclick="togglePassword('password')">
+                                        <i class="fas fa-eye" id="password-toggle-icon"></i>
+                                    </span>
+                                </div>
+                                <div class="form-text">
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                    {{ get_text('password_confirmation_help') }}
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>{{ get_text('update_username') }}
+                                </button>
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>{{ get_text('cancel') }}
+                                </a>
+                            </div>
+                        </form>
+
+                        <!-- Security Notice -->
+                        <div class="mt-4 p-3 bg-light rounded">
+                            <h6 class="text-primary mb-2">
+                                <i class="fas fa-exclamation-triangle me-2"></i>{{ get_text('important_notice') }}
+                            </h6>
+                            <small class="text-muted">
+                                {{ get_text('username_change_notice') }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function togglePassword(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(inputId + '-toggle-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Username validation
+        document.getElementById('new_username').addEventListener('input', function(e) {
+            const value = e.target.value;
+            const isValid = /^[a-zA-Z0-9_]+$/.test(value) && value.length >= 3;
+            
+            if (value && !isValid) {
+                e.target.classList.add('is-invalid');
+            } else {
+                e.target.classList.remove('is-invalid');
+            }
+        });
+    </script>
+</body>
+</html>

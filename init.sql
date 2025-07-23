@@ -142,17 +142,73 @@ CREATE TABLE IF NOT EXISTS materials (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Videos table - stores video resources with camp filtering
+-- Videos table - stores video resources with camp filtering and multiple video types
 CREATE TABLE IF NOT EXISTS videos (
     id SERIAL PRIMARY KEY,
     unit_id INTEGER NOT NULL,
     title VARCHAR(200) NOT NULL,
-    youtube_url VARCHAR(500) NOT NULL,
+    youtube_url VARCHAR(500), -- Made nullable for uploaded videos
     description TEXT,
+    video_type VARCHAR(20) DEFAULT 'youtube', -- 'youtube', 'lark', or 'upload'
+    video_file_path VARCHAR(500), -- File path for uploaded videos (null for YouTube/Lark)
     camp VARCHAR(50) NOT NULL DEFAULT 'both', -- 'Middle East', 'Chinese', 'English', or 'both'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Add new columns to existing videos table if they don't exist
+DO $$ 
+BEGIN 
+    -- Add video_type column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'videos' AND column_name = 'video_type') THEN
+        ALTER TABLE videos ADD COLUMN video_type VARCHAR(20) DEFAULT 'youtube';
+    END IF;
+    
+    -- Add video_file_path column if it doesn't exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'videos' AND column_name = 'video_file_path') THEN
+        ALTER TABLE videos ADD COLUMN video_file_path VARCHAR(500);
+    END IF;
+    
+    -- Make youtube_url nullable if it's currently NOT NULL
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name = 'videos' 
+        AND column_name = 'youtube_url' 
+        AND is_nullable = 'NO'
+    ) THEN
+        ALTER TABLE videos ALTER COLUMN youtube_url DROP NOT NULL;
+    END IF;
+END $$;
+
+-- Update existing records to have default video type (idempotent)
+UPDATE videos 
+SET video_type = 'youtube' 
+WHERE video_type IS NULL OR video_type = '';
+
+-- Add check constraint for video types (only if it doesn't exist)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint 
+        WHERE conname = 'check_video_type'
+    ) THEN
+        ALTER TABLE videos 
+        ADD CONSTRAINT check_video_type 
+        CHECK (video_type IN ('youtube', 'lark', 'upload'));
+    END IF;
+END $$;
+
+-- Add comments to document the new columns
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'videos' AND column_name = 'video_type') THEN
+        COMMENT ON COLUMN videos.video_type IS 'Video type: youtube, lark, or upload';
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'videos' AND column_name = 'video_file_path') THEN
+        COMMENT ON COLUMN videos.video_file_path IS 'File path for uploaded videos (null for YouTube/Lark)';
+    END IF;
+END $$;
 
 -- Projects table - stores project assignments with camp filtering
 CREATE TABLE IF NOT EXISTS projects (
@@ -317,6 +373,10 @@ BEGIN
     
     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_videos_unit_camp') THEN
         CREATE INDEX idx_videos_unit_camp ON videos(unit_id, camp);
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_videos_type') THEN
+        CREATE INDEX idx_videos_type ON videos(video_type);
     END IF;
     
     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_projects_unit_camp') THEN
@@ -655,7 +715,7 @@ WHERE schemaname = 'public'
 ORDER BY tablename;
 
 -- Display success message
-SELECT 'Database schema created/updated successfully! All tables and default data have been inserted.' as status;
+SELECT 'Database schema created/updated successfully! All tables and default data have been inserted. Video functionality has been added.' as status;
 
 -- Show counts of inserted data
 SELECT 

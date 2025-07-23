@@ -207,66 +207,81 @@
         color: var(--accent-gray);
     }
 
-/* Team Leaderboards */
-.team-card .card-header {
-    background: var(--gradient-purple);
-    color: white;
-}
+    /* Team Leaderboards - FIXED */
+    .team-card .card-header {
+        background: var(--gradient-purple);
+        color: white;
+    }
 
-.team-card.cn .card-header {
-    background: var(--gradient-purple);
-}
+    /* Different colors for different camps */
+    .team-card.chinese .card-header {
+        background: linear-gradient(135deg, #dc3545, #bd2130);
+    }
 
-.team-card.me .card-header {
-    background: var(--gradient-purple);
-}
+    .team-card.english .card-header {
+        background: linear-gradient(135deg, #0066cc, #004499);
+    }
 
-.table {
-    color: var(--text-color);
-    background: transparent;
-}
+    .team-card.middle-east .card-header {
+        background: linear-gradient(135deg, #28a745, #1e7e34);
+    }
 
-.table th {
-    background: rgba(76, 29, 149, 0.3); /* Purple background for headers */
-    color: white;
-    font-weight: 600;
-    border: none;
-    padding: 0.75rem;
-}
+    .table {
+        color: var(--text-color);
+        background: transparent;
+    }
 
-.table td {
-    border-color: rgba(107, 114, 128, 0.1);
-    padding: 0.75rem;
-    color: white;
-}
+    .table th {
+        background: rgba(76, 29, 149, 0.3);
+        color: white;
+        font-weight: 600;
+        border: none;
+        padding: 0.75rem;
+    }
 
-.table tbody tr {
-    transition: all 0.3s ease;
-    background: rgba(76, 29, 149, 0.1); /* Light purple background for rows */
-}
+    .table td {
+        border-color: rgba(107, 114, 128, 0.1);
+        padding: 0.75rem;
+        color: white;
+    }
 
-.table tbody tr:hover {
-    background: rgba(139, 92, 246, 0.2);
-}
+    .table tbody tr {
+        transition: all 0.3s ease;
+        background: rgba(76, 29, 149, 0.1);
+    }
 
-/* Your Team section */
-.team-info-card {
-    background: rgba(76, 29, 149, 0.1);
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 12px;
-}
+    .table tbody tr:hover {
+        background: rgba(139, 92, 246, 0.2);
+    }
 
-.team-info-card h4 {
-    color: white;
-}
+    .table tbody tr.user-team {
+        background: rgba(40, 167, 69, 0.2);
+        border-left: 3px solid #28a745;
+    }
 
-.team-info-card p {
-    color: rgba(255, 255, 255, 0.8);
-}
+    /* Your Team section */
+    .team-info-card {
+        background: rgba(76, 29, 149, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+    }
 
-.team-info-card strong {
-    color: var(--accent-purple);
-}
+    .team-info-card h4 {
+        color: white;
+    }
+
+    .team-info-card p {
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .team-info-card strong {
+        color: var(--accent-purple);
+    }
+
+    /* User Camp Leaderboard */
+    .user-camp-card .card-header {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    }
 
     /* Animations */
     .animate-fadeIn {
@@ -303,6 +318,10 @@
             --size: 100px;
             --thickness: 8px;
         }
+
+        .team-card {
+            margin-bottom: 1rem;
+        }
     }
 </style>
 {% endblock %}
@@ -330,7 +349,7 @@
                                 <div class="progress mb-3">
                                     <div class="progress-bar" role="progressbar" style="width: {{ 100 if i <= completed_units else 0 }}%" aria-valuenow="{{ 100 if i <= completed_units else 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
                                 </div>
-                                {% if i == 1 or i <= completed_units + 1 %}
+                                <!-- FIXED: All units are now accessible -->
                                 <a href="{{ url_for('unit', unit_id=i) }}" class="btn btn-primary btn-block">
                                     <i class="fas fa-play-circle mr-1"></i>
                                     {% if i <= completed_units %}
@@ -339,11 +358,6 @@
                                     {{ get_text('start_unit') }}
                                     {% endif %}
                                 </a>
-                                {% else %}
-                                <button class="btn btn-secondary btn-block" disabled>
-                                    <i class="fas fa-lock mr-1"></i> {{ get_text('locked') }}
-                                </button>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -401,13 +415,13 @@
     </div>
 </div>
 
-<!-- Team Leaderboards -->
+<!-- Team Information -->
+{% if user_team %}
 <div class="row mt-4">
-    {% if user_team %}
     <div class="col-md-12 mb-4">
         <div class="card team-info-card">
             <div class="card-body">
-                <h3 class="text-center mb-4"><i class="fas fa-users mr-2"></i> Your Team</h3>
+                <h3 class="text-center mb-4"><i class="fas fa-users mr-2"></i>Your Team</h3>
                 <div class="row">
                     <div class="col-md-6">
                         <h4 class="text-purple">{{ user_team.name }}</h4>
@@ -421,67 +435,90 @@
             </div>
         </div>
     </div>
+</div>
+{% endif %}
+
+<!-- FIXED: Leaderboards for All Three Camps -->
+<div class="row mt-4">
+    <!-- User's Camp Detailed Leaderboard -->
+    {% if user_camp and user_camp_leaderboard %}
+    <div class="col-md-12 mb-4">
+        <div class="card team-card user-camp-card">
+            <div class="card-header">
+                <h3><i class="fas fa-star mr-2"></i>{{ get_text('your_camp_leaderboard', user_camp + ' Camp Leaderboard') }}</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>{{ get_text('team_name') }}</th>
+                                <th>{{ get_text('team_leader') }}</th>
+                                <th>{{ get_text('team_score') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for team in user_camp_leaderboard %}
+                            <tr {% if team.user_team %}class="user-team"{% endif %}>
+                                <td>
+                                    {{ loop.index }}
+                                    {% if team.user_team %}<i class="fas fa-arrow-left text-success ml-2"></i>{% endif %}
+                                </td>
+                                <td>
+                                    {{ team.name }}
+                                    {% if team.user_team %}<small class="text-success">(Your Team)</small>{% endif %}
+                                </td>
+                                <td>{{ team.team_lead_name }}</td>
+                                <td><strong>{{ team.score }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
     {% endif %}
 
-    <div class="col-md-6 mb-4">
-        <div class="card team-card me">
-            <div class="card-header">
-                <h3><i class="fas fa-trophy mr-2"></i> Middle East Camp Leaderboard</h3>
-            </div>
-            <div class="card-body">
-                {% if top_teams_me %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Team Name</th>
-                                <th>Team Lead</th>
-                                <th>Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for team in top_teams_me %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td>{{ team.name }}</td>
-                                <td>{{ team.team_lead_name }}</td>
-                                <td><strong>{{ team.score }}</strong></td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <p class="text-center">No teams in Middle East Camp yet.</p>
-                {% endif %}
-            </div>
-        </div>
+    <!-- All Camps Leaderboards -->
+    <div class="col-md-12">
+        <h3 class="text-center mb-4 text-white">
+            <i class="fas fa-globe mr-2"></i>{{ get_text('all_camps_leaderboard') }}
+        </h3>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card team-card cn">
+    {% for camp_name in ["Chinese", "English", "Middle East"] %}
+    <div class="col-md-4 mb-4">
+        <div class="card team-card {{ camp_name.lower().replace(' ', '-') }}">
             <div class="card-header">
-                <h3><i class="fas fa-trophy mr-2"></i> Chinese Camp Leaderboard</h3>
+                <h4 class="mb-0">
+                    <i class="fas fa-trophy mr-2"></i>
+                    {{ camp_name }} Camp
+                </h4>
             </div>
             <div class="card-body">
-                {% if top_teams_cn %}
+                {% set camp_teams = all_camps_leaderboard.get(camp_name, []) %}
+                {% if camp_teams %}
                 <div class="table-responsive">
-                    <table class="table table-hover">
+                    <table class="table table-hover table-sm">
                         <thead>
                             <tr>
                                 <th>#</th>
-                                <th>Team Name</th>
-                                <th>Team Lead</th>
-                                <th>Score</th>
+                                <th>{{ get_text('team_name') }}</th>
+                                <th>{{ get_text('team_score') }}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for team in top_teams_cn %}
+                            {% for team in camp_teams %}
                             <tr>
                                 <td>{{ loop.index }}</td>
-                                <td>{{ team.name }}</td>
-                                <td>{{ team.team_lead_name }}</td>
+                                <td>
+                                    {{ team.name }}
+                                    {% if user_team and team.name == user_team.name %}
+                                    <i class="fas fa-star text-warning ml-1" title="Your Team"></i>
+                                    {% endif %}
+                                </td>
                                 <td><strong>{{ team.score }}</strong></td>
                             </tr>
                             {% endfor %}
@@ -489,11 +526,15 @@
                     </table>
                 </div>
                 {% else %}
-                <p class="text-center">No teams in Chinese Camp yet.</p>
+                <p class="text-center text-muted mb-0">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    {{ get_text('no_teams_yet') }}
+                </p>
                 {% endif %}
             </div>
         </div>
     </div>
+    {% endfor %}
 </div>
 {% endblock %}
 

@@ -22,7 +22,7 @@
                         {% endif %}
                     {% endwith %}
 
-                    <form method="POST">
+                    <form method="POST" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -34,7 +34,105 @@
                             </div>
                         </div>
 
-                        <!-- Improved Bootcamp Type Selection -->
+                        <!-- Video Type Selection -->
+                        <div class="mb-4">
+                            <label class="form-label mb-3">
+                                <i class="fas fa-film me-2"></i>
+                                <strong>{{ get_text('video_type', 'Video Type') }} *</strong>
+                                <small class="text-muted d-block">{{ get_text('select_video_type', 'Select video type') }}</small>
+                            </label>
+                            
+                            <div class="video-type-grid">
+                                <!-- YouTube Video -->
+                                <div class="video-type-card" data-type="youtube">
+                                    <div class="video-type-icon">
+                                        <i class="fab fa-youtube"></i>
+                                    </div>
+                                    <div class="video-type-content">
+                                        <h6 class="video-type-title">{{ get_text('youtube_video', 'YouTube Video') }}</h6>
+                                        <p class="video-type-subtitle">From YouTube platform</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input video-type-radio" type="radio" 
+                                                   name="video_type" value="youtube" id="youtube" checked>
+                                            <label class="form-check-label" for="youtube">
+                                                Use YouTube URL
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Lark Recording -->
+                                <div class="video-type-card" data-type="lark">
+                                    <div class="video-type-icon">
+                                        <i class="fas fa-video"></i>
+                                    </div>
+                                    <div class="video-type-content">
+                                        <h6 class="video-type-title">{{ get_text('lark_video', 'Lark Recording') }}</h6>
+                                        <p class="video-type-subtitle">Lark meeting recording</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input video-type-radio" type="radio" 
+                                                   name="video_type" value="lark" id="lark">
+                                            <label class="form-check-label" for="lark">
+                                                Use Lark URL
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Direct Upload -->
+                                <div class="video-type-card" data-type="upload">
+                                    <div class="video-type-icon">
+                                        <i class="fas fa-upload"></i>
+                                    </div>
+                                    <div class="video-type-content">
+                                        <h6 class="video-type-title">{{ get_text('upload_video', 'Upload Video File') }}</h6>
+                                        <p class="video-type-subtitle">Direct file upload</p>
+                                        <div class="form-check">
+                                            <input class="form-check-input video-type-radio" type="radio" 
+                                                   name="video_type" value="upload" id="upload">
+                                            <label class="form-check-label" for="upload">
+                                                Upload video file
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Video Input Fields (Dynamic based on selection) -->
+                        <div class="mb-3" id="video-input-section">
+                            <!-- YouTube URL Input -->
+                            <div class="video-input youtube-input">
+                                <label for="youtube_url" class="form-label">
+                                    <i class="fab fa-youtube me-1"></i>{{ get_text('youtube_url', 'YouTube URL') }} *
+                                </label>
+                                <input type="text" class="form-control" id="youtube_url" name="youtube_url" 
+                                       placeholder="{{ get_text('youtube_url_placeholder', 'https://youtube.com/watch?v=...') }}">
+                                <small class="text-muted">Enter full YouTube URL or just the video ID</small>
+                            </div>
+
+                            <!-- Lark URL Input -->
+                            <div class="video-input lark-input" style="display: none;">
+                                <label for="lark_url" class="form-label">
+                                    <i class="fas fa-video me-1"></i>{{ get_text('lark_url', 'Lark Recording URL') }} *
+                                </label>
+                                <input type="text" class="form-control" id="lark_url" name="lark_url" 
+                                       placeholder="{{ get_text('lark_url_placeholder', 'https://meetings.lark.cn/...') }}">
+                                <small class="text-muted">Enter the Lark meeting recording URL</small>
+                            </div>
+
+                            <!-- File Upload Input -->
+                            <div class="video-input upload-input" style="display: none;">
+                                <label for="video_file" class="form-label">
+                                    <i class="fas fa-file-video me-1"></i>{{ get_text('video_file', 'Video File') }} *
+                                </label>
+                                <input type="file" class="form-control" id="video_file" name="video_file" 
+                                       accept=".mp4,.avi,.mov,.wmv,.flv,.webm">
+                                <small class="text-muted">{{ get_text('video_file_help', 'Supported formats: MP4, AVI, MOV, WMV, FLV, WEBM') }}</small>
+                            </div>
+                        </div>
+
+                        <!-- Bootcamp Type Selection -->
                         <div class="mb-4">
                             <label class="form-label mb-3">
                                 <i class="fas fa-globe me-2"></i>
@@ -132,14 +230,6 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="youtube_url" class="form-label">
-                                <i class="fab fa-youtube me-1"></i>YouTube URL or Video ID *
-                            </label>
-                            <input type="text" class="form-control" id="youtube_url" name="youtube_url" required placeholder="https://www.youtube.com/watch?v=VIDEO_ID or just VIDEO_ID">
-                            <small class="text-muted">Enter full YouTube URL (https://www.youtube.com/watch?v=VIDEO_ID) or just the video ID</small>
-                        </div>
-
-                        <div class="mb-3">
                             <label for="description" class="form-label">
                                 <i class="fas fa-align-left me-1"></i>Description
                             </label>
@@ -150,11 +240,11 @@
                             <i class="fas fa-lightbulb me-2"></i>
                             <strong>Video Guidelines:</strong>
                             <ul class="mb-0 mt-2">
+                                <li>✅ Select appropriate video type and provide valid URL or file</li>
                                 <li>✅ Select appropriate bootcamp types for the target audience</li>
                                 <li>✅ Use clear, descriptive titles</li>
-                                <li>✅ Ensure the YouTube URL is valid and accessible</li>
                                 <li>✅ Add descriptions to help students understand the content</li>
-                                <li>✅ No limit on bootcamp type selection!</li>
+                                <li>✅ For uploads: Maximum file size is 200MB</li>
                             </ul>
                         </div>
 
@@ -175,14 +265,68 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Enhanced bootcamp card interactions
+    // Video type selection
+    const videoTypeRadios = document.querySelectorAll('.video-type-radio');
+    const videoTypeCards = document.querySelectorAll('.video-type-card');
+    const videoInputs = document.querySelectorAll('.video-input');
+
+    function updateVideoType() {
+        const selectedType = document.querySelector('.video-type-radio:checked').value;
+        
+        // Update card selection
+        videoTypeCards.forEach(card => {
+            const cardType = card.getAttribute('data-type');
+            if (cardType === selectedType) {
+                card.classList.add('selected');
+            } else {
+                card.classList.remove('selected');
+            }
+        });
+
+        // Show/hide appropriate input fields
+        videoInputs.forEach(input => {
+            input.style.display = 'none';
+            // Clear the input when hidden
+            const inputField = input.querySelector('input');
+            if (inputField && !input.classList.contains(selectedType + '-input')) {
+                inputField.value = '';
+                inputField.removeAttribute('required');
+            }
+        });
+
+        // Show selected input and make it required
+        const selectedInput = document.querySelector('.' + selectedType + '-input');
+        if (selectedInput) {
+            selectedInput.style.display = 'block';
+            const inputField = selectedInput.querySelector('input');
+            if (inputField) {
+                inputField.setAttribute('required', 'required');
+            }
+        }
+    }
+
+    // Video type card click handlers
+    videoTypeCards.forEach(card => {
+        card.addEventListener('click', function(e) {
+            if (e.target.type !== 'radio') {
+                const radio = this.querySelector('.video-type-radio');
+                radio.checked = true;
+                updateVideoType();
+            }
+        });
+    });
+
+    // Radio change handlers
+    videoTypeRadios.forEach(radio => {
+        radio.addEventListener('change', updateVideoType);
+    });
+
+    // Bootcamp card interactions
     const bootcampCards = document.querySelectorAll('.bootcamp-card');
     const bootcampCheckboxes = document.querySelectorAll('.bootcamp-checkbox');
     
-    // Add click interaction for entire card
     bootcampCards.forEach(card => {
         card.addEventListener('click', function(e) {
-            // Don't trigger if clicking on the checkbox itself
             if (e.target.type !== 'checkbox') {
                 const checkbox = this.querySelector('.bootcamp-checkbox');
                 checkbox.checked = !checkbox.checked;
@@ -192,7 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Handle checkbox changes
     bootcampCheckboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             const card = this.closest('.bootcamp-card');
@@ -233,15 +376,117 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Please select at least one bootcamp type.');
             return false;
         }
+
+        // Check if required video input is filled
+        const selectedVideoType = document.querySelector('.video-type-radio:checked').value;
+        const selectedInput = document.querySelector('.' + selectedVideoType + '-input input');
+        if (selectedInput && !selectedInput.value.trim()) {
+            e.preventDefault();
+            alert('Please provide the required video information.');
+            selectedInput.focus();
+            return false;
+        }
     });
     
-    // Initial update
+    // Initial updates
+    updateVideoType();
     updateSelectionCounter();
 });
 </script>
 
 <style>
-/* Enhanced Bootcamp Selection Design */
+/* Video Type Selection Grid */
+.video-type-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.video-type-card {
+    background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.video-type-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    border-color: #007bff;
+}
+
+.video-type-card.selected {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,123,255,0.2);
+}
+
+.video-type-icon {
+    font-size: 2rem;
+    margin-bottom: 10px;
+    color: #6c757d;
+    transition: all 0.3s ease;
+}
+
+.video-type-card:hover .video-type-icon,
+.video-type-card.selected .video-type-icon {
+    color: #007bff;
+    transform: scale(1.1);
+}
+
+.video-type-card[data-type="youtube"] .video-type-icon {
+    color: #ff0000;
+}
+
+.video-type-card[data-type="lark"] .video-type-icon {
+    color: #00d4aa;
+}
+
+.video-type-card[data-type="upload"] .video-type-icon {
+    color: #28a745;
+}
+
+.video-type-title {
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #212529;
+    font-size: 0.9rem;
+}
+
+.video-type-subtitle {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.video-type-card .form-check {
+    margin: 0;
+}
+
+.video-type-card .form-check-input {
+    transform: scale(1.1);
+}
+
+.video-type-card .form-check-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    cursor: pointer;
+}
+
+.video-type-card.selected .form-check-label {
+    color: #007bff;
+    font-weight: 500;
+}
+
+/* Bootcamp Selection Grid */
 .bootcamp-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -370,16 +615,27 @@ document.addEventListener('DOMContentLoaded', function() {
     border-bottom: none;
 }
 
+/* Video Input Sections */
+.video-input {
+    transition: all 0.3s ease;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
+    .video-type-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .bootcamp-grid {
         grid-template-columns: 1fr;
     }
     
+    .video-type-card,
     .bootcamp-card {
         padding: 15px;
     }
     
+    .video-type-icon,
     .bootcamp-icon {
         font-size: 2rem;
     }
