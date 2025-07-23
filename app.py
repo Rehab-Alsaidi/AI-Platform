@@ -2550,7 +2550,19 @@ def get_content_with_tag_filtering(content_type: str, unit_id: int, user_id: int
             )
             return []
 
-        table_name = f"{content_type}s" if content_type != "quiz" else "quizzes"
+        # FIXED: Use correct table names
+        table_mapping = {
+            "material": "materials",
+            "video": "videos", 
+            "project": "projects",
+            "quiz": "quizzes",  # FIXED: was "quiz_questions"
+            "word": "words"
+        }
+        
+        table_name = table_mapping.get(content_type)
+        if not table_name:
+            logger.error(f"Unknown content type: {content_type}")
+            return []
 
         # Check if user's camp matches ANY of the content's bootcamp tags OR the main camp field
         cursor.execute(
@@ -3081,9 +3093,10 @@ def unit(unit_id: int) -> Any:
 @login_required
 @camp_required
 def quiz(unit_id: int) -> Any:
-    """UPDATED quiz route with prerequisites removed"""
+    """FIXED quiz route with correct table names"""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
+    
     username = session["username"]
     user_id = session["user_id"]
     user_camp = session.get("user_camp")
@@ -3110,86 +3123,148 @@ def quiz(unit_id: int) -> Any:
         if attempt and attempt[1] is not None:
             return redirect(url_for("quiz_review", unit_id=unit_id))
 
-        # Get quiz questions
+        # Get quiz questions for this unit using direct database query
+        # Using cursor with RealDictCursor for easier data handling
+        cursor.close()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        
+        # Get quiz questions with proper filtering
         cursor.execute(
             """
-            SELECT id, question, options, correct_answer, explanation
-            FROM quiz_questions
-            WHERE unit_id = %s
-            ORDER BY RANDOM()
-            LIMIT 5
-        """,
-            (unit_id,),
+            SELECT DISTINCT q.* FROM quizzes q
+            WHERE q.unit_id = %s 
+            AND (
+                -- Match main camp field (backward compatibility)
+                q.camp = %s 
+                OR 
+                -- Match any bootcamp type tag assigned to this quiz
+                EXISTS (
+                    SELECT 1 FROM content_tags ct
+                    JOIN tags t ON ct.tag_id = t.id
+                    JOIN tag_groups tg ON t.tag_group_id = tg.id
+                    WHERE ct.content_type = 'quiz' 
+                    AND ct.content_id = q.id
+                    AND tg.name = 'Bootcamp Type'
+                    AND t.name = %s
+                )
+            )
+            ORDER BY q.id
+            """,
+            (unit_id, user_camp, user_camp),
         )
-        questions = [
-            {
-                "id": row[0],
-                "question": row[1],
-                "options": row[2],
-                "correct_answer": row[3],
-                "explanation": row[4],
-            }
-            for row in cursor.fetchall()
-        ]
-
-        if not questions:
-            flash("No questions found for this quiz.", "error")
+        
+        quizzes = cursor.fetchall()
+        
+        if not quizzes:
+            flash("No quiz available for this unit.", "warning")
             return redirect(url_for("unit", unit_id=unit_id))
 
-        # Get a random motivational tip
-        motivation = get_random_motivation()
-
+        # Handle POST request (quiz submission)
         if request.method == "POST":
-            # Process quiz submission
-            score = 0
-            results = []
-            
-            for question in questions:
-                user_answer = int(request.form.get(f"q{question['id']}", -1))
-                is_correct = user_answer == question["correct_answer"]
+            try:
+                # Get user answers from form
+                user_answers = {}
+                for quiz_question in quizzes:
+                    answer_key = f"question_{quiz_question['id']}"
+                    user_answer = request.form.get(answer_key)
+                    if user_answer is not None:
+                        user_answers[quiz_question['id']] = int(user_answer)
+
+                # Calculate score
+                correct_answers = 0
+                total_questions = len(quizzes)
                 
-                if is_correct:
-                    score += 1
-                
-                results.append({
-                    "question": question["question"],
-                    "options": question["options"],
-                    "correct_index": question["correct_answer"],
-                    "user_answer": user_answer,
-                    "correct": is_correct,
-                    "explanation": question["explanation"],
-                })
+                # Create quiz attempt record
+                cursor.execute(
+                    """
+                    INSERT INTO quiz_attempts (user_id, unit_id, attempted_at, score, passed)
+                    VALUES (%s, %s, CURRENT_TIMESTAMP, %s, %s)
+                    RETURNING id
+                """,
+                    (user_id, unit_id, 0, False),  # Temporary values, will update later
+                )
+                attempt_id = cursor.fetchone()['id']
 
-            # Save attempt to database
-            passed = score >= 3  # Assuming passing is 3/5
-            cursor.execute(
-                """
-                INSERT INTO quiz_attempts 
-                (user_id, unit_id, score, passed, attempted_at)
-                VALUES (%s, %s, %s, %s, NOW())
-            """,
-                (user_id, unit_id, score, passed),
-            )
-            conn.commit()
+                # Process each question and save responses
+                for quiz_question in quizzes:
+                    question_id = quiz_question['id']
+                    correct_answer = quiz_question['correct_answer']
+                    user_answer = user_answers.get(question_id)
+                    
+                    is_correct = (user_answer == correct_answer) if user_answer is not None else False
+                    if is_correct:
+                        correct_answers += 1
 
-            # Render results page
-            return render_template(
-                "quiz_result.html",
-                unit_id=unit_id,
-                score=score,
-                total=len(questions),
-                passed=passed,
-                results=results,
-                motivation=motivation,
-                overall_result=f"You got {score} out of {len(questions)} correct!",
-            )
+                    # Save individual question response
+                    cursor.execute(
+                        """
+                        INSERT INTO quiz_responses (attempt_id, question_id, user_answer, is_correct)
+                        VALUES (%s, %s, %s, %s)
+                    """,
+                        (attempt_id, question_id, user_answer, is_correct),
+                    )
 
-        # Render quiz page (GET request)
+                # Calculate final score and pass status
+                score = round((correct_answers / total_questions) * 100) if total_questions > 0 else 0
+                passed = score >= 70  # 70% passing grade
+
+                # Update quiz attempt with final score
+                cursor.execute(
+                    """
+                    UPDATE quiz_attempts 
+                    SET score = %s, passed = %s 
+                    WHERE id = %s
+                """,
+                    (score, passed, attempt_id),
+                )
+
+                # Update user progress
+                cursor.execute(
+                    """
+                    INSERT INTO progress (user_id, unit_number, quiz_score, completed)
+                    VALUES (%s, %s, %s, %s)
+                    ON CONFLICT (user_id, unit_number) 
+                    DO UPDATE SET quiz_score = EXCLUDED.quiz_score, 
+                                  completed = CASE WHEN EXCLUDED.quiz_score >= 70 THEN 1 ELSE progress.completed END
+                """,
+                    (user_id, unit_id, score, 1 if passed else 0),
+                )
+
+                # Update team score if user is part of a team
+                if passed:
+                    update_team_score(user_id, 10)  # Award 10 points for passing quiz
+
+                conn.commit()
+
+                flash(f"Quiz completed! Your score: {score}%", "success" if passed else "warning")
+                return redirect(url_for("quiz_review", unit_id=unit_id))
+
+            except Exception as submit_error:
+                conn.rollback()
+                logger.error(f"Quiz submission error: {str(submit_error)}")
+                flash("Error submitting quiz. Please try again.", "error")
+
+        # Handle GET request (show quiz)
+        # Parse options for each question
+        quiz_questions = []
+        for quiz in quizzes:
+            options = safely_parse_options(quiz.get("options", []))
+            quiz_questions.append({
+                'id': quiz['id'],
+                'question': quiz['question'],
+                'options': options,
+                'explanation': quiz.get('explanation', ''),
+            })
+
+        cursor.close()
+
         return render_template(
             "quiz.html",
+            username=username,
             unit_id=unit_id,
-            questions=questions,
-            motivation=motivation,
+            questions=quiz_questions,
+            total_questions=len(quiz_questions),
+            user_camp=user_camp,
         )
 
     except Exception as e:
