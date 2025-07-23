@@ -3201,6 +3201,7 @@ def quiz(unit_id: int) -> Any:
             cursor.close()
             release_db_connection(conn)
 
+
 @app.route("/quiz_review/<int:unit_id>")
 @login_required
 @camp_required
@@ -7599,7 +7600,7 @@ def admin_view_video(video_id: int) -> Any:
 @app.route("/admin/edit_video/<int:video_id>", methods=["GET", "POST"])
 @admin_required
 def admin_edit_video(video_id: int) -> Any:
-    """Edit video details with multiple bootcamp type support."""
+    """Edit video details with support for YouTube, Lark, and Upload types."""
     conn = None
     try:
         conn = get_db_connection()
@@ -7655,9 +7656,9 @@ def admin_edit_video(video_id: int) -> Any:
             try:
                 # Get form data
                 title = request.form["title"]
-                youtube_url = request.form["youtube_url"]
-                description = request.form["description"]
+                description = request.form.get("description", "")
                 unit_id = request.form["unit_id"]
+                video_type = request.form.get("video_type", "youtube")
                 selected_bootcamp_types = request.form.getlist("bootcamp_types")
                 selected_additional_tags = [
                     int(tag_id) for tag_id in request.form.getlist("tags")
@@ -7697,25 +7698,123 @@ def admin_edit_video(video_id: int) -> Any:
                 # Use first selected bootcamp type for the main camp field (backward compatibility)
                 primary_camp = selected_bootcamp_types[0]
 
-                # Extract YouTube video ID
-                if "youtube.com" in youtube_url or "youtu.be" in youtube_url:
-                    if "v=" in youtube_url:
-                        youtube_id = youtube_url.split("v=")[1].split("&")[0]
-                    elif "youtu.be/" in youtube_url:
-                        youtube_id = youtube_url.split("youtu.be/")[1].split("?")[0]
+                # Handle different video types
+                video_url = None
+                video_file_path = video.get("video_file_path")  # Keep existing file path by default
+
+                if video_type == "youtube":
+                    youtube_url = request.form.get("youtube_url", "").strip()
+                    if not youtube_url:
+                        flash("YouTube URL is required for YouTube videos.", "danger")
+                        return render_template(
+                            "admin/edit_video.html",
+                            video=video,
+                            available_tags=available_tags,
+                            tag_ids=additional_tag_ids,
+                            current_bootcamp_types=current_bootcamp_types,
+                            camps=CAMPS,
+                        )
+                    
+                    # Extract YouTube video ID from URL
+                    if "youtube.com" in youtube_url or "youtu.be" in youtube_url:
+                        if "v=" in youtube_url:
+                            video_url = youtube_url.split("v=")[1].split("&")[0]
+                        elif "youtu.be/" in youtube_url:
+                            video_url = youtube_url.split("youtu.be/")[1].split("?")[0]
+                        else:
+                            video_url = youtube_url
                     else:
-                        youtube_id = youtube_url
-                else:
-                    youtube_id = youtube_url
+                        video_url = youtube_url
+                    
+                    # Clear file path for YouTube videos
+                    video_file_path = None
+
+                elif video_type == "lark":
+                    lark_url = request.form.get("lark_url", "").strip()
+                    if not lark_url:
+                        flash("Lark URL is required for Lark recordings.", "danger")
+                        return render_template(
+                            "admin/edit_video.html",
+                            video=video,
+                            available_tags=available_tags,
+                            tag_ids=additional_tag_ids,
+                            current_bootcamp_types=current_bootcamp_types,
+                            camps=CAMPS,
+                        )
+                    
+                    video_url = lark_url
+                    # Clear file path for Lark videos
+                    video_file_path = None
+
+                elif video_type == "upload":
+                    video_file = request.files.get("video_file")
+                    
+                    # Only process file upload if a new file is provided
+                    if video_file and video_file.filename:
+                        # Validate file type
+                        allowed_video_extensions = [".mp4", ".avi", ".mov", ".wmv", ".flv", ".webm"]
+                        if not any(video_file.filename.lower().endswith(ext) for ext in allowed_video_extensions):
+                            flash("Invalid video file type. Allowed: MP4, AVI, MOV, WMV, FLV, WEBM", "danger")
+                            return render_template(
+                                "admin/edit_video.html",
+                                video=video,
+                                available_tags=available_tags,
+                                tag_ids=additional_tag_ids,
+                                current_bootcamp_types=current_bootcamp_types,
+                                camps=CAMPS,
+                            )
+
+                        # Remove old file if it exists
+                        if video.get("video_file_path"):
+                            old_file_path = os.path.join(UPLOAD_FOLDER, "videos", video["video_file_path"])
+                            try:
+                                if os.path.exists(old_file_path):
+                                    os.remove(old_file_path)
+                                    logger.info(f"Removed old video file: {old_file_path}")
+                            except Exception as e:
+                                logger.warning(f"Could not remove old video file: {e}")
+
+                        # Save new video file
+                        filename = secure_filename(video_file.filename)
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        video_file_path = f"video_{unit_id}_{primary_camp}_{timestamp}_{filename}"
+
+                        # Ensure videos directory exists
+                        videos_dir = os.path.join(UPLOAD_FOLDER, "videos")
+                        os.makedirs(videos_dir, exist_ok=True)
+
+                        file_path = os.path.join(videos_dir, video_file_path)
+                        video_file.save(file_path)
+                        logger.info(f"Saved new video file: {file_path}")
+
+                        # For uploaded videos, store the path in youtube_url field for consistency
+                        video_url = f"videos/{video_file_path}"
+                    
+                    elif not video.get("video_file_path"):
+                        # No existing file and no new file uploaded
+                        flash("Please upload a video file.", "danger")
+                        return render_template(
+                            "admin/edit_video.html",
+                            video=video,
+                            available_tags=available_tags,
+                            tag_ids=additional_tag_ids,
+                            current_bootcamp_types=current_bootcamp_types,
+                            camps=CAMPS,
+                        )
+                    else:
+                        # Keep existing file
+                        video_url = video.get("youtube_url")
 
                 # Update video in database
                 cursor.execute(
                     """
                     UPDATE videos
-                    SET unit_id=%s, title=%s, youtube_url=%s, description=%s, camp=%s
+                    SET unit_id=%s, title=%s, youtube_url=%s, description=%s, camp=%s, 
+                        video_type=%s, video_file_path=%s
                     WHERE id=%s
                 """,
-                    (unit_id, title, youtube_id, description, primary_camp, video_id),
+                    (unit_id, title, video_url, description, primary_camp, 
+                     video_type, video_file_path, video_id),
                 )
 
                 # Prepare tags to assign
@@ -7731,9 +7830,7 @@ def admin_edit_video(video_id: int) -> Any:
                     if bootcamp_tag:
                         tags_to_assign.append(bootcamp_tag["id"])
                     else:
-                        logger.warning(
-                            f"No tag found for bootcamp type: {bootcamp_type}"
-                        )
+                        logger.warning(f"No tag found for bootcamp type: {bootcamp_type}")
 
                 # Add additional selected tags
                 tags_to_assign.extend(selected_additional_tags)
@@ -7748,20 +7845,17 @@ def admin_edit_video(video_id: int) -> Any:
 
                 if success:
                     flash("Video updated successfully!", "success")
-                    logger.info(
-                        f"Video {video_id} updated with bootcamp types: {selected_bootcamp_types}"
-                    )
+                    logger.info(f"Video {video_id} updated with type: {video_type}, bootcamp types: {selected_bootcamp_types}")
                 else:
-                    flash(
-                        "Video updated, but there was an issue with tag assignment.",
-                        "warning",
-                    )
+                    flash("Video updated, but there was an issue with tag assignment.", "warning")
 
                 return redirect(url_for("admin_manage_content"))
 
             except Exception as e:
                 conn.rollback()
                 logger.error(f"Error updating video: {str(e)}")
+                import traceback
+                logger.error(f"Full traceback: {traceback.format_exc()}")
                 flash(f"Error updating video: {str(e)}", "danger")
 
         cursor.close()
