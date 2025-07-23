@@ -37,7 +37,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('mindmap_home') }}">
                             <i class="fas fa-project-diagram mr-1"></i> Mindmap
-                         </a>
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('feedback') }}">
@@ -48,26 +48,39 @@
             </ul>
 
             {% if session.get('username') %}
-                <span class="navbar-text mr-3">
-                    <i class="fas fa-user-circle mr-1"></i> {{ session.get('username') }}
-                </span>
+                <!-- Professional User Settings Dropdown -->
+                <div class="dropdown mr-2">
+                    <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="userDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-user-circle mr-1"></i> {{ session.get('username') }}
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                        <!-- Account Section -->
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-user mr-1"></i> {{ get_text('account') }}
+                        </h6>
+                        <a class="dropdown-item" href="{{ url_for('change_username') }}">
+                            <i class="fas fa-user-edit mr-2"></i> {{ get_text('change_username') }}
+                        </a>
+                        <div class="dropdown-divider"></div>
 
-                {% if session.get('language') %}
-                    <div class="dropdown mr-2">
-                        <button class="btn btn-sm btn-outline-light dropdown-toggle" type="button" id="languageDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-globe mr-1"></i> {{ LANGUAGES[session.get('language', 'en')] }}
-                        </button>
-                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="languageDropdown">
-                            {% for code, name in LANGUAGES.items() %}
-                                <a class="dropdown-item {% if session.get('language') == code %}active{% endif %}" href="{{ url_for('set_language', language=code) }}">{{ name }}</a>
-                            {% endfor %}
-                        </div>
+                        <!-- Language Section -->
+                        <h6 class="dropdown-header">
+                            <i class="fas fa-globe mr-1"></i> {{ get_text('language') }}
+                        </h6>
+                        {% for code, name in LANGUAGES.items() %}
+                            <a class="dropdown-item {% if session.get('language') == code %}active{% endif %}" href="{{ url_for('set_language', language=code) }}">
+                                <i class="fas fa-globe mr-2"></i> {{ name }}
+                                {% if session.get('language') == code %}<i class="fas fa-check ml-auto text-success"></i>{% endif %}
+                            </a>
+                        {% endfor %}
+                        <div class="dropdown-divider"></div>
+
+                        <!-- Logout -->
+                        <a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt mr-2"></i> {{ get_text('logout') }}
+                        </a>
                     </div>
-                {% endif %}
-
-                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-sign-out-alt mr-1"></i> {{ get_text('logout') }}
-                </a>
+                </div>
             {% else %}
                 <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline-light mr-2">
                     <i class="fas fa-sign-in-alt mr-1"></i> Login

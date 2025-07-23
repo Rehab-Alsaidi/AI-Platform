@@ -20,56 +20,6 @@
         color: var(--accent-gray);
         font-size: 1.25rem;
     }
-    
-    /* Settings dropdown styles */
-    .settings-dropdown {
-        position: relative;
-        display: inline-block;
-        margin-top: 1rem;
-    }
-    
-    .settings-dropdown .dropdown-menu {
-        background: rgba(32, 33, 43, 0.95);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(107, 114, 128, 0.3);
-        border-radius: 8px;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        min-width: 200px;
-    }
-    
-    .settings-dropdown .dropdown-item {
-        color: var(--text-color);
-        padding: 12px 20px;
-        transition: all 0.3s ease;
-        border-radius: 4px;
-        margin: 2px 8px;
-    }
-    
-    .settings-dropdown .dropdown-item:hover {
-        background: rgba(139, 92, 246, 0.2);
-        color: var(--accent-purple);
-        transform: translateX(3px);
-    }
-    
-    .settings-dropdown .dropdown-item.active {
-        background: rgba(139, 92, 246, 0.3);
-        color: var(--accent-purple);
-        font-weight: 500;
-    }
-    
-    .settings-dropdown .dropdown-header {
-        color: var(--accent-gray);
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        padding: 8px 20px 4px;
-        margin-bottom: 4px;
-    }
-    
-    .settings-dropdown .dropdown-divider {
-        border-color: rgba(107, 114, 128, 0.2);
-        margin: 8px 0;
-    }
 
     .card {
         background: rgba(32, 33, 43, 0.7);
@@ -153,18 +103,6 @@
         background: rgba(107, 114, 128, 0.1);
         border: 1px solid rgba(107, 114, 128, 0.3);
         color: var(--accent-slate);
-    }
-
-    .btn-outline-light {
-        border-color: rgba(139, 92, 246, 0.3);
-        color: var(--accent-purple);
-        transition: all 0.3s ease;
-    }
-
-    .btn-outline-light:hover {
-        background: rgba(139, 92, 246, 0.1);
-        border-color: var(--accent-purple);
-        color: var(--accent-purple);
     }
 
     /* Progress Circle */
@@ -269,13 +207,12 @@
         color: var(--accent-gray);
     }
 
-    /* Team Leaderboards - FIXED */
+    /* Team Leaderboards */
     .team-card .card-header {
         background: var(--gradient-purple);
         color: white;
     }
 
-    /* User Camp Leaderboard Styling */
     .user-camp-card .card-header {
         background: linear-gradient(135deg, #8b5cf6, #7c3aed);
     }
@@ -371,45 +308,17 @@
         .team-card {
             margin-bottom: 1rem;
         }
-        
-        .settings-dropdown .dropdown-menu {
-            min-width: 180px;
-        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- CLEAN Professional Welcome Section - No Settings Here -->
 <div class="welcome-section text-center">
     <h1 class="mb-3">
         <i class="fas fa-graduation-cap mr-2"></i>{{ get_text('welcome_msg') }}
     </h1>
     <p class="lead">{{ get_text('continue_learning') }}, {{ username }}!</p>
-    
-    <!-- Settings Dropdown -->
-    <div class="settings-dropdown">
-        <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" id="settingsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fas fa-cog mr-1"></i> {{ get_text('settings') }}
-        </button>
-        <div class="dropdown-menu dropdown-menu-center" aria-labelledby="settingsDropdown">
-            <h6 class="dropdown-header">
-                <i class="fas fa-user mr-1"></i> {{ get_text('account') }}
-            </h6>
-            <a class="dropdown-item" href="{{ url_for('change_username') }}">
-                <i class="fas fa-user-edit mr-2"></i> {{ get_text('change_username') }}
-            </a>
-            <div class="dropdown-divider"></div>
-            <h6 class="dropdown-header">
-                <i class="fas fa-globe mr-1"></i> {{ get_text('language') }}
-            </h6>
-            {% for code, name in LANGUAGES.items() %}
-                <a class="dropdown-item {% if session.get('language') == code %}active{% endif %}" href="{{ url_for('set_language', language=code) }}">
-                    <i class="fas fa-globe mr-2"></i> {{ name }}
-                    {% if session.get('language') == code %}<i class="fas fa-check ml-auto"></i>{% endif %}
-                </a>
-            {% endfor %}
-        </div>
-    </div>
 </div>
 
 <div class="row">
@@ -517,7 +426,7 @@
 </div>
 {% endif %}
 
-<!-- FIXED: Only Show User's Camp Leaderboard -->
+<!-- User's Camp Leaderboard Only -->
 {% if user_camp and user_camp_leaderboard %}
 <div class="row mt-4">
     <div class="col-md-12 mb-4">
