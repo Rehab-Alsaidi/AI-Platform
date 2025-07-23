@@ -3385,6 +3385,8 @@ def quiz_review(unit_id: int) -> Any:
 
         # Process the quiz data to make it template-friendly
         processed_questions = []
+        correct_answers = 0  # Initialize correct answers counter
+        
         for q in quiz_data:
             options = safely_parse_options(q["options"])
 
@@ -3404,6 +3406,10 @@ def quiz_review(unit_id: int) -> Any:
                 if q["correct_answer"] < len(options)
                 else "Invalid correct answer"
             )
+
+            # Count correct answers
+            if q["is_correct"]:
+                correct_answers += 1
 
             processed_questions.append(
                 {
@@ -3428,6 +3434,7 @@ def quiz_review(unit_id: int) -> Any:
             attempt=attempt,
             questions=processed_questions,
             total_questions=len(processed_questions),
+            correct_answers=correct_answers,  # FIX: Add this missing variable
             user_camp=user_camp,
         )
 
@@ -3437,6 +3444,7 @@ def quiz_review(unit_id: int) -> Any:
         return redirect(url_for("unit", unit_id=unit_id))
     finally:
         if conn:
+            cursor.close()
             release_db_connection(conn)
 
 
