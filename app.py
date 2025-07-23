@@ -251,11 +251,8 @@ TRANSLATIONS = {
         "cancel": "Cancel",
         "important_notice": "Important Notice",
         "username_change_notice": "Changing your username will affect how others see you in the system. Your login email remains the same.",
-         # Password Visibility
         "show_password": "Show Password",
         "hide_password": "Hide Password",
-        
-        # Video Types
         "video_type": "Video Type",
         "youtube_video": "YouTube Video",
         "lark_video": "Lark Recording",
@@ -284,6 +281,29 @@ TRANSLATIONS = {
         "error_occurred": "An error occurred",
         "try_again": "Try Again",
         "success": "Success",
+        "change_username": "Change Username",
+        "update_your_username": "Update your username",
+        "current_username": "Current Username",
+        "new_username": "New Username",
+        "enter_new_username": "Enter new username",
+        "username_requirements": "Username can only contain letters, numbers, and underscores",
+        "username_help_text": "3-50 characters, letters, numbers, and underscores only",
+        "confirm_with_password": "Confirm with Password",
+        "enter_current_password": "Enter your current password",
+        "password_confirmation_help": "Required to confirm your identity",
+        "update_username": "Update Username",
+        "cancel": "Cancel",
+        "important_notice": "Important Notice",
+        "username_change_notice": "Changing your username will affect how others see you in the system. Your login email remains the same.",
+        "video_type": "Video Type",
+        "youtube_video": "YouTube Video",
+        "lark_video": "Lark Recording",
+        "upload_video": "Upload Video File",
+        "leaderboard": "Leaderboard",
+        "your_camp_leaderboard": "Your Camp Leaderboard",
+        "team_name": "Team Name",
+        "team_score": "Score",
+        "team_leader": "Team Leader",
     },
     "zh": {
         "welcome": "51Talk 智能中心",
@@ -388,12 +408,8 @@ TRANSLATIONS = {
         "cancel": "取消",
         "important_notice": "重要提示",
         "username_change_notice": "更改用户名将影响其他人在系统中看到您的方式。您的登录邮箱保持不变。",
-        
-        # Password Visibility
         "show_password": "显示密码",
         "hide_password": "隐藏密码",
-        
-        # Video Types
         "video_type": "视频类型",
         "youtube_video": "YouTube视频",
         "lark_video": "飞书录像",
@@ -422,6 +438,29 @@ TRANSLATIONS = {
         "error_occurred": "发生错误",
         "try_again": "重试",
         "success": "成功",
+        "change_username": "更改用户名",
+        "update_your_username": "更新您的用户名",
+        "current_username": "当前用户名",
+        "new_username": "新用户名",
+        "enter_new_username": "输入新用户名",
+        "username_requirements": "用户名只能包含字母、数字和下划线",
+        "username_help_text": "3-50个字符，仅限字母、数字和下划线",
+        "confirm_with_password": "密码确认",
+        "enter_current_password": "输入您的当前密码",
+        "password_confirmation_help": "需要确认您的身份",
+        "update_username": "更新用户名",
+        "cancel": "取消",
+        "important_notice": "重要提示",
+        "username_change_notice": "更改用户名将影响其他人在系统中看到您的方式。您的登录邮箱保持不变。",
+        "video_type": "视频类型",
+        "youtube_video": "YouTube视频",
+        "lark_video": "飞书录像",
+        "upload_video": "上传视频文件",
+        "leaderboard": "排行榜",
+        "your_camp_leaderboard": "您的训练营排行榜",
+        "team_name": "团队名称",
+        "team_score": "分数",
+        "team_leader": "团队负责人",
     },
     "ar": {
         "welcome": "51Talk مركز الذكاءالاصطناعي",
@@ -560,6 +599,29 @@ TRANSLATIONS = {
         "error_occurred": "حدث خطأ",
         "try_again": "حاول مرة أخرى",
         "success": "نجح",
+        "change_username": "تغيير اسم المستخدم",
+        "update_your_username": "تحديث اسم المستخدم الخاص بك",
+        "current_username": "اسم المستخدم الحالي",
+        "new_username": "اسم المستخدم الجديد",
+        "enter_new_username": "أدخل اسم المستخدم الجديد",
+        "username_requirements": "يمكن أن يحتوي اسم المستخدم على أحرف وأرقام وشرطات سفلية فقط",
+        "username_help_text": "3-50 حرف، أحرف وأرقام وشرطات سفلية فقط",
+        "confirm_with_password": "التأكيد بكلمة المرور",
+        "enter_current_password": "أدخل كلمة المرور الحالية",
+        "password_confirmation_help": "مطلوب لتأكيد هويتك",
+        "update_username": "تحديث اسم المستخدم",
+        "cancel": "إلغاء",
+        "important_notice": "تنبيه مهم",
+        "username_change_notice": "تغيير اسم المستخدم سيؤثر على كيفية رؤية الآخرين لك في النظام. بريدك الإلكتروني للدخول يبقى كما هو.",
+        "video_type": "نوع الفيديو",
+        "youtube_video": "فيديو يوتيوب",
+        "lark_video": "تسجيل لارك",
+        "upload_video": "رفع ملف فيديو",
+        "leaderboard": "لوحة المتصدرين",
+        "your_camp_leaderboard": "لوحة متصدري معسكرك",
+        "team_name": "اسم الفريق",
+        "team_score": "النقاط",
+        "team_leader": "قائد الفريق",
     },
 }
 
@@ -740,14 +802,15 @@ def admin_required(f: Callable) -> Callable:
     return decorated_function
 
 
-def get_text(key: str) -> str:
-    """Get translated text based on current language."""
+def get_text(key: str, fallback: str = None) -> str:
+    """Get translated text based on current language with optional fallback."""
     lang = session.get("language", "en")
     text = TRANSLATIONS.get(lang, {}).get(key)
     if text is None:
         text = TRANSLATIONS.get("en", {}).get(key)
     if text is None:
-        text = key
+        # Use provided fallback or the key itself
+        text = fallback if fallback is not None else key
     return text
 
 
@@ -2764,10 +2827,11 @@ def assign_user_tags_by_names(
 # ==============================================
 # USER DASHBOARD & LEARNING ROUTES
 # ==============================================
+
 @app.route("/dashboard")
 @login_required
 def dashboard() -> Any:
-    """Display user dashboard with improved leaderboard showing all camps."""
+    """Display user dashboard with user's camp leaderboard only."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
 
@@ -2805,27 +2869,7 @@ def dashboard() -> Any:
         )
         user_team = cursor.fetchone()
 
-        # FIXED: Get top 3 teams for each camp (all three camps)
-        all_camps_leaderboard = {}
-        
-        # Always show all three bootcamp types
-        for camp in ["Chinese", "English", "Middle East"]:
-            cursor.execute(
-                """
-                SELECT t.name, ts.score, u.username AS team_lead_name, t.camp
-                FROM teams t
-                JOIN team_scores ts ON t.id = ts.team_id
-                JOIN users u ON t.team_lead_id = u.id
-                WHERE t.camp = %s
-                ORDER BY ts.score DESC
-                LIMIT 3
-            """,
-                (camp,)
-            )
-            teams = cursor.fetchall()
-            all_camps_leaderboard[camp] = teams
-
-        # Get user's camp leaderboard (top 5 for user's specific camp)
+        # FIXED: Get only user's camp leaderboard (top 10 for user's specific camp)
         user_camp_leaderboard = []
         if user_camp:
             cursor.execute(
@@ -2838,11 +2882,14 @@ def dashboard() -> Any:
                 LEFT JOIN team_members tm_user ON t.id = tm_user.team_id AND tm_user.user_id = %s
                 WHERE t.camp = %s
                 ORDER BY ts.score DESC
-                LIMIT 5
+                LIMIT 10
             """,
                 (user_id, user_id, user_camp)
             )
             user_camp_leaderboard = cursor.fetchall()
+
+        # REMOVED: all_camps_leaderboard - only show user's camp
+        all_camps_leaderboard = {}
 
         cursor.close()
 
@@ -2864,9 +2911,9 @@ def dashboard() -> Any:
         current_language=current_language,
         user_team=user_team,
         user_camp=user_camp,
-        all_camps_leaderboard=all_camps_leaderboard,
+        all_camps_leaderboard=all_camps_leaderboard,  
         user_camp_leaderboard=user_camp_leaderboard,
-        bootcamp_types=["Chinese", "English", "Middle East"]  
+        show_only_user_camp=True 
     )
 
 
