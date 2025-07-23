@@ -34,11 +34,12 @@
                             <i class="fas fa-robot mr-1"></i> {{ get_text('ai_chat') }}
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('mindmap_home') }}">
-                            <i class="fas fa-project-diagram mr-1"></i> Mindmap
-                        </a>
+                   <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('mindmap_home') }}">
+                        <i class="fas fa-project-diagram mr-1"></i> {{ get_text('mindmap', 'Mind Map') }}
+                    </a>
                     </li>
+
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('feedback') }}">
                             <i class="fas fa-comment-dots mr-1"></i> {{ get_text('feedback') }}

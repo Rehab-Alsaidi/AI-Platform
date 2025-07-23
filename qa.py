@@ -1,5 +1,8 @@
 """
-Fixed QA System for Railway Deployment - Document Access Issue Resolution
+QA System 
+
+This module provides a document-based question answering system designed for Railway deployment.
+It includes functionality for document processing, vector storage, and interaction with OpenRouter's GPT models.
 """
 
 import os
@@ -11,7 +14,7 @@ import re
 import requests
 import hashlib
 import tempfile
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple, Union
 from datetime import datetime
 
 # Document processing
@@ -30,8 +33,14 @@ logger = logging.getLogger(__name__)
 # FIXED DATABASE CONNECTION FOR RAILWAY
 # ============================================================================
 
-def get_db_connection():
-    """Get database connection for Railway deployment with better error handling."""
+
+def get_db_connection() -> Optional[Any]:
+    """
+    Get database connection for Railway deployment with better error handling.
+
+    Returns:
+        Optional[Any]: A database connection object if successful, None otherwise.
+    """
     try:
         import psycopg2
         from psycopg2.extras import RealDictCursor
@@ -61,8 +70,13 @@ def get_db_connection():
         return None
 
 
-def ensure_stored_documents_table():
-    """Ensure the stored_documents table exists."""
+def ensure_stored_documents_table() -> bool:
+    """
+    Ensure the stored_documents table exists in the database.
+
+    Returns:
+        bool: True if the table exists or was created successfully, False otherwise.
+    """
     conn = None
     try:
         conn = get_db_connection()
@@ -97,8 +111,13 @@ def ensure_stored_documents_table():
             conn.close()
 
 
-def get_documents_from_database() -> List[Dict[str, Any]]:
-    """FIXED: Get documents from database with proper error handling."""
+def get_documents_from_database() -> List[Tuple[str, bytes, str]]:
+    """
+    Retrieve documents from the database with proper error handling.
+
+    Returns:
+        List[Tuple[str, bytes, str]]: A list of tuples containing (filename, content, content_type)
+    """
     conn = None
     try:
         conn = get_db_connection()
@@ -144,7 +163,12 @@ def get_documents_from_database() -> List[Dict[str, Any]]:
 
 
 def create_temp_documents_from_db() -> str:
-    """FIXED: Create temporary directory with documents from database."""
+    """
+    Create temporary directory with documents from database.
+
+    Returns:
+        str: Path to the temporary directory containing the documents.
+    """
     try:
         # Create temporary directory
         temp_dir = tempfile.mkdtemp(prefix="railway_qa_docs_")
@@ -171,7 +195,9 @@ This is a placeholder document. Please upload your course materials through the 
 - Multi-language support
 - Progress tracking
 """
-            with open(os.path.join(temp_dir, "placeholder.txt"), "w", encoding="utf-8") as f:
+            with open(
+                os.path.join(temp_dir, "placeholder.txt"), "w", encoding="utf-8"
+            ) as f:
                 f.write(placeholder_content)
             logger.info("📄 Created placeholder document")
             return temp_dir
@@ -189,7 +215,9 @@ This is a placeholder document. Please upload your course materials through the 
                 except Exception as e:
                     logger.error(f"❌ Error saving {filename}: {str(e)}")
 
-        logger.info(f"✅ Created temporary documents directory with {saved_count} files")
+        logger.info(
+            f"✅ Created temporary documents directory with {saved_count} files"
+        )
         return temp_dir
 
     except Exception as e:
@@ -201,8 +229,13 @@ This is a placeholder document. Please upload your course materials through the 
         return temp_dir
 
 
-def get_openrouter_config():
-    """Get OpenRouter configuration with better error handling."""
+def get_openrouter_config() -> Tuple[Optional[str], Optional[str]]:
+    """
+    Get OpenRouter configuration with better error handling.
+
+    Returns:
+        Tuple[Optional[str], Optional[str]]: A tuple containing (api_key, model) or (None, None) if not found.
+    """
     try:
         # Try to get from environment variables first
         api_key = os.getenv("OPENROUTER_API_KEY")
@@ -246,11 +279,25 @@ def get_openrouter_config():
 class ConversationMemory:
     """Simple conversation memory for context."""
 
-    def __init__(self, max_history: int = 10):
+    def __init__(self, max_history: int = 10) -> None:
+        """
+        Initialize conversation memory.
+
+        Args:
+            max_history (int): Maximum number of messages to retain per user.
+        """
         self.max_history = max_history
         self.conversations: Dict[str, List[Dict[str, str]]] = {}
 
     def add_message(self, user_id: str, question: str, answer: str) -> None:
+        """
+        Add a message to the conversation history.
+
+        Args:
+            user_id (str): Unique identifier for the user.
+            question (str): The user's question.
+            answer (str): The assistant's response.
+        """
         if user_id not in self.conversations:
             self.conversations[user_id] = []
         self.conversations[user_id].append(
@@ -266,6 +313,16 @@ class ConversationMemory:
             ]
 
     def get_context(self, user_id: str, last_n: int = 3) -> str:
+        """
+        Get recent conversation context for a user.
+
+        Args:
+            user_id (str): Unique identifier for the user.
+            last_n (int): Number of recent messages to include.
+
+        Returns:
+            str: Formatted conversation context.
+        """
         if user_id not in self.conversations:
             return ""
         recent = self.conversations[user_id][-last_n:]
@@ -284,14 +341,29 @@ class ConversationMemory:
 class OpenRouterLLM:
     """OpenRouter GPT API wrapper with improved error handling."""
 
-    def __init__(self, api_key: str, model: str):
+    def __init__(self, api_key: str, model: str) -> None:
+        """
+        Initialize the OpenRouter LLM wrapper.
+
+        Args:
+            api_key (str): OpenRouter API key.
+            model (str): Model identifier to use.
+        """
         self.api_key = api_key
         self.model = model
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
         self.timeout = 60
 
     def generate_response(self, prompt: str) -> str:
-        """Generate response with comprehensive error handling."""
+        """
+        Generate response with comprehensive error handling.
+
+        Args:
+            prompt (str): The prompt to send to the model.
+
+        Returns:
+            str: The generated response or an error message.
+        """
         if not prompt or not prompt.strip():
             return "[Error] Empty prompt provided"
 
@@ -357,10 +429,22 @@ class OpenRouterLLM:
 class PPTXLoader:
     """Simple PPTX loader."""
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str) -> None:
+        """
+        Initialize the PPTX loader.
+
+        Args:
+            file_path (str): Path to the PPTX file.
+        """
         self.file_path = file_path
 
     def load(self) -> List[Dict[str, Any]]:
+        """
+        Load and extract content from the PPTX file.
+
+        Returns:
+            List[Dict[str, Any]]: List of document dictionaries containing slide content and metadata.
+        """
         docs = []
         try:
             prs = pptx.Presentation(self.file_path)
@@ -400,15 +484,27 @@ class PPTXLoader:
 
 
 class DocumentProcessor:
-    """FIXED Document processor for Railway deployment."""
+    """Document processor for Railway deployment."""
 
-    def __init__(self, documents_dir: str = None):
+    def __init__(self, documents_dir: str = None) -> None:
+        """
+        Initialize the document processor.
+
+        Args:
+            documents_dir (str, optional): Directory containing documents. If None, creates from database.
+        """
         self.documents_dir = documents_dir or create_temp_documents_from_db()
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=800, chunk_overlap=100, length_function=len
         )
 
     def load_documents(self) -> List[Any]:
+        """
+        Load documents from the configured directory.
+
+        Returns:
+            List[Any]: List of loaded document objects.
+        """
         all_docs = []
 
         # Check if documents directory exists and has files
@@ -459,6 +555,16 @@ class DocumentProcessor:
         return all_docs
 
     def _load_pdf(self, file_path: str, filename: str) -> List[Any]:
+        """
+        Load a PDF file.
+
+        Args:
+            file_path (str): Path to the PDF file.
+            filename (str): Name of the file.
+
+        Returns:
+            List[Any]: List of loaded PDF pages.
+        """
         try:
             loader = PyPDFLoader(file_path)
             docs = loader.load()
@@ -469,7 +575,17 @@ class DocumentProcessor:
             logger.error(f"❌ Error loading PDF {filename}: {str(e)}")
             return []
 
-    def _load_txt(self, file_path: str, filename: str) -> List[Any]:
+    def _load_txt(self, file_path: str, filename: str) -> List[Dict[str, Any]]:
+        """
+        Load a text file with multiple encoding attempts.
+
+        Args:
+            file_path (str): Path to the text file.
+            filename (str): Name of the file.
+
+        Returns:
+            List[Dict[str, Any]]: List containing a single document dictionary.
+        """
         encodings = ["utf-8", "utf-16", "iso-8859-1", "windows-1252"]
         for encoding in encodings:
             try:
@@ -494,6 +610,12 @@ class DocumentProcessor:
         return []
 
     def process_documents(self) -> List[Any]:
+        """
+        Process loaded documents into chunks.
+
+        Returns:
+            List[Any]: List of processed document chunks.
+        """
         docs = self.load_documents()
         if not docs:
             logger.warning("⚠️ No documents loaded")
@@ -529,9 +651,16 @@ class DocumentProcessor:
 
 
 class VectorStore:
-    """FIXED Vector store manager for Railway deployment."""
+    """Vector store manager for Railway deployment."""
 
-    def __init__(self, documents_dir: str = None, vector_db_path: str = "vector_db"):
+    def __init__(self, documents_dir: str = None, vector_db_path: str = "vector_db") -> None:
+        """
+        Initialize the vector store manager.
+
+        Args:
+            documents_dir (str, optional): Directory containing documents. If None, creates from database.
+            vector_db_path (str): Path to store vector database.
+        """
         self.documents_dir = documents_dir or create_temp_documents_from_db()
         self.vector_db_path = vector_db_path
         self.embeddings = None
@@ -544,6 +673,7 @@ class VectorStore:
         self._start_background_initialization()
 
     def _start_background_initialization(self) -> None:
+        """Start background initialization of the vector store."""
         def initialize():
             try:
                 with self._initialization_lock:
@@ -557,11 +687,13 @@ class VectorStore:
                     # Load documents from temporary directory (created from database)
                     processor = DocumentProcessor(self.documents_dir)
                     self.document_chunks = processor.process_documents()
-                    
+
                     # Mark as complete - we don't need actual vector store for OpenRouter/GPT
                     self._initialization_complete = True
                     self._is_initializing = False
-                    logger.info(f"✅ Vector store initialized with {len(self.document_chunks)} chunks")
+                    logger.info(
+                        f"✅ Vector store initialized with {len(self.document_chunks)} chunks"
+                    )
 
             except Exception as e:
                 self._initialization_error = str(e)
@@ -571,8 +703,20 @@ class VectorStore:
         thread = threading.Thread(target=initialize, daemon=True)
         thread.start()
 
-    def get_vector_store(self, timeout: int = 30):
-        """For Railway deployment, return a mock retriever that searches document chunks."""
+    def get_vector_store(self, timeout: int = 30) -> "MockRetriever":
+        """
+        Get a vector store retriever.
+
+        Args:
+            timeout (int): Timeout in seconds for initialization.
+
+        Returns:
+            MockRetriever: A mock retriever instance.
+
+        Raises:
+            TimeoutError: If initialization times out.
+            Exception: If initialization fails.
+        """
         start_time = time.time()
         while time.time() - start_time < timeout:
             if self._initialization_complete:
@@ -583,22 +727,53 @@ class VectorStore:
         raise TimeoutError("Vector store initialization timed out")
 
     def is_ready(self) -> bool:
-        """Ready when initialization is complete."""
+        """
+        Check if the vector store is ready.
+
+        Returns:
+            bool: True if initialization is complete, False otherwise.
+        """
         return self._initialization_complete
 
 
 class MockRetriever:
-    """FIXED Mock retriever for Railway deployment."""
+    """Mock retriever for Railway deployment."""
 
-    def __init__(self, document_chunks):
+    def __init__(self, document_chunks: List[Any]) -> None:
+        """
+        Initialize the mock retriever.
+
+        Args:
+            document_chunks (List[Any]): List of document chunks to search through.
+        """
         self.document_chunks = document_chunks
         logger.info(f"🔍 MockRetriever initialized with {len(document_chunks)} chunks")
 
-    def as_retriever(self, search_kwargs=None):
+    def as_retriever(self, search_kwargs: Optional[Dict[str, Any]] = None) -> "MockRetriever":
+        """
+        Return self as a retriever.
+
+        Args:
+            search_kwargs (Optional[Dict[str, Any]]): Optional search parameters.
+
+        Returns:
+            MockRetriever: This instance.
+        """
         return self
 
-    def get_relevant_documents(self, query, search_kwargs=None):
-        """Improved text-based search through document chunks."""
+    def get_relevant_documents(
+        self, query: str, search_kwargs: Optional[Dict[str, Any]] = None
+    ) -> List[Any]:
+        """
+        Search for relevant documents based on a query.
+
+        Args:
+            query (str): The search query.
+            search_kwargs (Optional[Dict[str, Any]]): Optional search parameters.
+
+        Returns:
+            List[Any]: List of relevant documents.
+        """
         if not self.document_chunks:
             logger.warning("⚠️ No document chunks available for search")
             return []
@@ -654,9 +829,15 @@ class MockRetriever:
 
 
 class DocumentQA:
-    """FIXED Main Document QA system for Railway deployment."""
+    """Main Document QA system for Railway deployment."""
 
-    def __init__(self, documents_dir: str = None):
+    def __init__(self, documents_dir: str = None) -> None:
+        """
+        Initialize the Document QA system.
+
+        Args:
+            documents_dir (str, optional): Directory containing documents. If None, creates from database.
+        """
         self.documents_dir = documents_dir or create_temp_documents_from_db()
         self.vector_store_manager = VectorStore(self.documents_dir)
         self.gpt_llm = None
@@ -675,16 +856,28 @@ class DocumentQA:
             logger.error("❌ OpenRouter API not configured properly")
 
         self.greetings = {
-            'hi': "Hello! I'm your AI learning assistant. I can help you with course materials, explain concepts, or just chat about your studies. What would you like to know?",
-            'hello': "Hi there! I'm here to help with your learning journey. You can ask me about course topics, request explanations, or get study tips. How can I assist you today?",
-            'hey': "Hey! Great to see you here. I'm your AI tutor ready to help with anything you're studying. What's on your mind?",
-            'good morning': "Good morning! Ready to learn something new today? I'm here to help with your course materials.",
-            'good afternoon': "Good afternoon! How's your learning going today? I'm here to help with explanations or questions.",
-            'good evening': "Good evening! Perfect time for some learning. What would you like to explore?"
+            "hi": "Hello! I'm your AI learning assistant. I can help you with course materials, explain concepts, or just chat about your studies. What would you like to know?",
+            "hello": "Hi there! I'm here to help with your learning journey. You can ask me about course topics, request explanations, or get study tips. How can I assist you today?",
+            "hey": "Hey! Great to see you here. I'm your AI tutor ready to help with anything you're studying. What's on your mind?",
+            "good morning": "Good morning! Ready to learn something new today? I'm here to help with your course materials.",
+            "good afternoon": "Good afternoon! How's your learning going today? I'm here to help with explanations or questions.",
+            "good evening": "Good evening! Perfect time for some learning. What would you like to explore?",
         }
 
-    def answer_question(self, question: str, user_id: str = None) -> Dict[str, Any]:
-        """Main method to answer questions using GPT."""
+    def answer_question(self, question: str, user_id: Optional[str] = None) -> Dict[str, Any]:
+        """
+        Answer a question using the QA system.
+
+        Args:
+            question (str): The question to answer.
+            user_id (Optional[str]): Optional user identifier for conversation history.
+
+        Returns:
+            Dict[str, Any]: A dictionary containing:
+                - answer: The generated answer
+                - sources: List of source documents
+                - conversation_type: Type of conversation
+        """
         if not question or not question.strip():
             return {
                 "answer": "Hello! I'm your AI assistant. I'm here and ready to help! What would you like to know or discuss?",
@@ -694,7 +887,7 @@ class DocumentQA:
 
         question = question.strip()
         question_lower = question.lower()
-        
+
         logger.info(f"🤖 Processing question: {question[:50]}...")
 
         try:
@@ -719,6 +912,7 @@ class DocumentQA:
         except Exception as e:
             logger.error(f"❌ Error in answer_question: {str(e)}")
             import traceback
+
             logger.error(f"❌ Full traceback: {traceback.format_exc()}")
             return {
                 "answer": "I encountered an error, but I'm still here to help! Could you try rephrasing your question?",
@@ -727,6 +921,15 @@ class DocumentQA:
             }
 
     def _detect_conversation_type(self, question_lower: str) -> str:
+        """
+        Detect the type of conversation based on the question.
+
+        Args:
+            question_lower (str): The question in lowercase.
+
+        Returns:
+            str: Type of conversation ("greeting", "document_based", or "general")
+        """
         greeting_patterns = [
             r"\b(hi|hello|hey|hiya)\b",
             r"\bgood (morning|afternoon|evening|night)\b",
@@ -752,18 +955,36 @@ class DocumentQA:
         return "general"
 
     def _handle_greeting(self, question_lower: str) -> str:
+        """
+        Handle greeting questions.
+
+        Args:
+            question_lower (str): The greeting question in lowercase.
+
+        Returns:
+            str: Appropriate greeting response.
+        """
         for greeting, response in self.greetings.items():
             if greeting in question_lower:
                 return response
         return "Hello! I'm your AI learning assistant. I'm here to help you understand course materials, answer questions, or discuss topics you're studying. What would you like to explore today?"
 
     def _handle_document_question(
-        self, question: str, user_id: str = None
+        self, question: str, user_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """FIXED Handle document questions for Railway deployment."""
+        """
+        Handle document-based questions.
+
+        Args:
+            question (str): The question to answer.
+            user_id (Optional[str]): Optional user identifier.
+
+        Returns:
+            Dict[str, Any]: Response dictionary containing answer and metadata.
+        """
         try:
             logger.info("🔍 Starting document question processing...")
-            
+
             # Check 1: OpenRouter GPT availability
             if not self.gpt_llm:
                 logger.error("❌ OpenRouter GPT is not configured")
@@ -815,7 +1036,9 @@ class DocumentQA:
             # Check 4: Get relevant documents
             try:
                 logger.info("🔍 Searching for relevant documents...")
-                docs = retriever.get_relevant_documents(question, search_kwargs={"k": 6})
+                docs = retriever.get_relevant_documents(
+                    question, search_kwargs={"k": 6}
+                )
                 logger.info(f"✅ Found {len(docs)} relevant documents")
             except Exception as search_error:
                 logger.error(f"❌ Document search error: {str(search_error)}")
@@ -828,16 +1051,29 @@ class DocumentQA:
             if keywords:
                 keyword_query = " ".join(keywords)
                 try:
-                    additional_docs = retriever.get_relevant_documents(keyword_query, search_kwargs={"k": 4})
-                    seen_contents = {doc.page_content if hasattr(doc, "page_content") else doc.get("page_content", "") for doc in docs}
+                    additional_docs = retriever.get_relevant_documents(
+                        keyword_query, search_kwargs={"k": 4}
+                    )
+                    seen_contents = {
+                        (
+                            doc.page_content
+                            if hasattr(doc, "page_content")
+                            else doc.get("page_content", "")
+                        )
+                        for doc in docs
+                    }
                     for doc in additional_docs:
-                        content = doc.page_content if hasattr(doc, "page_content") else doc.get("page_content", "")
+                        content = (
+                            doc.page_content
+                            if hasattr(doc, "page_content")
+                            else doc.get("page_content", "")
+                        )
                         if content not in seen_contents:
                             docs.append(doc)
                             seen_contents.add(content)
                 except Exception as keyword_error:
                     logger.warning(f"⚠️ Keyword search failed: {str(keyword_error)}")
-            
+
             # Check 5: Handle no documents case
             if not docs:
                 logger.info("⚠️ No relevant documents found")
@@ -851,19 +1087,25 @@ class DocumentQA:
                 else:
                     logger.info("🤖 Using GPT general knowledge (no document matches)")
                     answer = self._generate_gpt_response_general(question, user_id)
-                    return {"answer": answer, "sources": [], "conversation_type": "general"}
+                    return {
+                        "answer": answer,
+                        "sources": [],
+                        "conversation_type": "general",
+                    }
 
             # Check 6: Prepare context and generate response
             try:
                 logger.info("📝 Preparing context from documents...")
                 context = self._prepare_context(docs)
                 sources = self._extract_sources(docs)
-                logger.info(f"✅ Context prepared, length: {len(context)} chars, sources: {len(sources)}")
-                
+                logger.info(
+                    f"✅ Context prepared, length: {len(context)} chars, sources: {len(sources)}"
+                )
+
                 logger.info("🤖 Generating GPT response...")
                 answer = self._generate_gpt_response(question, context, user_id)
                 logger.info(f"✅ GPT response generated, length: {len(answer)} chars")
-                
+
                 return {
                     "answer": answer,
                     "sources": sources,
@@ -878,6 +1120,7 @@ class DocumentQA:
         except Exception as e:
             logger.error(f"❌ Outer exception in document question handling: {str(e)}")
             import traceback
+
             logger.error(f"❌ Full traceback: {traceback.format_exc()}")
             return {
                 "answer": "I encountered an error, but I'm still here to help! Could you try rephrasing your question?",
@@ -885,11 +1128,20 @@ class DocumentQA:
                 "conversation_type": "error",
             }
 
-    def _generate_gpt_response_general(self, question: str, user_id: str = None) -> str:
-        """Generate response using GPT without course materials."""
+    def _generate_gpt_response_general(self, question: str, user_id: Optional[str] = None) -> str:
+        """
+        Generate response using GPT without course materials.
+
+        Args:
+            question (str): The question to answer.
+            user_id (Optional[str]): Optional user identifier.
+
+        Returns:
+            str: The generated response.
+        """
         if not self.gpt_llm:
             return "[Error: OpenRouter not configured. Please set OPENROUTER_API_KEY environment variable.]"
-        
+
         prompt = f"""You are a helpful AI learning assistant for the 51Talk AI Learning Platform. 
 
 Please provide a helpful, educational response to this question: {question}
@@ -898,9 +1150,13 @@ Keep your response clear, educational, and helpful for a student."""
 
         try:
             response = self.gpt_llm.generate_response(prompt)
-            if not response or response.startswith("[Error") or response.startswith("[Authentication"):
+            if (
+                not response
+                or response.startswith("[Error")
+                or response.startswith("[Authentication")
+            ):
                 return "I'm having trouble connecting to my language model. Please check that the OpenRouter API key is configured correctly and has sufficient credits."
-            
+
             response += "\n\n*Note: This response is based on general knowledge. Upload course materials for more specific help!*"
             return response
         except Exception as e:
@@ -908,20 +1164,102 @@ Keep your response clear, educational, and helpful for a student."""
             return f"I encountered an issue generating a response. Please check the OpenRouter API configuration. Error: {str(e)}"
 
     def _extract_keywords(self, question: str) -> List[str]:
+        """
+        Extract keywords from a question.
+
+        Args:
+            question (str): The question to analyze.
+
+        Returns:
+            List[str]: List of extracted keywords.
+        """
         import string
+
         stop_words = {
-            "the", "a", "an", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
-            "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "do", "does", "did",
-            "will", "would", "could", "should", "may", "might", "must", "can", "what", "where", "when",
-            "why", "how", "who", "which", "this", "that", "these", "those", "i", "you", "he", "she", "it",
-            "we", "they", "me", "him", "her", "us", "them", "my", "your", "his", "her", "its", "our", "their",
+            "the",
+            "a",
+            "an",
+            "and",
+            "or",
+            "but",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+            "of",
+            "with",
+            "by",
+            "is",
+            "are",
+            "was",
+            "were",
+            "be",
+            "been",
+            "being",
+            "have",
+            "has",
+            "had",
+            "do",
+            "does",
+            "did",
+            "will",
+            "would",
+            "could",
+            "should",
+            "may",
+            "might",
+            "must",
+            "can",
+            "what",
+            "where",
+            "when",
+            "why",
+            "how",
+            "who",
+            "which",
+            "this",
+            "that",
+            "these",
+            "those",
+            "i",
+            "you",
+            "he",
+            "she",
+            "it",
+            "we",
+            "they",
+            "me",
+            "him",
+            "her",
+            "us",
+            "them",
+            "my",
+            "your",
+            "his",
+            "her",
+            "its",
+            "our",
+            "their",
         }
-        question_clean = question.lower().translate(str.maketrans("", "", string.punctuation))
+        question_clean = question.lower().translate(
+            str.maketrans("", "", string.punctuation)
+        )
         words = question_clean.split()
         keywords = [word for word in words if word not in stop_words and len(word) > 2]
         return keywords[:5]
 
-    def _prepare_context(self, docs, max_length: int = 3000) -> str:
+    def _prepare_context(self, docs: List[Any], max_length: int = 3000) -> str:
+        """
+        Prepare context from document chunks.
+
+        Args:
+            docs (List[Any]): List of document chunks.
+            max_length (int): Maximum length of context in characters.
+
+        Returns:
+            str: Combined context string.
+        """
         context_parts = []
         total_length = 0
         for doc in docs:
@@ -936,7 +1274,16 @@ Keep your response clear, educational, and helpful for a student."""
             total_length += len(content)
         return "\n\n".join(context_parts)
 
-    def _extract_sources(self, docs) -> List[Dict[str, str]]:
+    def _extract_sources(self, docs: List[Any]) -> List[Dict[str, str]]:
+        """
+        Extract source information from documents.
+
+        Args:
+            docs (List[Any]): List of document chunks.
+
+        Returns:
+            List[Dict[str, str]]: List of source dictionaries.
+        """
         sources = []
         seen_sources = set()
         for doc in docs:
@@ -954,13 +1301,33 @@ Keep your response clear, educational, and helpful for a student."""
         return sources[:4]
 
     def _get_cache_key(self, question: str, context: str) -> str:
+        """
+        Generate a cache key for a question-context pair.
+
+        Args:
+            question (str): The question.
+            context (str): The context.
+
+        Returns:
+            str: MD5 hash of the combined string.
+        """
         combined = f"{question}||{context}"
         return hashlib.md5(combined.encode()).hexdigest()
 
     def _generate_gpt_response(
-        self, question: str, context: str, user_id: str = None
+        self, question: str, context: str, user_id: Optional[str] = None
     ) -> str:
-        """Generate response using OpenRouter GPT."""
+        """
+        Generate response using OpenRouter GPT.
+
+        Args:
+            question (str): The question to answer.
+            context (str): Context from documents.
+            user_id (Optional[str]): Optional user identifier.
+
+        Returns:
+            str: The generated response.
+        """
         if not self.gpt_llm:
             return "[Error: OpenRouter GPT not configured. Please check your API settings.]"
 
@@ -990,8 +1357,12 @@ Please provide a helpful, educational response based on the course materials abo
 
         try:
             response = self.gpt_llm.generate_response(prompt)
-            
-            if not response or response.startswith("[Error") or response.startswith("[Authentication"):
+
+            if (
+                not response
+                or response.startswith("[Error")
+                or response.startswith("[Authentication")
+            ):
                 return "I'm having trouble connecting to my language model. Please check that the OpenRouter API key is configured correctly and has sufficient credits."
 
             # Cache response
@@ -1007,7 +1378,12 @@ Please provide a helpful, educational response based on the course materials abo
             return "[Error] I encountered an issue generating a response. Please check your OpenRouter API configuration."
 
     def get_status(self) -> Dict[str, Any]:
-        """Get status for Railway deployment."""
+        """
+        Get system status information.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing system status information.
+        """
         # Count documents in database
         documents = get_documents_from_database()
         document_count = len(documents)
@@ -1034,9 +1410,18 @@ _qa_instance = None
 
 
 def initialize_qa(
-    documents_dir: str = None, llama_model_path: str = None
+    documents_dir: Optional[str] = None, llama_model_path: Optional[str] = None
 ) -> DocumentQA:
-    """Initialize the QA system for Railway deployment."""
+    """
+    Initialize the QA system for Railway deployment.
+
+    Args:
+        documents_dir (Optional[str]): Optional directory containing documents.
+        llama_model_path (Optional[str]): Optional path to LLaMA model (unused in this implementation).
+
+    Returns:
+        DocumentQA: The initialized QA system instance.
+    """
     global _qa_instance
     if _qa_instance is None:
         # For Railway, always create temp directory from database
@@ -1047,30 +1432,55 @@ def initialize_qa(
 
 
 def get_qa_system() -> Optional[DocumentQA]:
-    """Get the global QA instance."""
+    """
+    Get the global QA instance.
+
+    Returns:
+        Optional[DocumentQA]: The QA system instance if initialized, None otherwise.
+    """
     return _qa_instance
 
 
 def ask_question(
     question: str,
-    documents_dir: str = None,
-    llama_model_path: str = None,
-    user_id: str = None,
+    documents_dir: Optional[str] = None,
+    llama_model_path: Optional[str] = None,
+    user_id: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Simple function to ask a question using GPT on Railway."""
+    """
+    Simple function to ask a question using GPT on Railway.
+
+    Args:
+        question (str): The question to ask.
+        documents_dir (Optional[str]): Optional directory containing documents.
+        llama_model_path (Optional[str]): Optional path to LLaMA model (unused).
+        user_id (Optional[str]): Optional user identifier.
+
+    Returns:
+        Dict[str, Any]: Response dictionary containing answer and metadata.
+    """
     qa_system = initialize_qa(documents_dir)
     return qa_system.answer_question(question, user_id)
 
 
 def get_system_status(
-    documents_dir: str = None, llama_model_path: str = None
+    documents_dir: Optional[str] = None, llama_model_path: Optional[str] = None
 ) -> Dict[str, Any]:
-    """Get system status for Railway deployment."""
+    """
+    Get system status for Railway deployment.
+
+    Args:
+        documents_dir (Optional[str]): Optional directory containing documents.
+        llama_model_path (Optional[str]): Optional path to LLaMA model (unused).
+
+    Returns:
+        Dict[str, Any]: Dictionary containing system status information.
+    """
     qa_system = initialize_qa(documents_dir)
     return qa_system.get_status()
 
 
-def cleanup_qa():
+def cleanup_qa() -> None:
     """Cleanup function for graceful shutdown."""
     global _qa_instance
     try:
@@ -1098,13 +1508,14 @@ if __name__ == "__main__":
         if status["ready"]:
             response = qa.answer_question("Hello!")
             print(f"\n👋 Greeting Response: {response['answer']}")
-            
+
             response = qa.answer_question("What is artificial intelligence?")
             print(f"\n🤖 AI Question Response: {response['answer']}")
         else:
             print("⏳ QA system is not ready. Check your configuration.")
-            
+
     except Exception as e:
         print(f"❌ Test failed: {str(e)}")
         import traceback
+
         traceback.print_exc()

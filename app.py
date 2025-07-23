@@ -64,6 +64,7 @@ load_dotenv()
 
 _followup_system_initialized = False
 
+
 def validate_app_environment():
     """Validate all required environment variables at startup."""
     required_vars = {
@@ -230,7 +231,7 @@ TRANSLATIONS = {
         "back_to_unit": "Back to Unit",
         "quiz": "Quiz",
         "mindmap": "Mindmap",
-        "ai_mindmap": "AI Mindmap", 
+        "ai_mindmap": "AI Mindmap",
         "generate_mindmap": "Generate Mindmap",
         "view_mindmap": "View Mindmap",
         "interactive_mindmap": "Interactive Mindmap",
@@ -273,7 +274,6 @@ TRANSLATIONS = {
         "no_teams_yet": "No teams created yet",
         "generating_mindmap": "Generating mindmap...",
         "mindmap_error": "Error generating mindmap",
-        "mindmap_ready": "Mindmap ready!",
         "expand_node": "Click to expand",
         "mindmap_materials": "Learning Materials Mindmap",
         "mindmap_vocabulary": "Vocabulary Mindmap",
@@ -281,29 +281,22 @@ TRANSLATIONS = {
         "error_occurred": "An error occurred",
         "try_again": "Try Again",
         "success": "Success",
-        "change_username": "Change Username",
-        "update_your_username": "Update your username",
-        "current_username": "Current Username",
-        "new_username": "New Username",
-        "enter_new_username": "Enter new username",
-        "username_requirements": "Username can only contain letters, numbers, and underscores",
-        "username_help_text": "3-50 characters, letters, numbers, and underscores only",
-        "confirm_with_password": "Confirm with Password",
-        "enter_current_password": "Enter your current password",
-        "password_confirmation_help": "Required to confirm your identity",
-        "update_username": "Update Username",
-        "cancel": "Cancel",
-        "important_notice": "Important Notice",
-        "username_change_notice": "Changing your username will affect how others see you in the system. Your login email remains the same.",
-        "video_type": "Video Type",
-        "youtube_video": "YouTube Video",
-        "lark_video": "Lark Recording",
-        "upload_video": "Upload Video File",
-        "leaderboard": "Leaderboard",
-        "your_camp_leaderboard": "Your Camp Leaderboard",
-        "team_name": "Team Name",
-        "team_score": "Score",
-        "team_leader": "Team Leader",
+        "select_unit": "Select Unit",
+        "select_content_type": "Select Content Type",
+        "materials": "Materials",
+        "vocabulary": "Vocabulary",
+        "no_content_available": "No content available",
+        "content_type": "Content Type",
+        "explore_mindmap": "Explore Mindmap",
+        "mindmap_for_unit": "Unit {0} Mindmap",
+        "create_new_mindmap": "Create New Mindmap",
+        "ai_generated_mindmap": "AI Generated Mindmap",
+        "mindmap_description": "Interactive visualization of learning content",
+        "select_unit_to_start": "Select a unit to start creating your mindmap",
+        "mindmap_features": "Mindmap Features",
+        "ai_powered": "AI powered",
+        "expandable_content": "Expandable content",
+        "visual_learning": "Visual learning",
     },
     "zh": {
         "welcome": "51Talk 智能中心",
@@ -387,14 +380,14 @@ TRANSLATIONS = {
         "back_to_unit": "返回单元",
         "quiz": "测验",
         "mindmap": "思维导图",
-        "ai_mindmap": "AI思维导图", 
-       "generate_mindmap": "生成思维导图",
-       "view_mindmap": "查看思维导图",
-       "interactive_mindmap": "交互式思维导图",
-       "mindmap_generator": "思维导图生成器",
-       "mindmap_analysis": "AI正在分析您的材料",
-       "mindmap_ready": "思维导图准备就绪",
-       "change_username": "更改用户名",
+        "ai_mindmap": "AI思维导图",
+        "generate_mindmap": "生成思维导图",
+        "view_mindmap": "查看思维导图",
+        "interactive_mindmap": "交互式思维导图",
+        "mindmap_generator": "思维导图生成器",
+        "mindmap_analysis": "AI正在分析您的材料",
+        "mindmap_ready": "思维导图准备就绪",
+        "change_username": "更改用户名",
         "update_your_username": "更新您的用户名",
         "current_username": "当前用户名",
         "new_username": "新用户名",
@@ -430,48 +423,6 @@ TRANSLATIONS = {
         "no_teams_yet": "尚未创建团队",
         "generating_mindmap": "正在生成思维导图...",
         "mindmap_error": "生成思维导图时出错",
-        "mindmap_ready": "思维导图已准备就绪！",
-        "expand_node": "点击展开",
-        "mindmap_materials": "学习材料思维导图",
-        "mindmap_vocabulary": "词汇思维导图",
-        "loading": "加载中...",
-        "error_occurred": "发生错误",
-        "try_again": "重试",
-        "success": "成功",
-        "change_username": "更改用户名",
-        "update_your_username": "更新您的用户名",
-        "current_username": "当前用户名",
-        "new_username": "新用户名",
-        "enter_new_username": "输入新用户名",
-        "username_requirements": "用户名只能包含字母、数字和下划线",
-        "username_help_text": "3-50个字符，仅限字母、数字和下划线",
-        "confirm_with_password": "密码确认",
-        "enter_current_password": "输入您的当前密码",
-        "password_confirmation_help": "需要确认您的身份",
-        "update_username": "更新用户名",
-        "cancel": "取消",
-        "important_notice": "重要提示",
-        "username_change_notice": "更改用户名将影响其他人在系统中看到您的方式。您的登录邮箱保持不变。",
-        "video_type": "视频类型",
-        "youtube_video": "YouTube视频",
-        "lark_video": "飞书录像",
-        "upload_video": "上传视频文件",
-        "leaderboard": "排行榜",
-        "your_camp_leaderboard": "您的训练营排行榜",
-        "team_name": "团队名称",
-        "team_score": "分数",
-        "team_leader": "团队负责人",
-        # Mindmap translations
-        "mindmap": "思维导图",
-        "ai_mindmap": "AI思维导图", 
-        "generate_mindmap": "生成思维导图",
-        "view_mindmap": "查看思维导图",
-        "interactive_mindmap": "交互式思维导图",
-        "mindmap_generator": "思维导图生成器",
-        "mindmap_analysis": "AI正在分析您的材料",
-        "mindmap_ready": "思维导图准备就绪",
-        "generating_mindmap": "正在生成思维导图...",
-        "mindmap_error": "生成思维导图时出错",
         "expand_node": "点击展开",
         "mindmap_materials": "学习材料思维导图",
         "mindmap_vocabulary": "词汇思维导图",
@@ -492,7 +443,6 @@ TRANSLATIONS = {
         "mindmap_description": "学习内容的交互式可视化",
         "select_unit_to_start": "选择一个单元开始创建思维导图",
         "mindmap_features": "思维导图功能",
-        "interactive_nodes": "交互式节点",
         "ai_powered": "AI驱动",
         "expandable_content": "可展开内容",
         "visual_learning": "视觉学习",
@@ -579,14 +529,14 @@ TRANSLATIONS = {
         "back_to_unit": "العودة إلى الوحدة",
         "quiz": "اختبار",
         "mindmap": "خريطة ذهنية",
-       "ai_mindmap": "خريطة ذهنية بالذكاء الاصطناعي", 
-       "generate_mindmap": "إنشاء خريطة ذهنية",
-       "view_mindmap": "عرض الخريطة الذهنية",
-       "interactive_mindmap": "خريطة ذهنية تفاعلية",
-       "mindmap_generator": "مولد الخرائط الذهنية",
-       "mindmap_analysis": "الذكاء الاصطناعي يحلل موادك",
-       "mindmap_ready": "الخريطة الذهنية جاهزة للاستكشاف",
-       "change_username": "تغيير اسم المستخدم",
+        "ai_mindmap": "خريطة ذهنية بالذكاء الاصطناعي",
+        "generate_mindmap": "إنشاء خريطة ذهنية",
+        "view_mindmap": "عرض الخريطة الذهنية",
+        "interactive_mindmap": "خريطة ذهنية تفاعلية",
+        "mindmap_generator": "مولد الخرائط الذهنية",
+        "mindmap_analysis": "الذكاء الاصطناعي يحلل موادك",
+        "mindmap_ready": "الخريطة الذهنية جاهزة للاستكشاف",
+        "change_username": "تغيير اسم المستخدم",
         "update_your_username": "تحديث اسم المستخدم الخاص بك",
         "current_username": "اسم المستخدم الحالي",
         "new_username": "اسم المستخدم الجديد",
@@ -622,47 +572,6 @@ TRANSLATIONS = {
         "no_teams_yet": "لم يتم إنشاء فرق بعد",
         "generating_mindmap": "جاري إنشاء الخريطة الذهنية...",
         "mindmap_error": "خطأ في إنشاء الخريطة الذهنية",
-        "mindmap_ready": "الخريطة الذهنية جاهزة!",
-        "expand_node": "انقر للتوسيع",
-        "mindmap_materials": "خريطة ذهنية للمواد التعليمية",
-        "mindmap_vocabulary": "خريطة ذهنية للمفردات",
-        "loading": "جاري التحميل...",
-        "error_occurred": "حدث خطأ",
-        "try_again": "حاول مرة أخرى",
-        "success": "نجح",
-        "change_username": "تغيير اسم المستخدم",
-        "update_your_username": "تحديث اسم المستخدم الخاص بك",
-        "current_username": "اسم المستخدم الحالي",
-        "new_username": "اسم المستخدم الجديد",
-        "enter_new_username": "أدخل اسم المستخدم الجديد",
-        "username_requirements": "يمكن أن يحتوي اسم المستخدم على أحرف وأرقام وشرطات سفلية فقط",
-        "username_help_text": "3-50 حرف، أحرف وأرقام وشرطات سفلية فقط",
-        "confirm_with_password": "التأكيد بكلمة المرور",
-        "enter_current_password": "أدخل كلمة المرور الحالية",
-        "password_confirmation_help": "مطلوب لتأكيد هويتك",
-        "update_username": "تحديث اسم المستخدم",
-        "cancel": "إلغاء",
-        "important_notice": "تنبيه مهم",
-        "username_change_notice": "تغيير اسم المستخدم سيؤثر على كيفية رؤية الآخرين لك في النظام. بريدك الإلكتروني للدخول يبقى كما هو.",
-        "video_type": "نوع الفيديو",
-        "youtube_video": "فيديو يوتيوب",
-        "lark_video": "تسجيل لارك",
-        "upload_video": "رفع ملف فيديو",
-        "leaderboard": "لوحة المتصدرين",
-        "your_camp_leaderboard": "لوحة متصدري معسكرك",
-        "team_name": "اسم الفريق",
-        "team_score": "النقاط",
-        "team_leader": "قائد الفريق",
-        "mindmap": "خريطة ذهنية",
-        "ai_mindmap": "خريطة ذهنية بالذكاء الاصطناعي", 
-        "generate_mindmap": "إنشاء خريطة ذهنية",
-        "view_mindmap": "عرض الخريطة الذهنية",
-        "interactive_mindmap": "خريطة ذهنية تفاعلية",
-        "mindmap_generator": "مولد الخرائط الذهنية",
-        "mindmap_analysis": "الذكاء الاصطناعي يحلل موادك",
-        "mindmap_ready": "الخريطة الذهنية جاهزة للاستكشاف",
-        "generating_mindmap": "جاري إنشاء الخريطة الذهنية...",
-        "mindmap_error": "خطأ في إنشاء الخريطة الذهنية",
         "expand_node": "انقر للتوسيع",
         "mindmap_materials": "خريطة ذهنية للمواد التعليمية",
         "mindmap_vocabulary": "خريطة ذهنية للمفردات",
@@ -683,7 +592,6 @@ TRANSLATIONS = {
         "mindmap_description": "تصور تفاعلي لمحتوى التعلم الخاص بك",
         "select_unit_to_start": "اختر وحدة لبدء إنشاء خريطتك الذهنية",
         "mindmap_features": "ميزات الخريطة الذهنية",
-        "interactive_nodes": "عقد تفاعلية",
         "ai_powered": "مدعوم بالذكاء الاصطناعي",
         "expandable_content": "محتوى قابل للتوسيع",
         "visual_learning": "التعلم البصري",
@@ -1343,6 +1251,7 @@ def track_qa_request(user_id: str, response_time: float, success: bool):
 # metrics endpoints
 # ===============================================
 
+
 @app.route("/metrics")
 @admin_required
 def metrics():
@@ -1354,50 +1263,57 @@ def metrics():
             if app_metrics["response_times"]
             else 0
         )
-        
+
         success_rate = (
-            (app_metrics["qa_requests"] - app_metrics["qa_errors"]) / app_metrics["qa_requests"]
+            (app_metrics["qa_requests"] - app_metrics["qa_errors"])
+            / app_metrics["qa_requests"]
             if app_metrics["qa_requests"] > 0
             else 0
         )
-        
+
         # Get additional stats from database
         conn = None
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            
+
             # Get today's QA activity
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT COUNT(*) FROM qa_history 
                 WHERE DATE(created_at) = CURRENT_DATE
-            """)
+            """
+            )
             today_qa = cursor.fetchone()[0] or 0
-            
+
             # Get total QA requests (all time)
             cursor.execute("SELECT COUNT(*) FROM qa_history")
             total_qa_requests = cursor.fetchone()[0] or 0
-            
+
             # Get active users today
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT COUNT(DISTINCT user_id) FROM qa_history 
                 WHERE DATE(created_at) = CURRENT_DATE
-            """)
+            """
+            )
             today_active_users = cursor.fetchone()[0] or 0
-            
+
             # Get total users
             cursor.execute("SELECT COUNT(*) FROM users")
             total_users = cursor.fetchone()[0] or 0
-            
+
             # Get quiz attempts today
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT COUNT(*) FROM quiz_attempts 
                 WHERE DATE(attempted_at) = CURRENT_DATE
-            """)
+            """
+            )
             today_quiz_attempts = cursor.fetchone()[0] or 0
-            
+
             cursor.close()
-            
+
         except Exception as db_error:
             logger.error(f"Database error in metrics: {str(db_error)}")
             today_qa = 0
@@ -1408,12 +1324,13 @@ def metrics():
         finally:
             if conn:
                 release_db_connection(conn)
-        
+
         # Get QA system status
         qa_system_status = "Unknown"
         document_count = 0
         try:
             from qa import get_system_status
+
             status = get_system_status()
             if status.get("ready"):
                 qa_system_status = "Ready"
@@ -1427,7 +1344,7 @@ def metrics():
         except Exception as qa_error:
             logger.error(f"QA status error: {str(qa_error)}")
             qa_system_status = "Error"
-        
+
         # Prepare metrics data for template
         metrics_data = {
             # QA Metrics (from app_metrics)
@@ -1436,24 +1353,21 @@ def metrics():
             "qa_success_rate": success_rate,
             "avg_response_time_seconds": round(avg_response_time, 2),
             "active_users_count": len(app_metrics["active_users"]),
-            
             # Additional metrics from database
             "total_qa_requests_db": total_qa_requests,
             "today_qa_requests": today_qa,
             "today_active_users": today_active_users,
             "total_users": total_users,
             "today_quiz_attempts": today_quiz_attempts,
-            
             # System metrics
             "qa_system_status": qa_system_status,
             "document_count": document_count,
-            
             # Timestamp
             "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"),
         }
-        
+
         return render_template("admin/metrics_dashboard.html", metrics=metrics_data)
-        
+
     except Exception as e:
         logger.error(f"Error in metrics dashboard: {str(e)}")
         # Return safe default values
@@ -1479,41 +1393,44 @@ def metrics():
 @admin_required
 def admin_export_data():
     """Export filtered data to CSV or PDF."""
-    
+
     # Get filter parameters
     student_types = request.args.getlist("student_type")
     selected_tags = request.args.getlist("tags")
     format_type = request.args.get("format", "csv")
-    
+
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
+
         # Build WHERE clause for filters
         where_conditions = []
         params = []
-        
+
         if student_types:
             where_conditions.append("u.student_type = ANY(%s)")
             params.append(student_types)
-        
+
         if selected_tags:
-            where_conditions.append("""
+            where_conditions.append(
+                """
                 EXISTS (
                     SELECT 1 FROM user_tags ut 
                     JOIN tags t ON ut.tag_id = t.id 
                     WHERE ut.user_id = u.id AND t.name = ANY(%s)
                 )
-            """)
+            """
+            )
             params.append(selected_tags)
-        
+
         where_clause = ""
         if where_conditions:
             where_clause = "WHERE " + " AND ".join(where_conditions)
-        
+
         # Get detailed user data for export
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT 
                 u.id,
                 u.username,
@@ -1539,11 +1456,13 @@ def admin_export_data():
             {where_clause}
             GROUP BY u.id, u.username, u.email, u.camp, u.student_type, u.cohort_name, u.created_at, u.email_verified
             ORDER BY u.username
-        """, params)
-        
+        """,
+            params,
+        )
+
         export_data = cursor.fetchall()
         cursor.close()
-        
+
         if format_type == "csv":
             return export_to_csv(export_data, student_types, selected_tags)
         elif format_type == "pdf":
@@ -1551,7 +1470,7 @@ def admin_export_data():
         else:
             flash("Invalid export format", "error")
             return redirect(url_for("admin_export_advanced"))
-            
+
     except Exception as e:
         logger.error(f"Error in export_data: {str(e)}")
         flash(f"Error exporting data: {str(e)}", "error")
@@ -1567,8 +1486,9 @@ def create_followup_table():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
-        cursor.execute("""
+
+        cursor.execute(
+            """
             CREATE TABLE IF NOT EXISTS followup_emails (
                 id SERIAL PRIMARY KEY,
                 user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
@@ -1580,21 +1500,26 @@ def create_followup_table():
                 error_message TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
-        
+        """
+        )
+
         # Create index for faster queries
-        cursor.execute("""
+        cursor.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_followup_emails_user_id ON followup_emails(user_id)
-        """)
-        
-        cursor.execute("""
+        """
+        )
+
+        cursor.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_followup_emails_sent_at ON followup_emails(sent_at)
-        """)
-        
+        """
+        )
+
         conn.commit()
         cursor.close()
         logger.info("Follow-up emails table created successfully")
-        
+
     except Exception as e:
         if conn:
             conn.rollback()
@@ -1619,35 +1544,65 @@ def export_to_csv(data, student_types, selected_tags):
         # Create CSV in memory
         output = io.StringIO()
         writer = csv.writer(output)
-        
+
         # Write headers
         headers = [
-            "ID", "Username", "Email", "Camp", "Student Type", "Cohort", 
-            "Registered", "Email Verified", "Submissions", "Quiz Attempts", 
-            "QA Questions", "Last Submission", "Last Quiz", "Last QA Activity", "Tags"
+            "ID",
+            "Username",
+            "Email",
+            "Camp",
+            "Student Type",
+            "Cohort",
+            "Registered",
+            "Email Verified",
+            "Submissions",
+            "Quiz Attempts",
+            "QA Questions",
+            "Last Submission",
+            "Last Quiz",
+            "Last QA Activity",
+            "Tags",
         ]
         writer.writerow(headers)
-        
+
         # Write data rows
         for row in data:
-            writer.writerow([
-                row["id"],
-                row["username"],
-                row["email"],
-                row["camp"] or "No camp",
-                row["student_type"] or "Unknown",
-                row["cohort_name"] or "No cohort",
-                row["created_at"].strftime("%Y-%m-%d") if row["created_at"] else "Unknown",
-                "Yes" if row["email_verified"] else "No",
-                row["submission_count"],
-                row["quiz_attempts"],
-                row["qa_questions"],
-                row["last_submission"].strftime("%Y-%m-%d") if row["last_submission"] else "Never",
-                row["last_quiz_attempt"].strftime("%Y-%m-%d") if row["last_quiz_attempt"] else "Never",
-                row["last_qa_activity"].strftime("%Y-%m-%d") if row["last_qa_activity"] else "Never",
-                row["user_tags"] or "No tags"
-            ])
-        
+            writer.writerow(
+                [
+                    row["id"],
+                    row["username"],
+                    row["email"],
+                    row["camp"] or "No camp",
+                    row["student_type"] or "Unknown",
+                    row["cohort_name"] or "No cohort",
+                    (
+                        row["created_at"].strftime("%Y-%m-%d")
+                        if row["created_at"]
+                        else "Unknown"
+                    ),
+                    "Yes" if row["email_verified"] else "No",
+                    row["submission_count"],
+                    row["quiz_attempts"],
+                    row["qa_questions"],
+                    (
+                        row["last_submission"].strftime("%Y-%m-%d")
+                        if row["last_submission"]
+                        else "Never"
+                    ),
+                    (
+                        row["last_quiz_attempt"].strftime("%Y-%m-%d")
+                        if row["last_quiz_attempt"]
+                        else "Never"
+                    ),
+                    (
+                        row["last_qa_activity"].strftime("%Y-%m-%d")
+                        if row["last_qa_activity"]
+                        else "Never"
+                    ),
+                    row["user_tags"] or "No tags",
+                ]
+            )
+
         # Create filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filter_desc = []
@@ -1655,18 +1610,18 @@ def export_to_csv(data, student_types, selected_tags):
             filter_desc.append(f"types_{'_'.join(student_types)}")
         if selected_tags:
             filter_desc.append(f"tags_{len(selected_tags)}")
-        
+
         filter_suffix = "_".join(filter_desc) if filter_desc else "all"
         filename = f"student_export_{filter_suffix}_{timestamp}.csv"
-        
+
         # Create response
         output.seek(0)
         return app.response_class(
             output.getvalue(),
             mimetype="text/csv",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
-        
+
     except Exception as e:
         logger.error(f"Error creating CSV: {str(e)}")
         flash(f"Error creating CSV export: {str(e)}", "error")
@@ -1719,7 +1674,7 @@ def export_to_pdf(data, student_types, selected_tags):
                 </thead>
                 <tbody>
         """
-        
+
         for row in data:
             html_content += f"""
                 <tr>
@@ -1733,30 +1688,30 @@ def export_to_pdf(data, student_types, selected_tags):
                     <td>{row['qa_questions']}</td>
                 </tr>
             """
-        
+
         html_content += """
                 </tbody>
             </table>
         </body>
         </html>
         """
-        
+
         # Create filename
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"student_export_{timestamp}.html"
-        
+
         # Return HTML (can be converted to PDF by browser)
         return app.response_class(
             html_content,
             mimetype="text/html",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
+            headers={"Content-Disposition": f"attachment; filename={filename}"},
         )
-        
+
     except Exception as e:
         logger.error(f"Error creating PDF: {str(e)}")
         flash(f"Error creating PDF export: {str(e)}", "error")
         return redirect(url_for("admin_export_advanced"))
-    
+
 
 # ==============================================
 # APPLICATION HOOKS
@@ -2485,41 +2440,37 @@ def select_camp() -> Any:
 
     return render_template("select_camp.html", camps=CAMPS)
 
+
 def create_fallback_words_mindmap(words, unit_id):
     """Create a simple fallback mindmap structure from vocabulary words."""
-    mindmap = {
-        "central_topic": f"Unit {unit_id} Vocabulary",
-        "branches": []
-    }
-    
+    mindmap = {"central_topic": f"Unit {unit_id} Vocabulary", "branches": []}
+
     # Group words by sections if available
     sections = {}
     for word in words[:10]:  # Limit to 10 words
-        section = word.get('section', 1)
+        section = word.get("section", 1)
         if section not in sections:
             sections[section] = []
         sections[section].append(word)
-    
+
     for section_num, section_words in sections.items():
-        branch = {
-            "name": f"Section {section_num}",
-            "children": []
-        }
-        
+        branch = {"name": f"Section {section_num}", "children": []}
+
         for word in section_words:
-            child = {
-                "name": word['word'],
-                "type": "vocabulary"
-            }
-            
+            child = {"name": word["word"], "type": "vocabulary"}
+
             # Add definition if available
-            if word.get('daily_definition'):
-                child['definition'] = word['daily_definition'][:50] + "..." if len(word['daily_definition']) > 50 else word['daily_definition']
-            
+            if word.get("daily_definition"):
+                child["definition"] = (
+                    word["daily_definition"][:50] + "..."
+                    if len(word["daily_definition"]) > 50
+                    else word["daily_definition"]
+                )
+
             branch["children"].append(child)
-        
+
         mindmap["branches"].append(branch)
-    
+
     return mindmap
 
 
@@ -2893,6 +2844,7 @@ def assign_user_tags_by_names(
 # USER DASHBOARD & LEARNING ROUTES
 # ==============================================
 
+
 @app.route("/dashboard")
 @login_required
 def dashboard() -> Any:
@@ -2949,7 +2901,7 @@ def dashboard() -> Any:
                 ORDER BY ts.score DESC
                 LIMIT 10
             """,
-                (user_id, user_id, user_camp)
+                (user_id, user_id, user_camp),
             )
             user_camp_leaderboard = cursor.fetchall()
 
@@ -2976,11 +2928,10 @@ def dashboard() -> Any:
         current_language=current_language,
         user_team=user_team,
         user_camp=user_camp,
-        all_camps_leaderboard=all_camps_leaderboard,  
+        all_camps_leaderboard=all_camps_leaderboard,
         user_camp_leaderboard=user_camp_leaderboard,
-        show_only_user_camp=True 
+        show_only_user_camp=True,
     )
-
 
 
 @app.route("/set_language/<language>")
@@ -3000,7 +2951,9 @@ def set_language(language: str) -> Any:
                     (language, session["user_id"]),
                 )
                 conn.commit()
-                logger.info(f"Language updated to {language} for user {session['user_id']}")
+                logger.info(
+                    f"Language updated to {language} for user {session['user_id']}"
+                )
             except Exception as e:
                 logger.error(f"Error updating language in database: {str(e)}")
             finally:
@@ -3009,7 +2962,10 @@ def set_language(language: str) -> Any:
                     release_db_connection(conn)
 
         session.modified = True
-        flash(f"Language changed to {LANGUAGES[language]}. AI assistant and mindmap will now respond in {LANGUAGES[language]}.", "success")
+        flash(
+            f"Language changed to {LANGUAGES[language]}. AI assistant and mindmap will now respond in {LANGUAGES[language]}.",
+            "success",
+        )
 
     return redirect(request.referrer or url_for("dashboard"))
 
@@ -3121,7 +3077,6 @@ def unit(unit_id: int) -> Any:
             release_db_connection(conn)
 
 
-
 @app.route("/quiz/<int:unit_id>", methods=["GET", "POST"])
 @login_required
 @camp_required
@@ -3129,12 +3084,9 @@ def quiz(unit_id: int) -> Any:
     """UPDATED quiz route with prerequisites removed"""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
-
     username = session["username"]
     user_id = session["user_id"]
     user_camp = session.get("user_camp")
-
-    # REMOVED: Prerequisite check - all quizzes are now accessible
 
     conn = None
     try:
@@ -3158,9 +3110,88 @@ def quiz(unit_id: int) -> Any:
         if attempt and attempt[1] is not None:
             return redirect(url_for("quiz_review", unit_id=unit_id))
 
-        # Rest of the quiz logic remains the same...
-        # [Keep all the existing quiz logic here]
-        
+        # Get quiz questions
+        cursor.execute(
+            """
+            SELECT id, question, options, correct_answer, explanation
+            FROM quiz_questions
+            WHERE unit_id = %s
+            ORDER BY RANDOM()
+            LIMIT 5
+        """,
+            (unit_id,),
+        )
+        questions = [
+            {
+                "id": row[0],
+                "question": row[1],
+                "options": row[2],
+                "correct_answer": row[3],
+                "explanation": row[4],
+            }
+            for row in cursor.fetchall()
+        ]
+
+        if not questions:
+            flash("No questions found for this quiz.", "error")
+            return redirect(url_for("unit", unit_id=unit_id))
+
+        # Get a random motivational tip
+        motivation = get_random_motivation()
+
+        if request.method == "POST":
+            # Process quiz submission
+            score = 0
+            results = []
+            
+            for question in questions:
+                user_answer = int(request.form.get(f"q{question['id']}", -1))
+                is_correct = user_answer == question["correct_answer"]
+                
+                if is_correct:
+                    score += 1
+                
+                results.append({
+                    "question": question["question"],
+                    "options": question["options"],
+                    "correct_index": question["correct_answer"],
+                    "user_answer": user_answer,
+                    "correct": is_correct,
+                    "explanation": question["explanation"],
+                })
+
+            # Save attempt to database
+            passed = score >= 3  # Assuming passing is 3/5
+            cursor.execute(
+                """
+                INSERT INTO quiz_attempts 
+                (user_id, unit_id, score, passed, attempted_at)
+                VALUES (%s, %s, %s, %s, NOW())
+            """,
+                (user_id, unit_id, score, passed),
+            )
+            conn.commit()
+
+            # Render results page
+            return render_template(
+                "quiz_result.html",
+                unit_id=unit_id,
+                score=score,
+                total=len(questions),
+                passed=passed,
+                results=results,
+                motivation=motivation,
+                overall_result=f"You got {score} out of {len(questions)} correct!",
+            )
+
+        # Render quiz page (GET request)
+        return render_template(
+            "quiz.html",
+            unit_id=unit_id,
+            questions=questions,
+            motivation=motivation,
+        )
+
     except Exception as e:
         logger.error(f"Quiz page error: {str(e)}")
         flash(f"An error occurred loading the quiz: {str(e)}", "error")
@@ -3169,7 +3200,6 @@ def quiz(unit_id: int) -> Any:
         if conn:
             cursor.close()
             release_db_connection(conn)
-
 
 @app.route("/quiz_review/<int:unit_id>")
 @login_required
@@ -3300,141 +3330,6 @@ def quiz_review(unit_id: int) -> Any:
         logger.error(f"Quiz review error: {str(e)}")
         flash(f"An error occurred loading the quiz review: {str(e)}", "error")
         return redirect(url_for("unit", unit_id=unit_id))
-    finally:
-        if conn:
-            release_db_connection(conn)
-
-
-# Also add this debug route that was referenced in the code
-@app.route("/debug/force_quiz_review/<int:unit_id>")
-@login_required
-def debug_force_quiz_review(unit_id: int):
-    """Debug route to force quiz review - redirects to proper review route"""
-    return redirect(url_for("quiz_review", unit_id=unit_id))
-
-
-# Add this debug route to test quiz review functionality
-
-
-@app.route("/debug/quiz_review_test/<int:unit_id>")
-@login_required
-def debug_quiz_review_test(unit_id: int):
-    """Debug route to test quiz review functionality"""
-    if not session.get("authenticated"):
-        return redirect(url_for("password_gate"))
-
-    user_id = session["user_id"]
-    username = session["username"]
-
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-
-        # Check if user has any quiz attempts
-        cursor.execute(
-            """
-            SELECT qa.id, qa.score, qa.attempted_at, qa.passed, qa.unit_id
-            FROM quiz_attempts qa
-            WHERE qa.user_id = %s AND qa.unit_id = %s
-            ORDER BY qa.attempted_at DESC
-        """,
-            (user_id, unit_id),
-        )
-        attempts = cursor.fetchall()
-
-        # Get quiz questions for this unit
-        cursor.execute(
-            "SELECT id, question, camp FROM quizzes WHERE unit_id = %s",
-            (unit_id,),
-        )
-        quiz_questions = cursor.fetchall()
-
-        # Get user's camp
-        cursor.execute("SELECT camp FROM users WHERE id = %s", (user_id,))
-        user_camp = cursor.fetchone()["camp"] if cursor.fetchone() else "Unknown"
-
-        cursor.close()
-
-        # Generate HTML report
-        html_output = f"""
-        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f8f9fa;">
-            <h2>🧪 Quiz Review Debug Test</h2>
-            <p><strong>User:</strong> {username} | <strong>Camp:</strong> {user_camp} | <strong>Unit:</strong> {unit_id}</p>
-            
-            <div style="margin: 20px 0;">
-                <h3>Quiz Attempts:</h3>
-                {f"<p style='color: green;'>✅ Found {len(attempts)} attempts</p>" if attempts else "<p style='color: orange;'>⚠️ No quiz attempts found</p>"}
-                
-                {f'''
-                <div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 10px 0;">
-                    <h4>Latest Attempt:</h4>
-                    <ul>
-                        <li>Attempt ID: {attempts[0]["id"]}</li>
-                        <li>Score: {attempts[0]["score"]}</li>
-                        <li>Passed: {"Yes" if attempts[0]["passed"] else "No"}</li>
-                        <li>Date: {attempts[0]["attempted_at"]}</li>
-                    </ul>
-                </div>
-                ''' if attempts else ""}
-            </div>
-            
-            <div style="margin: 20px 0;">
-                <h3>Available Quiz Questions:</h3>
-                {f"<p style='color: green;'>✅ Found {len(quiz_questions)} questions</p>" if quiz_questions else "<p style='color: red;'>❌ No quiz questions found</p>"}
-                
-                {f'''
-                <div style="background: #f3e5f5; padding: 15px; border-radius: 5px; margin: 10px 0;">
-                    <h4>Questions for Unit {unit_id}:</h4>
-                    <ul>
-                        {"".join(f"<li>ID: {q['id']} | Camp: {q['camp']} | Question: {q['question'][:50]}...</li>" for q in quiz_questions)}
-                    </ul>
-                </div>
-                ''' if quiz_questions else ""}
-            </div>
-            
-            <div style="margin: 20px 0;">
-                <h3>Test Actions:</h3>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    {f'''
-                    <a href="/quiz_review/{unit_id}" style="background: #28a745; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                        📋 View Quiz Review
-                    </a>
-                    ''' if attempts else ""}
-                    
-                    <a href="/quiz/{unit_id}" style="background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                        🎯 Take Quiz
-                    </a>
-                    
-                    <a href="/unit/{unit_id}" style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
-                        📚 Back to Unit
-                    </a>
-                </div>
-            </div>
-            
-            <div style="margin: 20px 0; background: #fff3cd; padding: 15px; border-radius: 5px;">
-                <h4>🔧 Debug Info:</h4>
-                <ul>
-                    <li>Quiz Review Route: <code>/quiz_review/{unit_id}</code></li>
-                    <li>Quiz Take Route: <code>/quiz/{unit_id}</code></li>
-                    <li>User ID: {user_id}</li>
-                    <li>Has Attempts: {"Yes" if attempts else "No"}</li>
-                    <li>Can Take Quiz: {"No" if attempts else "Yes"}</li>
-                </ul>
-            </div>
-        </div>
-        """
-
-        return html_output
-
-    except Exception as e:
-        return f"""
-        <div style="font-family: Arial, sans-serif; padding: 20px; background: #f8d7da;">
-            <h2>❌ Debug Test Error</h2>
-            <p><strong>Error:</strong> {str(e)}</p>
-            <a href="/unit/{unit_id}" style="background: #6c757d; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Back to Unit</a>
-        </div>
-        """
     finally:
         if conn:
             release_db_connection(conn)
@@ -3657,41 +3552,43 @@ def download_file_from_db(filename):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Get file from database
         cursor.execute(
             "SELECT content, content_type FROM stored_documents WHERE filename = %s",
-            (filename,)
+            (filename,),
         )
-        
+
         result = cursor.fetchone()
         cursor.close()
-        
+
         if not result:
             # File not in database, try file system as fallback
             try:
                 file_path = os.path.join(UPLOAD_FOLDER, filename)
                 if os.path.exists(file_path):
-                    return send_file(file_path, as_attachment=True, download_name=filename)
+                    return send_file(
+                        file_path, as_attachment=True, download_name=filename
+                    )
             except:
                 pass
-            
+
             flash(f"File '{filename}' not found.", "error")
             return redirect(request.referrer or url_for("dashboard"))
-        
+
         content, content_type = result
-        
+
         # Create a BytesIO object from the database content
         file_data = io.BytesIO(content)
         file_data.seek(0)
-        
+
         return send_file(
             file_data,
             mimetype=content_type or "application/octet-stream",
             as_attachment=True,
-            download_name=filename
+            download_name=filename,
         )
-        
+
     except Exception as e:
         logger.error(f"Error downloading file from database: {str(e)}")
         flash(f"Error downloading file: {str(e)}", "error")
@@ -3701,90 +3598,98 @@ def download_file_from_db(filename):
             release_db_connection(conn)
 
 
-
 @app.route("/static/uploads/<path:filename>")
 def serve_static_upload(filename):
     """Serve uploaded files from database with smart filename matching."""
-    
+
     # Extract just the filename (remove any path prefix)
     clean_filename = os.path.basename(filename)
-    
+
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Strategy 1: Try exact match
         cursor.execute(
             "SELECT content, content_type FROM stored_documents WHERE filename = %s",
-            (clean_filename,)
+            (clean_filename,),
         )
         result = cursor.fetchone()
-        
+
         if not result:
             # Strategy 2: Try case-insensitive match
             cursor.execute(
                 "SELECT content, content_type FROM stored_documents WHERE LOWER(filename) = LOWER(%s)",
-                (clean_filename,)
+                (clean_filename,),
             )
             result = cursor.fetchone()
-        
+
         if not result:
             # Strategy 3: Try partial match (remove timestamp prefixes)
             # Handle filenames like "unit_1_Chinese_20250714_141026_E-51Talk-AI-Unit-one.pdf"
             # Look for files that end with the same base name
-            base_name = clean_filename.split('_')[-1] if '_' in clean_filename else clean_filename
+            base_name = (
+                clean_filename.split("_")[-1]
+                if "_" in clean_filename
+                else clean_filename
+            )
             cursor.execute(
                 "SELECT content, content_type FROM stored_documents WHERE filename LIKE %s",
-                (f"%{base_name}",)
+                (f"%{base_name}",),
             )
             result = cursor.fetchone()
-        
+
         if not result:
             # Strategy 4: Try matching the original file name pattern
             # Look for files that contain key parts of the requested filename
-            name_parts = clean_filename.replace('.pdf', '').replace('.ppt', '').replace('.pptx', '').split('_')
+            name_parts = (
+                clean_filename.replace(".pdf", "")
+                .replace(".ppt", "")
+                .replace(".pptx", "")
+                .split("_")
+            )
             for part in name_parts:
                 if len(part) > 3:  # Only use meaningful parts
                     cursor.execute(
                         "SELECT content, content_type FROM stored_documents WHERE filename LIKE %s",
-                        (f"%{part}%",)
+                        (f"%{part}%",),
                     )
                     result = cursor.fetchone()
                     if result:
                         break
-        
+
         cursor.close()
-        
+
         if result:
             content, content_type = result
-            
+
             # Determine the correct content type if not set
             if not content_type:
-                if clean_filename.lower().endswith('.pdf'):
-                    content_type = 'application/pdf'
-                elif clean_filename.lower().endswith(('.ppt', '.pptx')):
-                    content_type = 'application/vnd.ms-powerpoint'
+                if clean_filename.lower().endswith(".pdf"):
+                    content_type = "application/pdf"
+                elif clean_filename.lower().endswith((".ppt", ".pptx")):
+                    content_type = "application/vnd.ms-powerpoint"
                 else:
-                    content_type = 'application/octet-stream'
-            
+                    content_type = "application/octet-stream"
+
             # Create response
             response = app.response_class(
                 content,
                 mimetype=content_type,
                 headers={
                     "Content-Disposition": f"inline; filename={clean_filename}",
-                    "Cache-Control": "public, max-age=3600"
-                }
+                    "Cache-Control": "public, max-age=3600",
+                },
             )
             return response
-        
+
     except Exception as e:
         logger.error(f"Database error serving {filename}: {str(e)}")
     finally:
         if conn:
             release_db_connection(conn)
-    
+
     # Fallback to file system
     try:
         file_path = os.path.join(UPLOAD_FOLDER, clean_filename)
@@ -3792,37 +3697,9 @@ def serve_static_upload(filename):
             return send_file(file_path)
     except Exception as e:
         logger.error(f"File system error: {str(e)}")
-    
+
     # Return 404
     return "File not found", 404
-
-
-# Also add this debug route to see what's in your database
-@app.route("/debug/files")
-@admin_required
-def debug_files():
-    """Debug route to see what files are in the database."""
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("SELECT filename, content_type, upload_date, length(content) as size FROM stored_documents ORDER BY upload_date DESC")
-        files = cursor.fetchall()
-        cursor.close()
-        
-        html = "<h2>Files in Database:</h2><ul>"
-        for filename, content_type, upload_date, size in files:
-            html += f"<li><strong>{filename}</strong> ({content_type}) - {size} bytes - {upload_date}</li>"
-        html += "</ul>"
-        
-        return html
-        
-    except Exception as e:
-        return f"Error: {str(e)}"
-    finally:
-        if conn:
-            release_db_connection(conn)
 
 
 @app.route("/download_material/<path:filename>")
@@ -3836,49 +3713,52 @@ def download_material(filename: str) -> Any:
 
     # Extract just the filename (remove any path prefix)
     clean_filename = os.path.basename(filename)
-    
+
     # Try database first
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         cursor.execute(
             "SELECT content, content_type FROM stored_documents WHERE filename = %s",
-            (clean_filename,)
+            (clean_filename,),
         )
-        
+
         result = cursor.fetchone()
         cursor.close()
-        
+
         if result:
             content, content_type = result
             file_data = io.BytesIO(content)
             file_data.seek(0)
-            
+
             return send_file(
                 file_data,
                 mimetype=content_type or "application/octet-stream",
                 as_attachment=True,
-                download_name=clean_filename
+                download_name=clean_filename,
             )
     except Exception as e:
         logger.error(f"Database download error: {str(e)}")
     finally:
         if conn:
             release_db_connection(conn)
-    
+
     # Fallback to file system
     try:
         file_path = os.path.join(UPLOAD_FOLDER, clean_filename)
         if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True, download_name=clean_filename)
+            return send_file(
+                file_path, as_attachment=True, download_name=clean_filename
+            )
     except Exception as e:
         logger.error(f"File system download error: {str(e)}")
 
     # File not found anywhere
     flash(f"File '{clean_filename}' not found.", "error")
     return redirect(request.referrer or url_for("dashboard"))
+
 
 # ==============================================
 # AI ASSISTANT ROUTES
@@ -4057,68 +3937,87 @@ def ask_ai_enhanced() -> Any:
             greeting_msg = {
                 "en": "Hello! I'm your AI learning assistant. How can I help you today?",
                 "zh": "你好！我是你的AI学习助手。今天我可以如何帮助你？",
-                "ar": "مرحبا! أنا مساعد التعلم بالذكاء الاصطناعي. كيف يمكنني مساعدتك اليوم؟"
+                "ar": "مرحبا! أنا مساعد التعلم بالذكاء الاصطناعي. كيف يمكنني مساعدتك اليوم؟",
             }
-            return jsonify({
-                "success": True,
-                "answer": greeting_msg.get(user_language, greeting_msg["en"]),
-                "sources": [],
-                "conversation_type": "greeting",
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "answer": greeting_msg.get(user_language, greeting_msg["en"]),
+                    "sources": [],
+                    "conversation_type": "greeting",
+                }
+            )
 
         if len(question) > 2000:
             error_msg = {
                 "en": "Message too long. Please keep it under 2000 characters.",
                 "zh": "消息太长。请保持在2000个字符以下。",
-                "ar": "الرسالة طويلة جداً. يرجى إبقاؤها تحت 2000 حرف."
+                "ar": "الرسالة طويلة جداً. يرجى إبقاؤها تحت 2000 حرف.",
             }
-            return jsonify({"error": error_msg.get(user_language, error_msg["en"])}), 400
+            return (
+                jsonify({"error": error_msg.get(user_language, error_msg["en"])}),
+                400,
+            )
 
         qa_system = get_qa_system()
 
         if qa_system is None:
             from qa import get_system_status
+
             status = get_system_status()
 
             if status.get("document_count", 0) == 0:
                 no_docs_msg = {
                     "en": "📄 I don't have any course materials uploaded yet. Please upload documents through the admin panel so I can help you with course-specific questions!",
                     "zh": "📄 我还没有上传任何课程材料。请通过管理员面板上传文档，这样我就可以帮助您解答课程相关问题！",
-                    "ar": "📄 لم يتم رفع أي مواد دراسية بعد. يرجى رفع المستندات من خلال لوحة الإدارة حتى أتمكن من مساعدتك في الأسئلة المتعلقة بالدورة!"
+                    "ar": "📄 لم يتم رفع أي مواد دراسية بعد. يرجى رفع المستندات من خلال لوحة الإدارة حتى أتمكن من مساعدتك في الأسئلة المتعلقة بالدورة!",
                 }
-                return jsonify({
-                    "success": True,
-                    "answer": no_docs_msg.get(user_language, no_docs_msg["en"]),
-                    "sources": [],
-                    "conversation_type": "no_documents",
-                }), 200
+                return (
+                    jsonify(
+                        {
+                            "success": True,
+                            "answer": no_docs_msg.get(user_language, no_docs_msg["en"]),
+                            "sources": [],
+                            "conversation_type": "no_documents",
+                        }
+                    ),
+                    200,
+                )
             else:
                 loading_msg = {
                     "en": "⏳ I'm currently starting up and loading course materials. Please wait a moment and try again!",
                     "zh": "⏳ 我正在启动并加载课程材料。请稍等片刻再试！",
-                    "ar": "⏳ أقوم حالياً ببدء التشغيل وتحميل المواد الدراسية. يرجى الانتظار قليلاً والمحاولة مرة أخرى!"
+                    "ar": "⏳ أقوم حالياً ببدء التشغيل وتحميل المواد الدراسية. يرجى الانتظار قليلاً والمحاولة مرة أخرى!",
                 }
-                return jsonify({
-                    "success": False,
-                    "answer": loading_msg.get(user_language, loading_msg["en"]),
-                    "sources": [],
-                    "conversation_type": "system_loading",
-                }), 503
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "answer": loading_msg.get(user_language, loading_msg["en"]),
+                            "sources": [],
+                            "conversation_type": "system_loading",
+                        }
+                    ),
+                    503,
+                )
 
         try:
             # Add language context to the question
             language_prefixes = {
                 "en": "",  # No prefix for English
                 "zh": "请用中文回答：",
-                "ar": "يرجى الإجابة باللغة العربية: "
+                "ar": "يرجى الإجابة باللغة العربية: ",
             }
-            
+
             prefix = language_prefixes.get(user_language, "")
             enhanced_question = f"{prefix}{question}" if prefix else question
-            
+
             qa_response = qa_system.answer_question(enhanced_question, user_id=user_id)
 
-            answer = qa_response.get("answer", "I'm having trouble responding right now. Could you try again?")
+            answer = qa_response.get(
+                "answer",
+                "I'm having trouble responding right now. Could you try again?",
+            )
             sources = qa_response.get("sources", [])
             conversation_type = qa_response.get("conversation_type", "general")
 
@@ -4141,10 +4040,12 @@ def ask_ai_enhanced() -> Any:
                     "general": "\n\n📚 *لا تتردد في سؤالي أي شيء آخر عن دراستك!*",
                     "document_based": "\n\n📖 *هذه الإجابة مبنية على موادك الدراسية.*",
                     "no_documents": "\n\n📁 *بمجرد رفع المواد الدراسية، سأتمكن من تقديم مساعدة أكثر تحديداً!*",
-                }
+                },
             }
 
-            lang_additions = personality_additions.get(user_language, personality_additions["en"])
+            lang_additions = personality_additions.get(
+                user_language, personality_additions["en"]
+            )
             if conversation_type in lang_additions:
                 answer += lang_additions[conversation_type]
 
@@ -4152,7 +4053,7 @@ def ask_ai_enhanced() -> Any:
                 fallback_msg = {
                     "en": "I'm here to help! Could you tell me more about what you'd like to know?",
                     "zh": "我在这里帮助您！您能告诉我更多关于您想了解什么吗？",
-                    "ar": "أنا هنا للمساعدة! هل يمكنك إخباري المزيد عما تريد معرفته؟"
+                    "ar": "أنا هنا للمساعدة! هل يمكنك إخباري المزيد عما تريد معرفته؟",
                 }
                 answer = fallback_msg.get(user_language, fallback_msg["en"])
 
@@ -4161,7 +4062,7 @@ def ask_ai_enhanced() -> Any:
             error_response = {
                 "en": "I encountered an error while processing your question. I'm still here to help though - could you try rephrasing?",
                 "zh": "处理您的问题时遇到错误。不过我仍然在这里帮助您 - 您能试着重新表述吗？",
-                "ar": "واجهت خطأ أثناء معالجة سؤالك. ولكنني ما زلت هنا للمساعدة - هل يمكنك المحاولة بإعادة صياغة السؤال؟"
+                "ar": "واجهت خطأ أثناء معالجة سؤالك. ولكنني ما زلت هنا للمساعدة - هل يمكنك المحاولة بإعادة صياغة السؤال؟",
             }
             answer = error_response.get(user_language, error_response["en"])
             sources = []
@@ -4189,21 +4090,26 @@ def ask_ai_enhanced() -> Any:
         error_msg = {
             "en": "An unexpected error occurred while processing your message.",
             "zh": "处理您的消息时发生意外错误。",
-            "ar": "حدث خطأ غير متوقع أثناء معالجة رسالتك."
+            "ar": "حدث خطأ غير متوقع أثناء معالجة رسالتك.",
         }
         fallback_answer = {
             "en": "I encountered an error, but I'm still here to help! Could you try again?",
             "zh": "我遇到了错误，但我仍然在这里帮助您！您能再试一次吗？",
-            "ar": "واجهت خطأ، لكنني ما زلت هنا للمساعدة! هل يمكنك المحاولة مرة أخرى؟"
+            "ar": "واجهت خطأ، لكنني ما زلت هنا للمساعدة! هل يمكنك المحاولة مرة أخرى؟",
         }
         user_language = session.get("language", "en")
-        return jsonify({
-            "success": False,
-            "error": error_msg.get(user_language, error_msg["en"]),
-            "answer": fallback_answer.get(user_language, fallback_answer["en"]),
-            "sources": [],
-            "conversation_type": "error",
-        }), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": error_msg.get(user_language, error_msg["en"]),
+                    "answer": fallback_answer.get(user_language, fallback_answer["en"]),
+                    "sources": [],
+                    "conversation_type": "error",
+                }
+            ),
+            500,
+        )
 
     finally:
         response_time = time.time() - start_time
@@ -6213,9 +6119,13 @@ def admin_add_video() -> Any:
             title = request.form["title"]
             description = request.form["description"]
             unit_id = request.form["unit_id"]
-            video_type = request.form.get("video_type", "youtube")  # youtube, lark, upload
+            video_type = request.form.get(
+                "video_type", "youtube"
+            )  # youtube, lark, upload
             selected_bootcamp_types = request.form.getlist("bootcamp_types")
-            selected_additional_tags = [int(tag) for tag in request.form.getlist("tags")]
+            selected_additional_tags = [
+                int(tag) for tag in request.form.getlist("tags")
+            ]
 
             # Validation
             if not selected_bootcamp_types:
@@ -6251,27 +6161,42 @@ def admin_add_video() -> Any:
                 video_file = request.files.get("video_file")
                 if video_file and video_file.filename:
                     # Check file extension
-                    allowed_video_extensions = ['.mp4', '.avi', '.mov', '.wmv', '.flv', '.webm']
-                    if not any(video_file.filename.lower().endswith(ext) for ext in allowed_video_extensions):
-                        flash("Invalid video file type. Allowed: MP4, AVI, MOV, WMV, FLV, WEBM", "error")
+                    allowed_video_extensions = [
+                        ".mp4",
+                        ".avi",
+                        ".mov",
+                        ".wmv",
+                        ".flv",
+                        ".webm",
+                    ]
+                    if not any(
+                        video_file.filename.lower().endswith(ext)
+                        for ext in allowed_video_extensions
+                    ):
+                        flash(
+                            "Invalid video file type. Allowed: MP4, AVI, MOV, WMV, FLV, WEBM",
+                            "error",
+                        )
                         return render_template(
                             "admin/add_video.html",
                             available_tags=available_tags,
                             available_cohorts=available_cohorts,
                         )
-                    
+
                     # Save video file
                     filename = secure_filename(video_file.filename)
                     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    video_file_path = f"video_{unit_id}_{primary_camp}_{timestamp}_{filename}"
-                    
+                    video_file_path = (
+                        f"video_{unit_id}_{primary_camp}_{timestamp}_{filename}"
+                    )
+
                     # Create videos directory if it doesn't exist
                     videos_dir = os.path.join(UPLOAD_FOLDER, "videos")
                     os.makedirs(videos_dir, exist_ok=True)
-                    
+
                     file_path = os.path.join(videos_dir, video_file_path)
                     video_file.save(file_path)
-                    
+
                     # Store full path for database
                     video_url = f"videos/{video_file_path}"
 
@@ -6284,7 +6209,15 @@ def admin_add_video() -> Any:
                 INSERT INTO videos (unit_id, title, youtube_url, description, camp, video_type, video_file_path)
                 VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING id
             """,
-                (unit_id, title, video_url, description, primary_camp, video_type, video_file_path),
+                (
+                    unit_id,
+                    title,
+                    video_url,
+                    description,
+                    primary_camp,
+                    video_type,
+                    video_file_path,
+                ),
             )
 
             video_id = cursor.fetchone()[0]
@@ -6308,7 +6241,10 @@ def admin_add_video() -> Any:
 
             conn.commit()
 
-            flash(f'Video added successfully for {", ".join(selected_bootcamp_types)} bootcamp(s)!', "success")
+            flash(
+                f'Video added successfully for {", ".join(selected_bootcamp_types)} bootcamp(s)!',
+                "success",
+            )
             return redirect(url_for("admin_add_video"))
 
         except Exception as e:
@@ -6327,6 +6263,7 @@ def admin_add_video() -> Any:
         available_cohorts=available_cohorts,
     )
 
+
 @app.route("/serve_video/<path:filename>")
 @login_required
 def serve_video(filename):
@@ -6337,7 +6274,6 @@ def serve_video(filename):
     except Exception as e:
         logger.error(f"Error serving video: {str(e)}")
         return "Video not found", 404
-
 
 
 @app.route("/admin/add_project", methods=["GET", "POST"])
@@ -8594,6 +8530,7 @@ def admin_delete_document(filename: str) -> Any:
 
     return redirect(url_for("admin_manage_documents"))
 
+
 @app.route("/admin/setup_followup_system")
 @admin_required
 def setup_followup_system():
@@ -8603,7 +8540,7 @@ def setup_followup_system():
         flash("Follow-up email system initialized successfully!", "success")
     except Exception as e:
         flash(f"Error setting up follow-up system: {str(e)}", "error")
-    
+
     return redirect(url_for("admin_dashboard"))
 
 
@@ -8615,20 +8552,22 @@ def admin_followup_history():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        cursor.execute("""
+
+        cursor.execute(
+            """
             SELECT fe.*, u.username, u.email
             FROM followup_emails fe
             JOIN users u ON fe.user_id = u.id
             ORDER BY fe.sent_at DESC
             LIMIT 100
-        """)
-        
+        """
+        )
+
         followups = cursor.fetchall()
         cursor.close()
-        
+
         return render_template("admin/followup_history.html", followups=followups)
-        
+
     except Exception as e:
         logger.error(f"Error getting follow-up history: {str(e)}")
         flash(f"Error loading follow-up history: {str(e)}", "error")
@@ -8669,6 +8608,7 @@ def admin_force_qa_reload():
         </div>
         """
 
+
 @app.route("/admin/check_database_documents")
 @admin_required
 def admin_check_database_documents():
@@ -8676,16 +8616,18 @@ def admin_check_database_documents():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        
+
         # Check if table exists
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT EXISTS (
                 SELECT FROM information_schema.tables 
                 WHERE table_name = 'stored_documents'
             );
-        """)
+        """
+        )
         table_exists = cursor.fetchone()[0]
-        
+
         if not table_exists:
             return """
             <div style="font-family: monospace; padding: 20px; background: #fff3cd;">
@@ -8696,13 +8638,15 @@ def admin_check_database_documents():
             """
 
         # Get all documents
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT id, filename, content_type, upload_date, length(content) as size_bytes
             FROM stored_documents
             ORDER BY upload_date DESC
-        """)
+        """
+        )
         documents = cursor.fetchall()
-        
+
         cursor.close()
         release_db_connection(conn)
 
@@ -8756,7 +8700,7 @@ def admin_check_database_documents():
         </div>
         """
 
-    
+
 @app.route("/admin/rebuild_qa_system")
 @admin_required
 def admin_rebuild_qa() -> Any:
@@ -8929,40 +8873,43 @@ def ensure_specific_cohort_tags():
 @admin_required
 def admin_export_advanced():
     """Advanced export with real data calculations."""
-    
+
     # Get filter parameters
     student_types = request.args.getlist("student_type")
     selected_tags = request.args.getlist("tags")
-    
+
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
+
         # Build WHERE clause for filters
         where_conditions = []
         params = []
-        
+
         if student_types:
             where_conditions.append("u.student_type = ANY(%s)")
             params.append(student_types)
-        
+
         if selected_tags:
-            where_conditions.append("""
+            where_conditions.append(
+                """
                 EXISTS (
                     SELECT 1 FROM user_tags ut 
                     JOIN tags t ON ut.tag_id = t.id 
                     WHERE ut.user_id = u.id AND t.name = ANY(%s)
                 )
-            """)
+            """
+            )
             params.append(selected_tags)
-        
+
         where_clause = ""
         if where_conditions:
             where_clause = "WHERE " + " AND ".join(where_conditions)
-        
+
         # Calculate assignment submission rates
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT 
                 COUNT(*) as total_users,
                 COUNT(CASE WHEN s.id IS NOT NULL THEN 1 END) as users_with_submissions,
@@ -8970,32 +8917,42 @@ def admin_export_advanced():
             FROM users u
             LEFT JOIN submissions s ON u.id = s.user_id
             {where_clause}
-        """, params)
-        
+        """,
+            params,
+        )
+
         assignment_stats = cursor.fetchone()
-        
+
         # Calculate assignment rate
         total_users = assignment_stats["total_users"] or 0
         users_with_submissions = assignment_stats["users_with_submissions"] or 0
-        assignment_rate = round((users_with_submissions / total_users * 100) if total_users > 0 else 0, 1)
-        
+        assignment_rate = round(
+            (users_with_submissions / total_users * 100) if total_users > 0 else 0, 1
+        )
+
         # Calculate quiz completion rates (challenge assignments)
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT 
                 COUNT(DISTINCT u.id) as total_users,
                 COUNT(DISTINCT qa.user_id) as users_with_quiz_attempts
             FROM users u
             LEFT JOIN quiz_attempts qa ON u.id = qa.user_id AND qa.score IS NOT NULL
             {where_clause}
-        """, params)
-        
+        """,
+            params,
+        )
+
         quiz_stats = cursor.fetchone()
         quiz_total = quiz_stats["total_users"] or 0
         quiz_completed = quiz_stats["users_with_quiz_attempts"] or 0
-        challenge_rate = round((quiz_completed / quiz_total * 100) if quiz_total > 0 else 0, 1)
-        
+        challenge_rate = round(
+            (quiz_completed / quiz_total * 100) if quiz_total > 0 else 0, 1
+        )
+
         # Get students who need follow-up (no submissions)
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT DISTINCT u.id, u.username, u.email, u.camp
             FROM users u
             LEFT JOIN submissions s ON u.id = s.user_id
@@ -9003,12 +8960,15 @@ def admin_export_advanced():
             {'AND' if where_clause else 'WHERE'} s.id IS NULL
             ORDER BY u.username
             LIMIT 50
-        """, params)
-        
+        """,
+            params,
+        )
+
         followup_students = cursor.fetchall()
-        
+
         # Get assignment details for all users
-        cursor.execute(f"""
+        cursor.execute(
+            f"""
             SELECT 
                 u.username as name,
                 u.camp as department,
@@ -9022,36 +8982,47 @@ def admin_export_advanced():
             {where_clause}
             GROUP BY u.id, u.username, u.camp, u.cohort_name
             ORDER BY u.username
-        """, params)
-        
+        """,
+            params,
+        )
+
         assignment_details_raw = cursor.fetchall()
-        
+
         # Format assignment details
         assignment_details = []
         for row in assignment_details_raw:
-            assignment_details.append({
-                "name": row["name"],
-                "department": row["department"] or "Unknown",
-                "cohort": row["cohort"],
-                "assignment_link": f"/admin/user_progress/{row['name']}",
-                "submission_count": row["submission_count"],
-                "quiz_attempts": row["quiz_attempts"],
-                "last_submission": row["last_submission"].strftime("%Y-%m-%d") if row["last_submission"] else "Never"
-            })
-        
+            assignment_details.append(
+                {
+                    "name": row["name"],
+                    "department": row["department"] or "Unknown",
+                    "cohort": row["cohort"],
+                    "assignment_link": f"/admin/user_progress/{row['name']}",
+                    "submission_count": row["submission_count"],
+                    "quiz_attempts": row["quiz_attempts"],
+                    "last_submission": (
+                        row["last_submission"].strftime("%Y-%m-%d")
+                        if row["last_submission"]
+                        else "Never"
+                    ),
+                }
+            )
+
         # Calculate trend (simple comparison with last 30 days)
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT 
                 COUNT(CASE WHEN submitted_at >= NOW() - INTERVAL '30 days' THEN 1 END) as recent_submissions,
                 COUNT(CASE WHEN submitted_at >= NOW() - INTERVAL '60 days' AND submitted_at < NOW() - INTERVAL '30 days' THEN 1 END) as previous_submissions
             FROM submissions s
             JOIN users u ON s.user_id = u.id
-            """ + (where_clause.replace("WHERE", "WHERE") if where_clause else ""))
-        
+            """
+            + (where_clause.replace("WHERE", "WHERE") if where_clause else "")
+        )
+
         trend_data = cursor.fetchone()
         recent = trend_data["recent_submissions"] or 0
         previous = trend_data["previous_submissions"] or 0
-        
+
         if previous > 0:
             trend_pct = round(((recent - previous) / previous) * 100, 1)
             if trend_pct > 0:
@@ -9062,7 +9033,7 @@ def admin_export_advanced():
                 trend_text = "→ 0%"
         else:
             trend_text = "No data"
-        
+
         # Build summary
         summary = {
             "assignment_rate": assignment_rate,
@@ -9073,28 +9044,28 @@ def admin_export_advanced():
             "challenge_total": quiz_total,
             "trend_text": trend_text,
         }
-        
+
         cursor.close()
-        
+
         # Get available data for filters
         available_tags = get_available_tags_grouped()
-        
+
         # Get cohorts
         cursor = conn.cursor(cursor_factory=RealDictCursor)
         cursor.execute("SELECT name FROM cohorts WHERE is_active = TRUE ORDER BY name")
         cohorts = cursor.fetchall()
-        
+
         # Get course units
         cursor.execute("SELECT DISTINCT unit_id FROM materials ORDER BY unit_id")
         course_units_result = cursor.fetchall()
         course_units = [row["unit_id"] for row in course_units_result]
-        
+
         # Get tags
         cursor.execute("SELECT name FROM tags WHERE is_active = TRUE ORDER BY name")
         tags = cursor.fetchall()
-        
+
         cursor.close()
-        
+
         return render_template(
             "admin/export_advanced.html",
             available_tags=available_tags,
@@ -9106,10 +9077,10 @@ def admin_export_advanced():
             tags=tags,
             current_filters={
                 "student_types": student_types,
-                "selected_tags": selected_tags
-            }
+                "selected_tags": selected_tags,
+            },
         )
-        
+
     except Exception as e:
         logger.error(f"Error in export_advanced: {str(e)}")
         flash(f"Error loading export data: {str(e)}", "error")
@@ -9125,18 +9096,19 @@ def send_followup_email():
     """Send a gentle follow-up email to a student."""
     try:
         data = request.get_json()
-        user_id = data.get('user_id')
-        username = data.get('username')
-        email = data.get('email')
-        
+        user_id = data.get("user_id")
+        username = data.get("username")
+        email = data.get("email")
+
         if not all([user_id, username, email]):
             return jsonify({"success": False, "error": "Missing required data"}), 400
-        
+
         # Get user details from database
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
-        cursor.execute("""
+
+        cursor.execute(
+            """
             SELECT u.*, 
                    COUNT(s.id) as submission_count,
                    COUNT(qa.id) as quiz_attempts,
@@ -9146,24 +9118,26 @@ def send_followup_email():
             LEFT JOIN quiz_attempts qa ON u.id = qa.user_id
             WHERE u.id = %s
             GROUP BY u.id
-        """, (user_id,))
-        
+        """,
+            (user_id,),
+        )
+
         user = cursor.fetchone()
         if not user:
             return jsonify({"success": False, "error": "User not found"}), 404
-        
+
         # Create personalized email content
         subject = "Friendly Reminder - Your Learning Journey with 51Talk AI"
-        
+
         # Determine appropriate greeting and content based on user's camp
         camp_specific_content = {
             "Chinese": "中文训练营",
-            "English": "English Bootcamp", 
-            "Middle East": "Middle East Bootcamp"
+            "English": "English Bootcamp",
+            "Middle East": "Middle East Bootcamp",
         }
-        
-        camp_name = camp_specific_content.get(user['camp'], "AI Bootcamp")
-        
+
+        camp_name = camp_specific_content.get(user["camp"], "AI Bootcamp")
+
         # Create email body
         email_body = f"""
         <html>
@@ -9224,7 +9198,7 @@ def send_followup_email():
         </body>
         </html>
         """
-        
+
         # Create plain text version for email clients that don't support HTML
         text_body = f"""
         Hi {username},
@@ -9251,39 +9225,51 @@ def send_followup_email():
 
         Visit your dashboard: {url_for('dashboard', _external=True)}
         """
-        
+
         # Send email
         msg = Message(subject, recipients=[email])
         msg.body = text_body
         msg.html = email_body
-        
+
         mail.send(msg)
-        
+
         # Log the follow-up in database (optional - for tracking)
         try:
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO followup_emails (user_id, sent_by, sent_at, email_type, subject)
                 VALUES (%s, %s, CURRENT_TIMESTAMP, %s, %s)
-            """, (user_id, session.get('admin_username', 'admin'), 'assignment_reminder', subject))
+            """,
+                (
+                    user_id,
+                    session.get("admin_username", "admin"),
+                    "assignment_reminder",
+                    subject,
+                ),
+            )
             conn.commit()
         except Exception as log_error:
             # If logging fails, don't fail the whole operation
             logger.warning(f"Failed to log follow-up email: {str(log_error)}")
-        
+
         cursor.close()
         release_db_connection(conn)
-        
-        logger.info(f"Follow-up email sent to {username} ({email}) by {session.get('admin_username', 'admin')}")
-        
-        return jsonify({
-            "success": True, 
-            "message": f"Follow-up email sent successfully to {username}!"
-        })
-        
+
+        logger.info(
+            f"Follow-up email sent to {username} ({email}) by {session.get('admin_username', 'admin')}"
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "message": f"Follow-up email sent successfully to {username}!",
+            }
+        )
+
     except Exception as e:
         logger.error(f"Error sending follow-up email: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
-    
+
 
 @app.route("/admin/add_content_unified", methods=["GET", "POST"])
 @admin_required
@@ -9817,153 +9803,11 @@ def admin_edit_cohort(cohort_id):
     release_db_connection(conn)
     return render_template("admin/add_cohort.html", cohort=cohort)
 
-"""
-Add this debug route to your app.py to test the QA system
-"""
-
-@app.route("/debug/qa_test")
-@admin_required
-def debug_qa_test():
-    """Debug endpoint to test QA system step by step"""
-    debug_info = []
-    
-    try:
-        # Test 1: Check OpenRouter config
-        debug_info.append("=== OpenRouter Configuration ===")
-        import os
-        api_key = os.getenv("OPENROUTER_API_KEY")
-        model = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
-        
-        debug_info.append(f"API Key exists: {bool(api_key)}")
-        if api_key:
-            debug_info.append(f"API Key length: {len(api_key)} chars")
-            debug_info.append(f"API Key starts with: {api_key[:10]}...")
-        debug_info.append(f"Model: {model}")
-        
-        # Test 2: Check database documents
-        debug_info.append("\n=== Database Documents ===")
-        from qa import get_documents_from_database
-        docs = get_documents_from_database()
-        debug_info.append(f"Documents in database: {len(docs)}")
-        for i, (filename, content, content_type) in enumerate(docs):
-            debug_info.append(f"  {i+1}. {filename} ({len(content)} bytes, {content_type})")
-        
-        # Test 3: Test temp directory creation
-        debug_info.append("\n=== Temp Directory ===")
-        from qa import create_temp_documents_from_db
-        temp_dir = create_temp_documents_from_db()
-        debug_info.append(f"Temp directory: {temp_dir}")
-        
-        if os.path.exists(temp_dir):
-            files = os.listdir(temp_dir)
-            debug_info.append(f"Files in temp dir: {files}")
-        
-        # Test 4: Test OpenRouter API call
-        debug_info.append("\n=== OpenRouter API Test ===")
-        if api_key:
-            try:
-                from qa import OpenRouterLLM
-                llm = OpenRouterLLM(api_key, model)
-                test_response = llm.generate_response("Hello, this is a test.")
-                debug_info.append(f"✅ API Response: {test_response[:100]}...")
-            except Exception as api_error:
-                debug_info.append(f"❌ API Error: {str(api_error)}")
-        else:
-            debug_info.append("❌ No API key to test")
-        
-        # Test 5: Test QA system initialization
-        debug_info.append("\n=== QA System Test ===")
-        try:
-            qa_system = get_qa_system()
-            if not qa_system:
-                debug_info.append("Initializing new QA system...")
-                from qa import initialize_qa
-                qa_system = initialize_qa()
-            
-            if qa_system:
-                debug_info.append("✅ QA system exists")
-                debug_info.append(f"GPT LLM available: {qa_system.gpt_llm is not None}")
-                debug_info.append(f"Vector store ready: {qa_system.vector_store_manager.is_ready()}")
-                
-                # Test a simple question
-                debug_info.append("\n=== Test Question ===")
-                response = qa_system.answer_question("What is artificial intelligence?", user_id="debug")
-                debug_info.append(f"Answer type: {response['conversation_type']}")
-                debug_info.append(f"Answer: {response['answer'][:200]}...")
-                debug_info.append(f"Sources: {len(response['sources'])}")
-                
-            else:
-                debug_info.append("❌ QA system not available")
-                
-        except Exception as qa_error:
-            debug_info.append(f"❌ QA Error: {str(qa_error)}")
-            import traceback
-            debug_info.append(f"Traceback: {traceback.format_exc()}")
-        
-    except Exception as e:
-        debug_info.append(f"❌ Debug Error: {str(e)}")
-        import traceback
-        debug_info.append(f"Traceback: {traceback.format_exc()}")
-    
-    return "<pre>" + "\n".join(debug_info) + "</pre>"
-
-
-@app.route("/debug/simple_test")
-@admin_required  
-def debug_simple_test():
-    """Simple test to check if basic QA works"""
-    try:
-        # Force reload QA system
-        global _qa_instance
-        _qa_instance = None
-        
-        from qa import initialize_qa
-        qa_system = initialize_qa()
-        
-        if not qa_system:
-            return "❌ Failed to initialize QA system"
-        
-        # Test simple question
-        response = qa_system.answer_question("Hello")
-        
-        return f"""
-        <div style="font-family: monospace; padding: 20px;">
-            <h2>🧪 Simple QA Test Result</h2>
-            <p><strong>Question:</strong> Hello</p>
-            <p><strong>Answer:</strong> {response['answer']}</p>
-            <p><strong>Type:</strong> {response['conversation_type']}</p>
-            <p><strong>Sources:</strong> {len(response['sources'])}</p>
-            
-            <h3>System Status:</h3>
-            <pre>{json.dumps(qa_system.get_status(), indent=2)}</pre>
-        </div>
-        """
-    except Exception as e:
-        return f"❌ Error: {str(e)}"
-    
-
-def get_all_cohorts():
-    """Return all active cohorts for dropdowns."""
-    conn = None
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor(cursor_factory=RealDictCursor)
-        cursor.execute(
-            "SELECT id, name, bootcamp_type FROM cohorts WHERE is_active = TRUE ORDER BY bootcamp_type, name"
-        )
-        cohorts = cursor.fetchall()
-        cursor.close()
-        return cohorts
-    except Exception as e:
-        logger.error(f"Error getting all cohorts: {str(e)}")
-        return []
-    finally:
-        if conn:
-            release_db_connection(conn)
 
 # ==============================================
 # MindMap Routes
 # ==============================================
+
 
 @app.route("/mindmap")
 @login_required
@@ -9972,18 +9816,19 @@ def mindmap_home():
     """Display mindmap interface with unit selection for both materials and words."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
-    
+
     username = session["username"]
     user_id = session["user_id"]
     user_camp = session.get("user_camp")
-    
+
     conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor(cursor_factory=RealDictCursor)
-        
+
         # Get units with both materials and words counts for user's camp
-        cursor.execute("""
+        cursor.execute(
+            """
             WITH unit_materials AS (
                 SELECT DISTINCT unit_id, COUNT(*) as material_count
                 FROM materials m
@@ -10020,27 +9865,31 @@ def mindmap_home():
             FULL OUTER JOIN unit_words uw ON um.unit_id = uw.unit_id
             WHERE COALESCE(um.material_count, 0) > 0 OR COALESCE(uw.word_count, 0) > 0
             ORDER BY COALESCE(um.unit_id, uw.unit_id)
-        """, (user_camp, user_camp, user_camp, user_camp))
-        
+        """,
+            (user_camp, user_camp, user_camp, user_camp),
+        )
+
         available_units = cursor.fetchall()
         cursor.close()
-        
+
         # Convert to list of dictionaries for JSON serialization
         units_list = []
         for unit in available_units:
-            units_list.append({
-                'unit_id': unit['unit_id'],
-                'material_count': unit['material_count'],
-                'word_count': unit['word_count']
-            })
-        
+            units_list.append(
+                {
+                    "unit_id": unit["unit_id"],
+                    "material_count": unit["material_count"],
+                    "word_count": unit["word_count"],
+                }
+            )
+
         return render_template(
-            "mindmap.html", 
+            "mindmap.html",
             username=username,
             available_units=units_list,
-            user_camp=user_camp
+            user_camp=user_camp,
         )
-        
+
     except Exception as e:
         logger.error(f"Mindmap home error: {str(e)}")
         flash(f"Error loading mindmap: {str(e)}", "error")
@@ -10048,7 +9897,6 @@ def mindmap_home():
     finally:
         if conn:
             release_db_connection(conn)
-
 
 
 @app.route("/api/generate_mindmap/<int:unit_id>")
@@ -10059,34 +9907,38 @@ def generate_mindmap_api(unit_id):
     user_id = session["user_id"]
     user_camp = session.get("user_camp")
     user_language = session.get("language", "en")
-    
-    content_type = request.args.get('content_type', 'material')
-    
-    if content_type not in ['material', 'word']:
-        return jsonify({
-            "success": False,
-            "error": "Invalid content type. Must be 'material' or 'word'"
-        })
-    
+
+    content_type = request.args.get("content_type", "material")
+
+    if content_type not in ["material", "word"]:
+        return jsonify(
+            {
+                "success": False,
+                "error": "Invalid content type. Must be 'material' or 'word'",
+            }
+        )
+
     try:
-        if content_type == 'material':
+        if content_type == "material":
             content_items = get_content_with_tag_filtering("material", unit_id, user_id)
             content_label = "materials"
         else:
             content_items = get_content_with_tag_filtering("word", unit_id, user_id)
             content_label = "vocabulary words"
-        
+
         if not content_items:
             error_msg = {
                 "en": f"No {content_label} found for this unit",
                 "zh": f"此单元未找到{content_label}",
-                "ar": f"لم يتم العثور على {content_label} لهذه الوحدة"
+                "ar": f"لم يتم العثور على {content_label} لهذه الوحدة",
             }
-            return jsonify({
-                "success": False,
-                "error": error_msg.get(user_language, error_msg["en"])
-            })
-        
+            return jsonify(
+                {
+                    "success": False,
+                    "error": error_msg.get(user_language, error_msg["en"]),
+                }
+            )
+
         # Language-specific prompts
         language_prompts = {
             "en": {
@@ -10110,7 +9962,7 @@ def generate_mindmap_api(unit_id):
                 - Sub-branches (individual words and their key meanings)
                 
                 Please respond in English with a JSON structure.
-                """
+                """,
             },
             "zh": {
                 "material": f"""
@@ -10133,7 +9985,7 @@ def generate_mindmap_api(unit_id):
                 - 子分支（单个词汇及其关键含义）
                 
                 请用中文回复JSON结构。
-                """
+                """,
             },
             "ar": {
                 "material": f"""
@@ -10156,160 +10008,171 @@ def generate_mindmap_api(unit_id):
                 - فروع فرعية (كلمات فردية ومعانيها الأساسية)
                 
                 يرجى الرد باللغة العربية مع هيكل JSON.
-                """
-            }
+                """,
+            },
         }
-        
+
         # Get language-specific prompt
         prompts = language_prompts.get(user_language, language_prompts["en"])
         base_prompt = prompts[content_type]
-        
+
         # Combine content
         combined_content = f"Unit {unit_id} {content_label.title()}:\n\n"
-        
-        if content_type == 'material':
+
+        if content_type == "material":
             for item in content_items:
                 combined_content += f"Title: {item['title']}\n"
-                if item.get('content'):
+                if item.get("content"):
                     combined_content += f"Content: {item['content']}\n\n"
         else:
             for item in content_items:
                 combined_content += f"Word: {item['word']}\n"
-                if item.get('daily_definition'):
+                if item.get("daily_definition"):
                     combined_content += f"Definition: {item['daily_definition']}\n"
                 combined_content += "\n"
-        
+
         # Create full prompt
         full_prompt = f"{base_prompt}\n\nContent to analyze:\n{combined_content[:3000]}"
-        
+
         qa_system = get_qa_system()
-        
+
         if not qa_system:
             error_msg = {
                 "en": "AI system not available",
                 "zh": "AI系统不可用",
-                "ar": "نظام الذكاء الاصطناعي غير متاح"
+                "ar": "نظام الذكاء الاصطناعي غير متاح",
             }
-            return jsonify({
-                "success": False,
-                "error": error_msg.get(user_language, error_msg["en"])
-            })
-        
+            return jsonify(
+                {
+                    "success": False,
+                    "error": error_msg.get(user_language, error_msg["en"]),
+                }
+            )
+
         # Get AI response
         response = qa_system.answer_question(full_prompt, user_id=str(user_id))
         ai_answer = response.get("answer", "")
-        
+
         # Try to extract JSON from AI response
         try:
             import re
-            json_match = re.search(r'\{.*\}', ai_answer, re.DOTALL)
+
+            json_match = re.search(r"\{.*\}", ai_answer, re.DOTALL)
             if json_match:
                 mindmap_data = json.loads(json_match.group())
             else:
-                if content_type == 'material':
-                    mindmap_data = create_fallback_mindmap(content_items, unit_id, user_language)
+                if content_type == "material":
+                    mindmap_data = create_fallback_mindmap(
+                        content_items, unit_id, user_language
+                    )
                 else:
-                    mindmap_data = create_fallback_words_mindmap(content_items, unit_id, user_language)
+                    mindmap_data = create_fallback_words_mindmap(
+                        content_items, unit_id, user_language
+                    )
         except:
-            if content_type == 'material':
-                mindmap_data = create_fallback_mindmap(content_items, unit_id, user_language)
+            if content_type == "material":
+                mindmap_data = create_fallback_mindmap(
+                    content_items, unit_id, user_language
+                )
             else:
-                mindmap_data = create_fallback_words_mindmap(content_items, unit_id, user_language)
-        
+                mindmap_data = create_fallback_words_mindmap(
+                    content_items, unit_id, user_language
+                )
+
         session[f"mindmap_unit_{unit_id}_{content_type}"] = mindmap_data
-        
-        return jsonify({
-            "success": True,
-            "mindmap": mindmap_data,
-            "unit_id": unit_id,
-            "content_type": content_type,
-            "content_count": len(content_items),
-            "language": user_language
-        })
-        
+
+        return jsonify(
+            {
+                "success": True,
+                "mindmap": mindmap_data,
+                "unit_id": unit_id,
+                "content_type": content_type,
+                "content_count": len(content_items),
+                "language": user_language,
+            }
+        )
+
     except Exception as e:
         logger.error(f"Generate mindmap error: {str(e)}")
         error_msg = {
             "en": str(e),
             "zh": f"生成思维导图时出错: {str(e)}",
-            "ar": f"خطأ في إنشاء الخريطة الذهنية: {str(e)}"
+            "ar": f"خطأ في إنشاء الخريطة الذهنية: {str(e)}",
         }
-        return jsonify({
-            "success": False,
-            "error": error_msg.get(user_language, error_msg["en"])
-        })
+        return jsonify(
+            {"success": False, "error": error_msg.get(user_language, error_msg["en"])}
+        )
+
 
 def create_fallback_mindmap(materials, unit_id, language="en"):
     """Create a simple fallback mindmap structure with language support."""
     titles = {
         "en": f"Unit {unit_id} Learning Materials",
         "zh": f"第{unit_id}单元学习材料",
-        "ar": f"مواد التعلم - الوحدة {unit_id}"
+        "ar": f"مواد التعلم - الوحدة {unit_id}",
     }
-    
-    mindmap = {
-        "central_topic": titles.get(language, titles["en"]),
-        "branches": []
-    }
-    
+
+    mindmap = {"central_topic": titles.get(language, titles["en"]), "branches": []}
+
     for i, material in enumerate(materials[:5]):
         branch = {
-            "name": material['title'],
+            "name": material["title"],
             "children": [
-                {"name": material.get('content', '')[:50] + "..." if material.get('content') else "Content", "type": "content"}
-            ]
+                {
+                    "name": (
+                        material.get("content", "")[:50] + "..."
+                        if material.get("content")
+                        else "Content"
+                    ),
+                    "type": "content",
+                }
+            ],
         }
         mindmap["branches"].append(branch)
-    
+
     return mindmap
+
 
 def create_fallback_words_mindmap(words, unit_id, language="en"):
     """Create a simple fallback mindmap structure from vocabulary words with language support."""
     titles = {
         "en": f"Unit {unit_id} Vocabulary",
         "zh": f"第{unit_id}单元词汇",
-        "ar": f"مفردات الوحدة {unit_id}"
+        "ar": f"مفردات الوحدة {unit_id}",
     }
-    
-    mindmap = {
-        "central_topic": titles.get(language, titles["en"]),
-        "branches": []
-    }
-    
+
+    mindmap = {"central_topic": titles.get(language, titles["en"]), "branches": []}
+
     sections = {}
     for word in words[:10]:
-        section = word.get('section', 1)
+        section = word.get("section", 1)
         if section not in sections:
             sections[section] = []
         sections[section].append(word)
-    
-    section_labels = {
-        "en": "Section",
-        "zh": "部分",
-        "ar": "القسم"
-    }
-    
+
+    section_labels = {"en": "Section", "zh": "部分", "ar": "القسم"}
+
     for section_num, section_words in sections.items():
         branch = {
             "name": f"{section_labels.get(language, section_labels['en'])} {section_num}",
-            "children": []
+            "children": [],
         }
-        
-        for word in section_words:
-            child = {
-                "name": word['word'],
-                "type": "vocabulary"
-            }
-            
-            if word.get('daily_definition'):
-                child['definition'] = word['daily_definition'][:50] + "..." if len(word['daily_definition']) > 50 else word['daily_definition']
-            
-            branch["children"].append(child)
-        
-        mindmap["branches"].append(branch)
-    
-    return mindmap
 
+        for word in section_words:
+            child = {"name": word["word"], "type": "vocabulary"}
+
+            if word.get("daily_definition"):
+                child["definition"] = (
+                    word["daily_definition"][:50] + "..."
+                    if len(word["daily_definition"]) > 50
+                    else word["daily_definition"]
+                )
+
+            branch["children"].append(child)
+
+        mindmap["branches"].append(branch)
+
+    return mindmap
 
 
 @app.route("/api/expand_node", methods=["POST"])
@@ -10323,30 +10186,21 @@ def expand_mindmap_node():
         unit_id = data.get("unit_id")
         content_type = data.get("content_type", "material")
         context = data.get("context", "")
-        
+
         if not all([node_name, unit_id]):
-            return jsonify({
-                "success": False,
-                "error": "Missing required parameters"
-            })
-        
+            return jsonify({"success": False, "error": "Missing required parameters"})
+
         # Validate content type
-        if content_type not in ['material', 'word']:
-            return jsonify({
-                "success": False,
-                "error": "Invalid content type"
-            })
-        
+        if content_type not in ["material", "word"]:
+            return jsonify({"success": False, "error": "Invalid content type"})
+
         # Use AI to expand the node
         qa_system = get_qa_system()
         if not qa_system:
-            return jsonify({
-                "success": False,
-                "error": "AI system not available"
-            })
-        
+            return jsonify({"success": False, "error": "AI system not available"})
+
         # Create appropriate expand prompt based on content type
-        if content_type == 'material':
+        if content_type == "material":
             expand_prompt = f"""
             For the learning topic "{node_name}" in Unit {unit_id}, provide 3-5 detailed sub-topics or key points that students should understand. 
             
@@ -10378,82 +10232,79 @@ def expand_mindmap_node():
                 {{"name": "Application 1", "type": "application"}}
             ]
             """
-        
-        response = qa_system.answer_question(expand_prompt, user_id=str(session["user_id"]))
+
+        response = qa_system.answer_question(
+            expand_prompt, user_id=str(session["user_id"])
+        )
         ai_answer = response.get("answer", "")
-        
+
         # Try to extract JSON array
         try:
             import re
-            json_match = re.search(r'\[.*\]', ai_answer, re.DOTALL)
+
+            json_match = re.search(r"\[.*\]", ai_answer, re.DOTALL)
             if json_match:
                 expanded_nodes = json.loads(json_match.group())
             else:
                 # Fallback based on content type
-                if content_type == 'material':
+                if content_type == "material":
                     expanded_nodes = [
                         {"name": f"{node_name} - Key Concept 1", "type": "concept"},
                         {"name": f"{node_name} - Key Concept 2", "type": "concept"},
-                        {"name": f"{node_name} - Application", "type": "application"}
+                        {"name": f"{node_name} - Application", "type": "application"},
                     ]
                 else:
                     expanded_nodes = [
                         {"name": f"{node_name} - Definition", "type": "definition"},
                         {"name": f"{node_name} - Example", "type": "example"},
-                        {"name": f"{node_name} - Usage", "type": "usage"}
+                        {"name": f"{node_name} - Usage", "type": "usage"},
                     ]
         except:
             # Create fallback nodes
             expanded_nodes = [
                 {"name": f"{node_name} - Detail 1", "type": "detail"},
-                {"name": f"{node_name} - Detail 2", "type": "detail"}
+                {"name": f"{node_name} - Detail 2", "type": "detail"},
             ]
-        
-        return jsonify({
-            "success": True,
-            "expanded_nodes": expanded_nodes
-        })
-        
+
+        return jsonify({"success": True, "expanded_nodes": expanded_nodes})
+
     except Exception as e:
         logger.error(f"Expand node error: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        })
+        return jsonify({"success": False, "error": str(e)})
 
 
 @app.route("/mindmap/<int:unit_id>")
 @login_required
-@camp_required  
+@camp_required
 def view_mindmap(unit_id):
     """View interactive mindmap for a specific unit with content type support."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
-    
+
     username = session["username"]
     user_camp = session.get("user_camp")
     user_id = session["user_id"]
-    
+
     # Get content type from query parameter (default to 'material')
-    content_type = request.args.get('content_type', 'material')
-    
+    content_type = request.args.get("content_type", "material")
+
     # Validate content type
-    if content_type not in ['material', 'word']:
+    if content_type not in ["material", "word"]:
         flash("Invalid content type", "error")
         return redirect(url_for("mindmap_home"))
-    
+
     # Check if user has access to this unit's content
-    if content_type == 'material':
+    if content_type == "material":
         content_items = get_content_with_tag_filtering("material", unit_id, user_id)
         content_label = "materials"
     else:
         content_items = get_content_with_tag_filtering("word", unit_id, user_id)
         content_label = "vocabulary words"
-    
+
     if not content_items:
         flash(f"No {content_label} available for Unit {unit_id} in your camp.", "error")
         return redirect(url_for("mindmap_home"))
-    
+
     return render_template(
         "mindmap_viewer.html",
         username=username,
@@ -10461,8 +10312,9 @@ def view_mindmap(unit_id):
         user_camp=user_camp,
         content_count=len(content_items),
         content_type=content_type,
-        content_label=content_label
+        content_label=content_label,
     )
+
 
 @app.route("/change_username", methods=["GET", "POST"])
 @login_required
@@ -10470,52 +10322,67 @@ def change_username():
     """Allow users to change their username."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
-    
+
     user_id = session["user_id"]
     current_username = session["username"]
-    
+
     if request.method == "POST":
         new_username = request.form.get("new_username", "").strip()
         password = request.form.get("password", "")
-        
+
         if not new_username:
             flash("New username is required.", "error")
-            return render_template("change_username.html", current_username=current_username)
-        
+            return render_template(
+                "change_username.html", current_username=current_username
+            )
+
         if not password:
             flash("Password is required to change username.", "error")
-            return render_template("change_username.html", current_username=current_username)
-        
+            return render_template(
+                "change_username.html", current_username=current_username
+            )
+
         # Validate password
         conn = None
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            
+
             # Check current password
             cursor.execute("SELECT password FROM users WHERE id = %s", (user_id,))
             user_data = cursor.fetchone()
-            
+
             if not user_data or not check_password_hash(user_data[0], password):
                 flash("Incorrect password.", "error")
-                return render_template("change_username.html", current_username=current_username)
-            
+                return render_template(
+                    "change_username.html", current_username=current_username
+                )
+
             # Check if new username already exists
-            cursor.execute("SELECT id FROM users WHERE username = %s AND id != %s", (new_username, user_id))
+            cursor.execute(
+                "SELECT id FROM users WHERE username = %s AND id != %s",
+                (new_username, user_id),
+            )
             if cursor.fetchone():
-                flash("Username already exists. Please choose a different one.", "error")
-                return render_template("change_username.html", current_username=current_username)
-            
+                flash(
+                    "Username already exists. Please choose a different one.", "error"
+                )
+                return render_template(
+                    "change_username.html", current_username=current_username
+                )
+
             # Update username
-            cursor.execute("UPDATE users SET username = %s WHERE id = %s", (new_username, user_id))
+            cursor.execute(
+                "UPDATE users SET username = %s WHERE id = %s", (new_username, user_id)
+            )
             conn.commit()
-            
+
             # Update session
             session["username"] = new_username
-            
+
             flash("Username updated successfully!", "success")
             return redirect(url_for("dashboard"))
-            
+
         except Exception as e:
             if conn:
                 conn.rollback()
@@ -10525,7 +10392,7 @@ def change_username():
             if conn:
                 cursor.close()
                 release_db_connection(conn)
-    
+
     return render_template("change_username.html", current_username=current_username)
 
 
