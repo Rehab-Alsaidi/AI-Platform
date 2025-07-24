@@ -10104,12 +10104,184 @@ def mindmap_home():
         if conn:
             release_db_connection(conn)
 
+@app.route("/api/debug_mindmap/<int:unit_id>")
+@login_required
+@admin_required  # Only allow admins to access debug info
+def debug_mindmap_api(unit_id):
+    """Debug endpoint to check mindmap data and content."""
+    user_id = session["user_id"]
+    user_camp = session.get("user_camp")
+    user_language = session.get("language", "en")
+    content_type = request.args.get("content_type", "material")
+    
+    debug_info = {
+        "unit_id": unit_id,
+        "user_id": user_id,
+        "user_camp": user_camp,
+        "user_language": user_language,
+        "content_type": content_type,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    
+    try:
+        # Check content availability
+        if content_type == "material":
+            content_items = get_content_with_tag_filtering("material", unit_id, user_id)
+            debug_info["content_items_found"] = len(content_items)
+            debug_info["content_sample"] = [
+                {
+                    "id": item.get("id"),
+                    "title": item.get("title", "No title")[:50],
+                    "has_content": bool(item.get("content")),
+                    "content_length": len(item.get("content", ""))
+                }
+                for item in content_items[:3]
+            ]
+        else:
+            content_items = get_content_with_tag_filtering("word", unit_id, user_id)
+            debug_info["content_items_found"] = len(content_items)
+            debug_info["content_sample"] = [
+                {
+                    "id": item.get("id"),
+                    "word": item.get("word", "No word"),
+                    "has_definition": bool(item.get("daily_definition")),
+                    "section": item.get("section", "No section")
+                }
+                for item in content_items[:3]
+            ]
+        
+        # Test fallback mindmap generation
+        if content_items:
+            try:
+                if content_type == "material":
+                    fallback_mindmap = create_fallback_mindmap(content_items, unit_id, user_language)
+                else:
+                    fallback_mindmap = create_fallback_words_mindmap(content_items, unit_id, user_language)
+                
+                debug_info["fallback_mindmap_valid"] = validate_mindmap_structure(fallback_mindmap)
+                debug_info["fallback_mindmap_structure"] = {
+                    "central_topic": fallback_mindmap.get("central_topic"),
+                    "branches_count": len(fallback_mindmap.get("branches", [])),
+                    "total_children": sum(len(branch.get("children", [])) for branch in fallback_mindmap.get("branches", []))
+                }
+            except Exception as fallback_error:
+                debug_info["fallback_error"] = str(fallback_error)
+        
+        # Test basic mindmap generation
+        try:
+            basic_mindmap = create_basic_mindmap(unit_id, content_type, user_language)
+            debug_info["basic_mindmap_valid"] = validate_mindmap_structure(basic_mindmap)
+        except Exception as basic_error:
+            debug_info["basic_mindmap_error"] = str(basic_error)
+        
+        # Check QA system status
+        try:
+            qa_system = get_qa_system()
+            debug_info["qa_system_available"] = qa_system is not None
+            if qa_system:
+                debug_info["qa_system_ready"] = hasattr(qa_system, 'vector_store_manager') and qa_system.vector_store_manager.is_ready()
+        except Exception as qa_error:
+            debug_info["qa_system_error"] = str(qa_error)
+        
+        return jsonify({
+            "success": True,
+            "debug_info": debug_info
+        })
+        
+    except Exception as e:
+        logger.error(f"Debug mindmap error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "debug_info": debug_info
+        })
+
+
+@app.route("/api/test_mindmap_structure", methods=["POST"])
+@login_required
+@admin_required
+def test_mindmap_structure():
+    """Test endpoint to validate mindmap JSON structure."""
+    try:
+        data = request.get_json()
+        mindmap_data = data.get("mindmap_data")
+        
+        if not mindmap_data:
+            return jsonify({
+                "success": False,
+                "error": "No mindmap data provided"
+            })
+        
+        is_valid = validate_mindmap_structure(mindmap_data)
+        
+        validation_details = {
+            "is_dict": isinstance(mindmap_data, dict),
+            "has_central_topic": "central_topic" in mindmap_data if isinstance(mindmap_data, dict) else False,
+            "has_branches": "branches" in mindmap_data if isinstance(mindmap_data, dict) else False,
+            "branches_is_list": isinstance(mindmap_data.get("branches"), list) if isinstance(mindmap_data, dict) else False,
+            "branches_count": len(mindmap_data.get("branches", [])) if isinstance(mindmap_data, dict) else 0
+        }
+        
+        if isinstance(mindmap_data, dict) and isinstance(mindmap_data.get("branches"), list):
+            branch_issues = []
+            for i, branch in enumerate(mindmap_data["branches"]):
+                if not isinstance(branch, dict):
+                    branch_issues.append(f"Branch {i} is not a dict")
+                elif "name" not in branch:
+                    branch_issues.append(f"Branch {i} missing 'name' field")
+                elif "children" in branch and not isinstance(branch["children"], list):
+                    branch_issues.append(f"Branch {i} 'children' is not a list")
+            
+            validation_details["branch_issues"] = branch_issues
+        
+        return jsonify({
+            "success": True,
+            "is_valid": is_valid,
+            "validation_details": validation_details,
+            "mindmap_preview": {
+                "central_topic": mindmap_data.get("central_topic") if isinstance(mindmap_data, dict) else "N/A",
+                "branches_count": len(mindmap_data.get("branches", [])) if isinstance(mindmap_data, dict) else 0
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Test mindmap structure error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
+
+
+@app.route("/api/clear_mindmap_session/<int:unit_id>")
+@login_required
+def clear_mindmap_session(unit_id):
+    """Clear stored mindmap data from session."""
+    try:
+        content_type = request.args.get("content_type", "material")
+        session_key = f"mindmap_unit_{unit_id}_{content_type}"
+        
+        if session_key in session:
+            del session[session_key]
+            logger.info(f"Cleared mindmap session data for {session_key}")
+        
+        return jsonify({
+            "success": True,
+            "message": f"Cleared mindmap data for unit {unit_id}, type {content_type}"
+        })
+        
+    except Exception as e:
+        logger.error(f"Clear mindmap session error: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        })
+
 
 @app.route("/api/generate_mindmap/<int:unit_id>")
 @login_required
 @camp_required
 def generate_mindmap_api(unit_id):
-    """Generate mindmap data with language support."""
+    """Generate mindmap data with improved error handling and validation."""
     user_id = session["user_id"]
     user_camp = session.get("user_camp")
     user_language = session.get("language", "en")
@@ -10117,14 +10289,13 @@ def generate_mindmap_api(unit_id):
     content_type = request.args.get("content_type", "material")
 
     if content_type not in ["material", "word"]:
-        return jsonify(
-            {
-                "success": False,
-                "error": "Invalid content type. Must be 'material' or 'word'",
-            }
-        )
+        return jsonify({
+            "success": False,
+            "error": "Invalid content type. Must be 'material' or 'word'"
+        })
 
     try:
+        # Get content based on type
         if content_type == "material":
             content_items = get_content_with_tag_filtering("material", unit_id, user_id)
             content_label = "materials"
@@ -10132,182 +10303,452 @@ def generate_mindmap_api(unit_id):
             content_items = get_content_with_tag_filtering("word", unit_id, user_id)
             content_label = "vocabulary words"
 
+        logger.info(f"Found {len(content_items)} {content_label} for unit {unit_id}")
+
         if not content_items:
-            error_msg = {
+            error_messages = {
                 "en": f"No {content_label} found for this unit",
                 "zh": f"此单元未找到{content_label}",
-                "ar": f"لم يتم العثور على {content_label} لهذه الوحدة",
+                "ar": f"لم يتم العثور على {content_label} لهذه الوحدة"
             }
-            return jsonify(
-                {
-                    "success": False,
-                    "error": error_msg.get(user_language, error_msg["en"]),
-                }
-            )
+            return jsonify({
+                "success": False,
+                "error": error_messages.get(user_language, error_messages["en"])
+            })
 
-        # Language-specific prompts
-        language_prompts = {
-            "en": {
-                "material": f"""
-                Based on the following learning materials, create a structured mindmap with key concepts and their relationships.
-                
-                Please analyze this content and return a JSON structure for a mindmap with:
-                - A central topic
-                - Main branches (key concepts)
-                - Sub-branches (details/examples)
-                - Keep it educational and organized
-                
-                Please respond in English with a JSON structure.
-                """,
-                "word": f"""
-                Based on the following vocabulary words, create a structured mindmap showing word relationships and concepts.
-                
-                Please analyze this vocabulary content and return a JSON structure for a mindmap with:
-                - A central topic about vocabulary
-                - Main branches (word categories or themes)
-                - Sub-branches (individual words and their key meanings)
-                
-                Please respond in English with a JSON structure.
-                """,
-            },
-            "zh": {
-                "material": f"""
-                基于以下学习材料，创建一个具有关键概念及其关系的结构化思维导图。
-                
-                请分析此内容并返回思维导图的JSON结构，包含：
-                - 中心主题
-                - 主要分支（关键概念）
-                - 子分支（详细信息/示例）
-                - 保持教育性和组织性
-                
-                请用中文回复JSON结构。
-                """,
-                "word": f"""
-                基于以下词汇，创建一个显示词汇关系和概念的结构化思维导图。
-                
-                请分析此词汇内容并返回思维导图的JSON结构，包含：
-                - 关于词汇的中心主题
-                - 主要分支（词汇类别或主题）
-                - 子分支（单个词汇及其关键含义）
-                
-                请用中文回复JSON结构。
-                """,
-            },
-            "ar": {
-                "material": f"""
-                بناءً على المواد التعليمية التالية، أنشئ خريطة ذهنية منظمة تحتوي على المفاهيم الأساسية وعلاقاتها.
-                
-                يرجى تحليل هذا المحتوى وإرجاع هيكل JSON للخريطة الذهنية يحتوي على:
-                - موضوع مركزي
-                - فروع رئيسية (مفاهيم أساسية)
-                - فروع فرعية (تفاصيل/أمثلة)
-                - حافظ على الطابع التعليمي والتنظيم
-                
-                يرجى الرد باللغة العربية مع هيكل JSON.
-                """,
-                "word": f"""
-                بناءً على الكلمات المفردات التالية، أنشئ خريطة ذهنية منظمة تُظهر علاقات الكلمات والمفاهيم.
-                
-                يرجى تحليل محتوى المفردات هذا وإرجاع هيكل JSON للخريطة الذهنية يحتوي على:
-                - موضوع مركزي حول المفردات
-                - فروع رئيسية (فئات أو موضوعات الكلمات)
-                - فروع فرعية (كلمات فردية ومعانيها الأساسية)
-                
-                يرجى الرد باللغة العربية مع هيكل JSON.
-                """,
-            },
-        }
-
-        # Get language-specific prompt
-        prompts = language_prompts.get(user_language, language_prompts["en"])
-        base_prompt = prompts[content_type]
-
-        # Combine content
-        combined_content = f"Unit {unit_id} {content_label.title()}:\n\n"
-
-        if content_type == "material":
-            for item in content_items:
-                combined_content += f"Title: {item['title']}\n"
-                if item.get("content"):
-                    combined_content += f"Content: {item['content']}\n\n"
-        else:
-            for item in content_items:
-                combined_content += f"Word: {item['word']}\n"
-                if item.get("daily_definition"):
-                    combined_content += f"Definition: {item['daily_definition']}\n"
-                combined_content += "\n"
-
-        # Create full prompt
-        full_prompt = f"{base_prompt}\n\nContent to analyze:\n{combined_content[:3000]}"
-
-        qa_system = get_qa_system()
-
-        if not qa_system:
-            error_msg = {
-                "en": "AI system not available",
-                "zh": "AI系统不可用",
-                "ar": "نظام الذكاء الاصطناعي غير متاح",
-            }
-            return jsonify(
-                {
-                    "success": False,
-                    "error": error_msg.get(user_language, error_msg["en"]),
-                }
-            )
-
-        # Get AI response
-        response = qa_system.answer_question(full_prompt, user_id=str(user_id))
-        ai_answer = response.get("answer", "")
-
-        # Try to extract JSON from AI response
+        # Try AI generation first, with fallback to manual structure
+        mindmap_data = None
+        
         try:
-            import re
+            mindmap_data = generate_ai_mindmap(content_items, unit_id, content_type, user_language, user_id)
+        except Exception as ai_error:
+            logger.warning(f"AI mindmap generation failed: {str(ai_error)}")
+            mindmap_data = None
 
-            json_match = re.search(r"\{.*\}", ai_answer, re.DOTALL)
-            if json_match:
-                mindmap_data = json.loads(json_match.group())
-            else:
-                if content_type == "material":
-                    mindmap_data = create_fallback_mindmap(
-                        content_items, unit_id, user_language
-                    )
-                else:
-                    mindmap_data = create_fallback_words_mindmap(
-                        content_items, unit_id, user_language
-                    )
-        except:
+        # If AI generation failed, use fallback
+        if not mindmap_data or not validate_mindmap_structure(mindmap_data):
+            logger.info("Using fallback mindmap generation")
             if content_type == "material":
-                mindmap_data = create_fallback_mindmap(
-                    content_items, unit_id, user_language
-                )
+                mindmap_data = create_fallback_mindmap(content_items, unit_id, user_language)
             else:
-                mindmap_data = create_fallback_words_mindmap(
-                    content_items, unit_id, user_language
-                )
+                mindmap_data = create_fallback_words_mindmap(content_items, unit_id, user_language)
 
+        # Final validation
+        if not validate_mindmap_structure(mindmap_data):
+            logger.error("Fallback mindmap also invalid, creating basic structure")
+            mindmap_data = create_basic_mindmap(unit_id, content_type, user_language)
+
+        # Store in session
         session[f"mindmap_unit_{unit_id}_{content_type}"] = mindmap_data
 
-        return jsonify(
-            {
-                "success": True,
-                "mindmap": mindmap_data,
-                "unit_id": unit_id,
-                "content_type": content_type,
-                "content_count": len(content_items),
-                "language": user_language,
-            }
-        )
+        return jsonify({
+            "success": True,
+            "mindmap": mindmap_data,
+            "unit_id": unit_id,
+            "content_type": content_type,
+            "content_count": len(content_items),
+            "language": user_language
+        })
 
     except Exception as e:
         logger.error(f"Generate mindmap error: {str(e)}")
-        error_msg = {
-            "en": str(e),
+        error_messages = {
+            "en": f"Error generating mindmap: {str(e)}",
             "zh": f"生成思维导图时出错: {str(e)}",
-            "ar": f"خطأ في إنشاء الخريطة الذهنية: {str(e)}",
+            "ar": f"خطأ في إنشاء الخريطة الذهنية: {str(e)}"
         }
-        return jsonify(
-            {"success": False, "error": error_msg.get(user_language, error_msg["en"])}
-        )
+        return jsonify({
+            "success": False,
+            "error": error_messages.get(user_language, error_messages["en"])
+        })
+
+
+def generate_ai_mindmap(content_items, unit_id, content_type, user_language, user_id):
+    """Generate mindmap using AI with improved prompting."""
+    qa_system = get_qa_system()
+    
+    if not qa_system:
+        raise Exception("AI system not available")
+
+    # Create language-specific prompts
+    if content_type == "material":
+        prompt_templates = {
+            "en": f"""Create a mindmap for Unit {unit_id} learning materials. 
+Return ONLY a JSON object with this exact structure:
+{{
+    "central_topic": "Unit {unit_id} Learning Materials",
+    "branches": [
+        {{
+            "name": "Main Topic 1",
+            "children": [
+                {{"name": "Subtopic 1", "type": "concept"}},
+                {{"name": "Subtopic 2", "type": "detail"}}
+            ]
+        }}
+    ]
+}}
+
+Materials to analyze:""",
+            "zh": f"""为第{unit_id}单元学习材料创建思维导图。
+只返回具有以下确切结构的JSON对象:
+{{
+    "central_topic": "第{unit_id}单元学习材料",
+    "branches": [
+        {{
+            "name": "主要话题1",
+            "children": [
+                {{"name": "子话题1", "type": "concept"}},
+                {{"name": "子话题2", "type": "detail"}}
+            ]
+        }}
+    ]
+}}
+
+要分析的材料:""",
+            "ar": f"""أنشئ خريطة ذهنية لمواد التعلم للوحدة {unit_id}.
+أرجع فقط كائن JSON بهذا الهيكل الدقيق:
+{{
+    "central_topic": "مواد التعلم - الوحدة {unit_id}",
+    "branches": [
+        {{
+            "name": "الموضوع الرئيسي 1",
+            "children": [
+                {{"name": "الموضوع الفرعي 1", "type": "concept"}},
+                {{"name": "الموضوع الفرعي 2", "type": "detail"}}
+            ]
+        }}
+    ]
+}}
+
+المواد المراد تحليلها:"""
+        }
+    else:  # vocabulary
+        prompt_templates = {
+            "en": f"""Create a mindmap for Unit {unit_id} vocabulary.
+Return ONLY a JSON object with this exact structure:
+{{
+    "central_topic": "Unit {unit_id} Vocabulary",
+    "branches": [
+        {{
+            "name": "Word Category 1",
+            "children": [
+                {{"name": "word1", "type": "vocabulary"}},
+                {{"name": "word2", "type": "vocabulary"}}
+            ]
+        }}
+    ]
+}}
+
+Vocabulary to analyze:""",
+            "zh": f"""为第{unit_id}单元词汇创建思维导图。
+只返回具有以下确切结构的JSON对象:
+{{
+    "central_topic": "第{unit_id}单元词汇",
+    "branches": [
+        {{
+            "name": "词汇类别1",
+            "children": [
+                {{"name": "单词1", "type": "vocabulary"}},
+                {{"name": "单词2", "type": "vocabulary"}}
+            ]
+        }}
+    ]
+}}
+
+要分析的词汇:""",
+            "ar": f"""أنشئ خريطة ذهنية لمفردات الوحدة {unit_id}.
+أرجع فقط كائن JSON بهذا الهيكل الدقيق:
+{{
+    "central_topic": "مفردات الوحدة {unit_id}",
+    "branches": [
+        {{
+            "name": "فئة الكلمات 1",
+            "children": [
+                {{"name": "كلمة1", "type": "vocabulary"}},
+                {{"name": "كلمة2", "type": "vocabulary"}}
+            ]
+        }}
+    ]
+}}
+
+المفردات المراد تحليلها:"""
+        }
+
+    # Get appropriate prompt
+    base_prompt = prompt_templates.get(user_language, prompt_templates["en"])
+    
+    # Add content
+    content_text = ""
+    for i, item in enumerate(content_items[:5]):  # Limit to 5 items
+        if content_type == "material":
+            content_text += f"\n{i+1}. Title: {item.get('title', 'Untitled')}"
+            if item.get('content'):
+                content_text += f"\n   Content: {item['content'][:200]}..."
+        else:  # vocabulary
+            content_text += f"\n{i+1}. Word: {item.get('word', 'Unknown')}"
+            if item.get('daily_definition'):
+                content_text += f"\n   Definition: {item['daily_definition'][:100]}..."
+        content_text += "\n"
+
+    full_prompt = base_prompt + content_text
+    
+    # Get AI response
+    response = qa_system.answer_question(full_prompt, user_id=str(user_id))
+    ai_answer = response.get("answer", "")
+    
+    # Extract JSON from response
+    json_data = extract_json_from_text(ai_answer)
+    
+    if json_data and validate_mindmap_structure(json_data):
+        return json_data
+    else:
+        raise Exception("AI generated invalid mindmap structure")
+
+
+def extract_json_from_text(text):
+    """Extract JSON object from AI response text."""
+    try:
+        # First try to find JSON block markers
+        json_patterns = [
+            r'```json\s*(\{.*?\})\s*```',  # JSON code blocks
+            r'```\s*(\{.*?\})\s*```',      # Generic code blocks
+            r'(\{[^{}]*"central_topic"[^{}]*\{.*?\}.*?\})',  # Look for central_topic
+            r'(\{.*?\})',  # Any JSON object
+        ]
+        
+        for pattern in json_patterns:
+            matches = re.findall(pattern, text, re.DOTALL | re.IGNORECASE)
+            for match in matches:
+                try:
+                    # Clean up the match
+                    clean_match = match.strip()
+                    # Try to parse it
+                    parsed = json.loads(clean_match)
+                    if isinstance(parsed, dict):
+                        return parsed
+                except json.JSONDecodeError:
+                    continue
+        
+        # If no JSON found, return None
+        return None
+        
+    except Exception as e:
+        logger.error(f"Error extracting JSON: {str(e)}")
+        return None
+
+
+def validate_mindmap_structure(mindmap_data):
+    """Validate that mindmap data has the correct structure."""
+    if not isinstance(mindmap_data, dict):
+        return False
+    
+    # Check required fields
+    if "central_topic" not in mindmap_data:
+        return False
+    
+    if "branches" not in mindmap_data:
+        return False
+    
+    if not isinstance(mindmap_data["branches"], list):
+        return False
+    
+    # Validate each branch
+    for branch in mindmap_data["branches"]:
+        if not isinstance(branch, dict):
+            return False
+        if "name" not in branch:
+            return False
+        # children is optional, but if present should be a list
+        if "children" in branch and not isinstance(branch["children"], list):
+            return False
+    
+    return True
+
+
+def create_basic_mindmap(unit_id, content_type, language="en"):
+    """Create a very basic mindmap structure as last resort."""
+    titles = {
+        "en": {
+            "material": f"Unit {unit_id} Learning Materials",
+            "word": f"Unit {unit_id} Vocabulary"
+        },
+        "zh": {
+            "material": f"第{unit_id}单元学习材料",
+            "word": f"第{unit_id}单元词汇"
+        },
+        "ar": {
+            "material": f"مواد التعلم - الوحدة {unit_id}",
+            "word": f"مفردات الوحدة {unit_id}"
+        }
+    }
+    
+    lang_titles = titles.get(language, titles["en"])
+    central_topic = lang_titles.get(content_type, f"Unit {unit_id}")
+    
+    basic_branches = {
+        "en": {
+            "material": [
+                {"name": "Key Concepts", "children": [{"name": "Loading...", "type": "placeholder"}]},
+                {"name": "Important Topics", "children": [{"name": "Loading...", "type": "placeholder"}]}
+            ],
+            "word": [
+                {"name": "Vocabulary Set 1", "children": [{"name": "Loading...", "type": "placeholder"}]},
+                {"name": "Vocabulary Set 2", "children": [{"name": "Loading...", "type": "placeholder"}]}
+            ]
+        },
+        "zh": {
+            "material": [
+                {"name": "关键概念", "children": [{"name": "加载中...", "type": "placeholder"}]},
+                {"name": "重要主题", "children": [{"name": "加载中...", "type": "placeholder"}]}
+            ],
+            "word": [
+                {"name": "词汇组1", "children": [{"name": "加载中...", "type": "placeholder"}]},
+                {"name": "词汇组2", "children": [{"name": "加载中...", "type": "placeholder"}]}
+            ]
+        },
+        "ar": {
+            "material": [
+                {"name": "المفاهيم الأساسية", "children": [{"name": "جاري التحميل...", "type": "placeholder"}]},
+                {"name": "المواضيع المهمة", "children": [{"name": "جاري التحميل...", "type": "placeholder"}]}
+            ],
+            "word": [
+                {"name": "مجموعة المفردات 1", "children": [{"name": "جاري التحميل...", "type": "placeholder"}]},
+                {"name": "مجموعة المفردات 2", "children": [{"name": "جاري التحميل...", "type": "placeholder"}]}
+            ]
+        }
+    }
+    
+    lang_branches = basic_branches.get(language, basic_branches["en"])
+    branches = lang_branches.get(content_type, basic_branches["en"]["material"])
+    
+    return {
+        "central_topic": central_topic,
+        "branches": branches
+    }
+
+
+def create_fallback_mindmap(materials, unit_id, language="en"):
+    """Create a simple fallback mindmap structure with improved validation."""
+    titles = {
+        "en": f"Unit {unit_id} Learning Materials",
+        "zh": f"第{unit_id}单元学习材料",
+        "ar": f"مواد التعلم - الوحدة {unit_id}"
+    }
+
+    mindmap = {
+        "central_topic": titles.get(language, titles["en"]),
+        "branches": []
+    }
+
+    # Group materials or create individual branches
+    for i, material in enumerate(materials[:6]):  # Limit to 6 materials
+        # Clean the title to prevent JSON issues
+        title = str(material.get("title", f"Material {i+1}")).strip()
+        if not title:
+            title = f"Material {i+1}"
+        
+        # Clean content preview
+        content_preview = ""
+        if material.get("content"):
+            content_preview = str(material["content"])[:50].strip()
+            if len(material["content"]) > 50:
+                content_preview += "..."
+        
+        branch = {
+            "name": title,
+            "children": []
+        }
+        
+        if content_preview:
+            branch["children"].append({
+                "name": content_preview,
+                "type": "content"
+            })
+        else:
+            branch["children"].append({
+                "name": "Content available",
+                "type": "content"
+            })
+        
+        mindmap["branches"].append(branch)
+
+    return mindmap
+
+
+def create_fallback_words_mindmap(words, unit_id, language="en"):
+    """Create a simple fallback mindmap structure from vocabulary words."""
+    titles = {
+        "en": f"Unit {unit_id} Vocabulary",
+        "zh": f"第{unit_id}单元词汇",
+        "ar": f"مفردات الوحدة {unit_id}"
+    }
+
+    mindmap = {
+        "central_topic": titles.get(language, titles["en"]),
+        "branches": []
+    }
+
+    # Group words by section
+    sections = {}
+    for word in words[:10]:  # Limit to 10 words
+        section = word.get("section", 1)
+        if section not in sections:
+            sections[section] = []
+        sections[section].append(word)
+
+    section_labels = {
+        "en": "Section",
+        "zh": "部分", 
+        "ar": "القسم"
+    }
+
+    for section_num, section_words in sections.items():
+        branch = {
+            "name": f"{section_labels.get(language, 'Section')} {section_num}",
+            "children": []
+        }
+
+        for word in section_words:
+            word_name = str(word.get("word", "Unknown")).strip()
+            if not word_name:
+                continue
+                
+            child = {
+                "name": word_name,
+                "type": "vocabulary"
+            }
+
+            # Add definition if available
+            if word.get("daily_definition"):
+                definition = str(word["daily_definition"]).strip()
+                if len(definition) > 50:
+                    definition = definition[:50] + "..."
+                child["definition"] = definition
+
+            branch["children"].append(child)
+
+        if branch["children"]:  # Only add if has children
+            mindmap["branches"].append(branch)
+
+    # If no sections found, create a simple structure
+    if not mindmap["branches"]:
+        branch = {
+            "name": "Vocabulary Words",
+            "children": []
+        }
+        
+        for word in words[:5]:
+            word_name = str(word.get("word", "Unknown")).strip()
+            if word_name:
+                branch["children"].append({
+                    "name": word_name,
+                    "type": "vocabulary"
+                })
+        
+        if branch["children"]:
+            mindmap["branches"].append(branch)
+
+    return mindmap
 
 
 def create_fallback_mindmap(materials, unit_id, language="en"):
@@ -10483,7 +10924,7 @@ def expand_mindmap_node():
 @login_required
 @camp_required
 def view_mindmap(unit_id):
-    """View interactive mindmap for a specific unit with content type support."""
+    """View interactive mindmap for a specific unit with improved error handling."""
     if not session.get("authenticated"):
         return redirect(url_for("password_gate"))
 
@@ -10499,27 +10940,150 @@ def view_mindmap(unit_id):
         flash("Invalid content type", "error")
         return redirect(url_for("mindmap_home"))
 
-    # Check if user has access to this unit's content
-    if content_type == "material":
-        content_items = get_content_with_tag_filtering("material", unit_id, user_id)
-        content_label = "materials"
-    else:
-        content_items = get_content_with_tag_filtering("word", unit_id, user_id)
-        content_label = "vocabulary words"
+    try:
+        # Check if user has access to this unit's content
+        if content_type == "material":
+            content_items = get_content_with_tag_filtering("material", unit_id, user_id)
+            content_label = "materials"
+        else:
+            content_items = get_content_with_tag_filtering("word", unit_id, user_id)
+            content_label = "vocabulary words"
 
-    if not content_items:
-        flash(f"No {content_label} available for Unit {unit_id} in your camp.", "error")
+        if not content_items:
+            flash(f"No {content_label} available for Unit {unit_id} in your camp.", "error")
+            return redirect(url_for("mindmap_home"))
+
+        # Check if we have a valid mindmap in session
+        session_key = f"mindmap_unit_{unit_id}_{content_type}"
+        stored_mindmap = session.get(session_key)
+        
+        mindmap_status = "none"
+        if stored_mindmap:
+            if validate_mindmap_structure(stored_mindmap):
+                mindmap_status = "valid"
+            else:
+                mindmap_status = "invalid"
+                # Clear invalid mindmap from session
+                del session[session_key]
+
+        return render_template(
+            "mindmap_viewer.html",
+            username=username,
+            unit_id=unit_id,
+            user_camp=user_camp,
+            content_count=len(content_items),
+            content_type=content_type,
+            content_label=content_label,
+            mindmap_status=mindmap_status
+        )
+        
+    except Exception as e:
+        logger.error(f"View mindmap error for unit {unit_id}: {str(e)}")
+        flash(f"Error loading mindmap: {str(e)}", "error")
         return redirect(url_for("mindmap_home"))
 
-    return render_template(
-        "mindmap_viewer.html",
-        username=username,
-        unit_id=unit_id,
-        user_camp=user_camp,
-        content_count=len(content_items),
-        content_type=content_type,
-        content_label=content_label,
+
+# Add JavaScript helper functions for the frontend
+@app.route("/static/js/mindmap-helpers.js")
+def mindmap_helpers_js():
+    """Serve JavaScript helpers for mindmap functionality."""
+    js_content = '''
+// Mindmap Helper Functions
+
+function validateMindmapData(data) {
+    try {
+        if (!data || typeof data !== 'object') {
+            console.error('Mindmap data is not an object');
+            return false;
+        }
+        
+        if (!data.central_topic) {
+            console.error('Mindmap missing central_topic');
+            return false;
+        }
+        
+        if (!Array.isArray(data.branches)) {
+            console.error('Mindmap branches is not an array');
+            return false;
+        }
+        
+        for (let i = 0; i < data.branches.length; i++) {
+            const branch = data.branches[i];
+            if (!branch.name) {
+                console.error(`Branch ${i} missing name`);
+                return false;
+            }
+            
+            if (branch.children && !Array.isArray(branch.children)) {
+                console.error(`Branch ${i} children is not an array`);
+                return false;
+            }
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Error validating mindmap data:', error);
+        return false;
+    }
+}
+
+function showMindmapError(message, debugData = null) {
+    const container = document.getElementById('mindmap-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="mindmap-error">
+                <div class="error-icon">⚠️</div>
+                <h2>Error Loading Mindmap</h2>
+                <p>${message}</p>
+                <div class="error-actions">
+                    <button onclick="location.reload()" class="btn-retry">Try Again</button>
+                    <button onclick="clearMindmapCache()" class="btn-clear">Clear Cache</button>
+                    <button onclick="window.history.back()" class="btn-back">← Back to Selection</button>
+                </div>
+                ${debugData ? `
+                    <details class="debug-info">
+                        <summary>🔧 Debug Information</summary>
+                        <pre>${JSON.stringify(debugData, null, 2)}</pre>
+                    </details>
+                ` : ''}
+            </div>
+        `;
+    }
+}
+
+function clearMindmapCache() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const contentType = urlParams.get('content_type') || 'material';
+    const unitId = window.location.pathname.split('/').pop();
+    
+    fetch(`/api/clear_mindmap_session/${unitId}?content_type=${contentType}`, {
+        method: 'GET'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Cache cleared successfully');
+            location.reload();
+        } else {
+            console.error('Failed to clear cache:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error clearing cache:', error);
+    });
+}
+
+// Export functions for global use
+window.validateMindmapData = validateMindmapData;
+window.showMindmapError = showMindmapError;
+window.clearMindmapCache = clearMindmapCache;
+'''
+    
+    response = app.response_class(
+        js_content,
+        mimetype='application/javascript'
     )
+    return response
 
 
 @app.route("/change_username", methods=["GET", "POST"])
