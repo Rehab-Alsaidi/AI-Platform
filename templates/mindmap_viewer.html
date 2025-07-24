@@ -254,16 +254,6 @@
         transform: translateY(-2px);
     }
 
-    .btn-clear {
-        background: #2196F3;
-        color: white;
-    }
-
-    .btn-clear:hover {
-        background: #1976D2;
-        transform: translateY(-2px);
-    }
-
     .btn-back {
         background: #FF9800;
         color: white;
@@ -272,71 +262,6 @@
     .btn-back:hover {
         background: #F57C00;
         transform: translateY(-2px);
-    }
-
-    /* Debug styles */
-    .debug-info {
-        background: rgba(26, 26, 31, 0.8);
-        border: 1px solid rgba(139, 92, 246, 0.3);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-top: 1rem;
-        font-family: monospace;
-        font-size: 0.8rem;
-        width: 100%;
-        max-width: 600px;
-    }
-
-    .debug-info details {
-        margin-top: 1rem;
-    }
-
-    .debug-info summary {
-        cursor: pointer;
-        padding: 0.5rem;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 4px;
-        margin-bottom: 1rem;
-        font-weight: 500;
-    }
-
-    .debug-info pre {
-        background: rgba(0, 0, 0, 0.3);
-        padding: 1rem;
-        border-radius: 8px;
-        text-align: left;
-        font-size: 0.75rem;
-        overflow-x: auto;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        color: var(--text-color);
-    }
-
-    .error-solutions {
-        background: rgba(32, 33, 43, 0.8);
-        border: 1px solid rgba(20, 184, 166, 0.3);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-top: 1rem;
-        text-align: left;
-        width: 100%;
-        max-width: 600px;
-    }
-
-    .error-solutions h6 {
-        color: var(--accent-teal);
-        margin-bottom: 0.5rem;
-    }
-
-    .error-solutions ul {
-        color: var(--text-color);
-        font-size: 0.9rem;
-        margin: 0;
-        padding-left: 1.5rem;
-    }
-
-    .error-solutions li {
-        margin-bottom: 0.5rem;
     }
 
     /* Loading States */
@@ -443,12 +368,6 @@
         <button class="control-btn" id="refreshMindmap" onclick="regenerateMindmap()">
             <i class="fas fa-sync-alt mr-1"></i> Regenerate
         </button>
-        <button class="control-btn" id="clearCache" onclick="clearMindmapCache()">
-            <i class="fas fa-trash mr-1"></i> Clear Cache
-        </button>
-        <button class="control-btn" id="debugBtn" onclick="debugMindmap()">
-            <i class="fas fa-bug mr-1"></i> Debug
-        </button>
         <button class="control-btn" id="fullscreen" onclick="toggleFullscreen()">
             <i class="fas fa-expand mr-1"></i> Fullscreen
         </button>
@@ -547,27 +466,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Debug Info Card -->
-        <div class="card mt-3">
-            <div class="card-header">
-                <h5><i class="fas fa-wrench mr-2"></i>Debug Info</h5>
-            </div>
-            <div class="card-body">
-                <small style="color: var(--accent-gray);">
-                    <strong>Unit:</strong> {{ unit_id }}<br>
-                    <strong>Type:</strong> {{ content_type }}<br>
-                    <strong>Camp:</strong> {{ user_camp }}<br>
-                    <strong>User ID:</strong> {{ session.user_id }}<br>
-                    <button class="btn btn-sm btn-outline-info mt-2" onclick="checkSystemStatus()">
-                        <i class="fas fa-stethoscope mr-1"></i> Check System
-                    </button>
-                    <button class="btn btn-sm btn-outline-warning mt-2" onclick="validateCurrentMindmap()">
-                        <i class="fas fa-check-circle mr-1"></i> Validate Data
-                    </button>
-                </small>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}
@@ -583,13 +481,7 @@ let zoom;
 
 // Initialize mindmap on page load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🎯 Mindmap viewer initialized', {
-        unitId: {{ unit_id }},
-        contentType: new URLSearchParams(window.location.search).get('content_type') || 'material',
-        userCamp: '{{ user_camp }}',
-        timestamp: new Date().toISOString()
-    });
-    
+    console.log('🎯 Mindmap viewer initialized');
     initializeMindmap();
     loadMindmapData();
 });
@@ -615,7 +507,7 @@ function initializeMindmap() {
     // Main group for all mindmap elements
     g = svg.append("g");
     
-    // Add drag behavior to svg for panning
+    // Add click behavior to svg for panning
     svg.on("click", function(event) {
         if (event.target === this) {
             hideInfoPanel();
@@ -625,37 +517,30 @@ function initializeMindmap() {
 
 function validateMindmapData(data) {
     if (!data || typeof data !== 'object') {
-        console.error('❌ Mindmap data is not an object:', data);
         return false;
     }
     
     if (!data.central_topic) {
-        console.error('❌ Mindmap missing central_topic:', data);
         return false;
     }
     
     if (!Array.isArray(data.branches)) {
-        console.error('❌ Mindmap branches is not an array:', data.branches);
         return false;
     }
     
     for (let i = 0; i < data.branches.length; i++) {
         const branch = data.branches[i];
         if (!branch || typeof branch !== 'object') {
-            console.error(`❌ Branch ${i} is not an object:`, branch);
             return false;
         }
         if (!branch.name) {
-            console.error(`❌ Branch ${i} missing name:`, branch);
             return false;
         }
         if (branch.children && !Array.isArray(branch.children)) {
-            console.error(`❌ Branch ${i} children is not an array:`, branch.children);
             return false;
         }
     }
     
-    console.log('✅ Mindmap data validation passed');
     return true;
 }
 
@@ -666,95 +551,67 @@ function loadMindmapData() {
     const urlParams = new URLSearchParams(window.location.search);
     const contentType = urlParams.get('content_type') || 'material';
     
-    console.log('🧠 MINDMAP DEBUG: Loading', { 
-        unitId: {{ unit_id }}, 
-        contentType,
-        userCamp: '{{ user_camp }}',
-        userId: {{ session.user_id }}
-    });
-    
     // Check if mindmap data is already cached
     const cacheKey = `mindmap_unit_{{ unit_id }}_${contentType}`;
     const cachedData = sessionStorage.getItem(cacheKey);
     if (cachedData) {
-        console.log('💾 Found cached data, validating...');
         try {
             const parsedData = JSON.parse(cachedData);
             if (validateMindmapData(parsedData)) {
-                console.log('✅ Using valid cached data');
                 mindmapData = parsedData;
                 renderMindmap(mindmapData);
                 hideLoading();
                 return;
             } else {
-                console.warn('⚠️ Cached data invalid, removing and fetching fresh');
+                // Clear invalid cached data
                 sessionStorage.removeItem(cacheKey);
             }
         } catch (e) {
-            console.warn('⚠️ Cached data corrupted, fetching fresh:', e);
+            // Clear corrupted cached data
             sessionStorage.removeItem(cacheKey);
         }
     }
     
-    // Load from server with content type parameter
+    // Load from server
     const apiUrl = `/api/generate_mindmap/{{ unit_id }}?content_type=${contentType}`;
-    console.log('📡 API Request:', apiUrl);
     
     fetch(apiUrl)
         .then(response => {
-            console.log('📡 Response status:', response.status, response.statusText);
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                throw new Error(`Server error: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('📡 Response data:', data);
             hideLoading();
             
             if (data.success) {
                 if (validateMindmapData(data.mindmap)) {
-                    console.log('✅ Success! Mindmap nodes:', data.mindmap?.branches?.length || 0);
                     mindmapData = data.mindmap;
                     sessionStorage.setItem(cacheKey, JSON.stringify(mindmapData));
                     renderMindmap(mindmapData);
                 } else {
-                    console.error('❌ Invalid mindmap structure received');
-                    showDetailedError('Invalid mindmap data structure received from server', {
-                        received_data: data.mindmap,
-                        validation_failed: true
-                    });
+                    showError('Unable to generate mindmap from available content. Please try again later.');
                 }
             } else {
-                console.error('❌ API Error:', data.error);
-                showDetailedError(data.error || 'Failed to load mindmap', data.debug_info || null);
+                showError(data.error || 'Failed to load mindmap. Please try again.');
             }
         })
         .catch(error => {
             hideLoading();
             console.error('❌ Network Error:', error);
-            showDetailedError(`Network error: ${error.message}`, {
-                apiUrl: apiUrl,
-                timestamp: new Date().toISOString(),
-                userAgent: navigator.userAgent,
-                errorType: 'NetworkError'
-            });
+            showError('Unable to connect to the server. Please check your connection and try again.');
         });
 }
 
 function renderMindmap(data) {
     if (!validateMindmapData(data)) {
-        showDetailedError('Cannot render invalid mindmap data', { invalidData: data });
+        showError('Invalid mindmap data. Please try regenerating the mindmap.');
         return;
     }
     
     // Clear existing content
     g.selectAll("*").remove();
-    
-    console.log('🎨 Rendering mindmap:', {
-        centralTopic: data.central_topic,
-        branchCount: data.branches.length
-    });
     
     // Prepare data for D3
     const nodes = [];
@@ -807,11 +664,6 @@ function renderMindmap(data) {
                 });
             });
         }
-    });
-    
-    console.log('📊 Mindmap stats:', {
-        totalNodes: nodes.length,
-        totalLinks: links.length
     });
     
     // Update stats
@@ -886,8 +738,6 @@ function renderMindmap(data) {
     setTimeout(() => {
         resetZoom();
     }, 1000);
-    
-    console.log('✅ Mindmap rendered successfully');
 }
 
 function showNodeInfo(node) {
@@ -947,14 +797,13 @@ function expandCurrentNode() {
             // Add new nodes to mindmap
             addExpandedNodes(currentSelectedNode, data.expanded_nodes);
         } else {
-            alert('Failed to expand node: ' + (data.error || 'Unknown error'));
+            alert('Unable to expand this node. Please try again.');
         }
     })
     .catch(error => {
         expandBtn.innerHTML = '<i class="fas fa-plus mr-1"></i> Expand Node';
         expandBtn.disabled = false;
-        console.error('Error:', error);
-        alert('Failed to expand node: ' + error.message);
+        alert('Unable to expand node. Please check your connection.');
     });
 }
 
@@ -964,7 +813,6 @@ function addExpandedNodes(parentNode, newNodes) {
     // 2. Update the simulation with new nodes and links
     // 3. Animate the new nodes appearing
     alert(`Added ${newNodes.length} new details to "${parentNode.name}"`);
-    console.log('Expanded nodes:', newNodes);
 }
 
 // Control functions
@@ -992,26 +840,13 @@ function zoomOut() {
 }
 
 function regenerateMindmap() {
-    if (confirm('Regenerate the mindmap? This will create a new AI analysis.')) {
-        clearMindmapCache();
+    if (confirm('Generate a new mindmap? This will create a fresh AI analysis.')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const contentType = urlParams.get('content_type') || 'material';
+        const cacheKey = `mindmap_unit_{{ unit_id }}_${contentType}`;
+        sessionStorage.removeItem(cacheKey);
         loadMindmapData();
     }
-}
-
-function clearMindmapCache() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const contentType = urlParams.get('content_type') || 'material';
-    const cacheKey = `mindmap_unit_{{ unit_id }}_${contentType}`;
-    
-    sessionStorage.removeItem(cacheKey);
-    console.log('🗑️ Cleared cache for:', cacheKey);
-    
-    // Clear the mindmap display
-    if (g) {
-        g.selectAll("*").remove();
-    }
-    
-    alert('Cache cleared! Click "Try Again" or regenerate the mindmap.');
 }
 
 function toggleFullscreen() {
@@ -1023,203 +858,35 @@ function toggleFullscreen() {
     }
 }
 
-function validateCurrentMindmap() {
-    if (!mindmapData) {
-        alert('No mindmap data to validate');
-        return;
-    }
-    
-    const isValid = validateMindmapData(mindmapData);
-    const stats = {
-        valid: isValid,
-        centralTopic: mindmapData.central_topic || 'Missing',
-        branchCount: mindmapData.branches ? mindmapData.branches.length : 0,
-        totalChildren: 0
-    };
-    
-    if (mindmapData.branches) {
-        stats.totalChildren = mindmapData.branches.reduce((total, branch) => {
-            return total + (branch.children ? branch.children.length : 0);
-        }, 0);
-    }
-    
-    alert(`Mindmap Validation Results:
-    
-Valid Structure: ${isValid ? '✅ Yes' : '❌ No'}
-Central Topic: ${stats.centralTopic}
-Branch Count: ${stats.branchCount}
-Total Children: ${stats.totalChildren}
-
-Check browser console for detailed information.`);
-    
-    console.log('🔍 Mindmap validation results:', stats);
-    console.log('🔍 Full mindmap data:', mindmapData);
-}
-
-function debugMindmap() {
-    console.log('🔧 Starting mindmap debug...');
-    
-    const urlParams = new URLSearchParams(window.location.search);
-    const contentType = urlParams.get('content_type') || 'material';
-    
-    const debugInfo = {
-        timestamp: new Date().toISOString(),
-        unitId: {{ unit_id }},
-        contentType: contentType,
-        userCamp: '{{ user_camp }}',
-        userId: {{ session.user_id }},
-        mindmapData: mindmapData,
-        sessionStorage: sessionStorage.getItem(`mindmap_unit_{{ unit_id }}_${contentType}`),
-        mindmapValid: mindmapData ? validateMindmapData(mindmapData) : false
-    };
-    
-    console.log('🔧 Debug Info:', debugInfo);
-    
-    // Test API endpoints in sequence
-    Promise.resolve()
-        .then(() => {
-            console.log('🏥 Testing health endpoint...');
-            return fetch('/health');
-        })
-        .then(response => response.json())
-        .then(health => {
-            console.log('🏥 Health check:', health);
-            
-            console.log('🤖 Testing AI status...');
-            return fetch('/ai_status');
-        })
-        .then(response => response.json())
-        .then(aiStatus => {
-            console.log('🤖 AI Status:', aiStatus);
-            
-            console.log('📡 Testing direct API call...');
-            const apiUrl = `/api/generate_mindmap/{{ unit_id }}?content_type=${contentType}`;
-            return fetch(apiUrl);
-        })
-        .then(response => {
-            console.log('📡 Direct API test:', response.status, response.statusText);
-            return response.json();
-        })
-        .then(apiData => {
-            console.log('📡 Direct API response:', apiData);
-            
-            const debugSummary = {
-                mindmapValid: debugInfo.mindmapValid,
-                apiSuccess: apiData.success,
-                apiError: apiData.error || 'None',
-                hasCachedData: !!debugInfo.sessionStorage,
-                contentCount: {{ content_count }},
-                recommendations: []
-            };
-            
-            if (!debugSummary.apiSuccess) {
-                debugSummary.recommendations.push('Check if content exists for this unit and camp');
-                debugSummary.recommendations.push('Verify AI system is properly initialized');
-            }
-            
-            if (!debugSummary.mindmapValid) {
-                debugSummary.recommendations.push('Clear cache and try regenerating');
-                debugSummary.recommendations.push('Check for JSON parsing errors');
-            }
-            
-            alert(`🔧 Debug Complete!
-
-Key Findings:
-- Unit: {{ unit_id }}
-- Content Type: ${contentType}
-- User Camp: {{ user_camp }}
-- Current Mindmap Valid: ${debugSummary.mindmapValid ? '✅' : '❌'}
-- API Response: ${debugSummary.apiSuccess ? '✅ SUCCESS' : '❌ FAILED'}
-- Error: ${debugSummary.apiError}
-- Has Cached Data: ${debugSummary.hasCachedData ? 'Yes' : 'No'}
-- Content Count: {{ content_count }}
-
-${debugSummary.recommendations.length > 0 ? 'Recommendations:\n' + debugSummary.recommendations.map(r => '• ' + r).join('\n') : ''}
-
-See browser console for complete details.`);
-        })
-        .catch(error => {
-            console.error('🔧 Debug error:', error);
-            alert(`Debug encountered an error: ${error.message}\n\nCheck browser console for details.`);
-        });
-}
-
-function checkSystemStatus() {
-    fetch('/ai_status')
-        .then(response => response.json())
-        .then(data => {
-            console.log('🔍 System status:', data);
-            
-            let statusText = `AI System Status: ${data.status}\n`;
-            if (data.details) {
-                statusText += `Ready: ${data.details.ready}\n`;
-                statusText += `Documents: ${data.details.document_count}\n`;
-                if (data.details.error) {
-                    statusText += `Error: ${data.details.error}\n`;
-                }
-            }
-            
-            alert(statusText);
-        })
-        .catch(error => {
-            alert(`Error checking system status: ${error.message}`);
-        });
-}
-
-// Enhanced error display function
-function showDetailedError(message, debugInfo = null) {
+// Clean error display function (no debug info)
+function showError(message) {
     const container = document.getElementById('mindmapContainer');
-    
-    let debugInfoHtml = '';
-    if (debugInfo) {
-        debugInfoHtml = `
-            <div class="debug-info">
-                <details>
-                    <summary>🔧 Debug Information</summary>
-                    <pre>${JSON.stringify(debugInfo, null, 2)}</pre>
-                </details>
-            </div>
-        `;
-    }
     
     container.innerHTML = `
         <div class="mindmap-error">
             <div class="error-icon">⚠️</div>
-            <h2>Error Loading Mindmap</h2>
-            <p style="white-space: pre-line; margin-bottom: 1rem;">${message}</p>
+            <h2>Unable to Load Mindmap</h2>
+            <p style="margin-bottom: 2rem;">${message}</p>
             
             <div class="error-actions">
                 <button class="btn-retry" onclick="loadMindmapData()">
-                    <i class="fas fa-retry mr-1"></i> Try Again
-                </button>
-                <button class="btn-clear" onclick="clearMindmapCache()">
-                    <i class="fas fa-trash mr-1"></i> Clear Cache
-                </button>
-                <button class="btn btn-info" onclick="debugMindmap()">
-                    <i class="fas fa-tools mr-1"></i> Debug
+                    <i class="fas fa-sync mr-1"></i> Try Again
                 </button>
                 <a href="{{ url_for('mindmap_home') }}" class="btn-back">
                     <i class="fas fa-arrow-left mr-1"></i> Back to Selection
                 </a>
             </div>
             
-            ${debugInfoHtml}
-            
-            <div class="error-solutions">
-                <h6><i class="fas fa-lightbulb mr-2"></i>Possible Solutions</h6>
-                <ul>
-                    <li>Make sure you have {{ 'vocabulary words' if 'word' in request.args.get('content_type', 'material') else 'learning materials' }} uploaded for Unit {{ unit_id }}</li>
-                    <li>Check that content is tagged for your camp: <strong>{{ user_camp }}</strong></li>
-                    <li>Try switching between Materials and Vocabulary content types</li>
-                    <li>Verify the AI system is running: <button class="btn btn-sm btn-outline-info" onclick="checkSystemStatus()">Check AI Status</button></li>
-                    <li>Contact admin if the issue persists</li>
+            <div style="margin-top: 2rem; padding: 1rem; background: rgba(32, 33, 43, 0.8); border-radius: 8px; max-width: 500px;">
+                <h6 style="color: var(--accent-teal); margin-bottom: 1rem;">
+                    <i class="fas fa-lightbulb mr-2"></i>What to try:
+                </h6>
+                <ul style="color: var(--text-color); font-size: 0.9rem; margin: 0; text-align: left; padding-left: 1.5rem;">
+                    <li style="margin-bottom: 0.5rem;">Make sure you have {{ 'vocabulary words' if 'word' in request.args.get('content_type', 'material') else 'learning materials' }} for Unit {{ unit_id }}</li>
+                    <li style="margin-bottom: 0.5rem;">Check that content is available for {{ user_camp }} camp</li>
+                    <li style="margin-bottom: 0.5rem;">Try switching between Materials and Vocabulary types</li>
+                    <li style="margin-bottom: 0.5rem;">Refresh the page and try again</li>
                 </ul>
-                
-                <div class="mt-3">
-                    <small style="color: var(--accent-gray);">
-                        <strong>Debug Info:</strong> Unit {{ unit_id }}, Type: {{ 'vocabulary' if 'word' in request.args.get('content_type', 'material') else 'material' }}, Camp: {{ user_camp }}, User: {{ session.user_id }}
-                    </small>
-                </div>
             </div>
         </div>
     `;
