@@ -6,10 +6,15 @@
 <style>
     /* Dashboard Styles Matching Dark Theme */
     .welcome-section h1 {
-        color: var(--text-color);
+        color: white; /* Changed from gradient to white */
         margin-bottom: 1rem;
         font-weight: 700;
         letter-spacing: -0.02em;
+        /* Removed gradient background */
+    }
+
+    /* Keep the graduation cap icon purple */
+    .welcome-section h1 i {
         background: linear-gradient(45deg, var(--accent-purple), var(--purple-light));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -48,7 +53,11 @@
 
     .card-header h4 {
         margin: 0;
-        color: var(--text-color);
+        color: white; /* Changed from var(--text-color) to white */
+    }
+
+    .card-header h3 {
+        color: white; /* Ensure leaderboard titles are white */
     }
 
     .unit-card {
@@ -63,7 +72,7 @@
     }
 
     .unit-card .card-title {
-        color: var(--accent-purple);
+        color: var(--info-color); /* Changed from var(--accent-purple) to green */
         font-weight: 600;
     }
 
@@ -210,6 +219,11 @@
     /* Team Leaderboards */
     .team-card .card-header {
         background: var(--gradient-purple);
+        color: white;
+    }
+
+    .team-card .card-header h3,
+    .user-camp-card .card-header h3 {
         color: white;
     }
 
