@@ -124,8 +124,8 @@
                                     </div>
                                     
                                     <!-- Embedded YouTube Video -->
-                                    {% if video.get('youtube_url') %}
-                                        <!-- Test with direct embed URL construction -->
+                                    {% if video.get('youtube_url') and ('youtube.com' in video['youtube_url'] or 'youtu.be' in video['youtube_url']) %}
+                                        <!-- Extract video ID from YouTube URL -->
                                         {% if 'youtube.com' in video['youtube_url'] and 'v=' in video['youtube_url'] %}
                                             {% set video_id = video['youtube_url'].split('v=')[1].split('&')[0] %}
                                         {% elif 'youtu.be/' in video['youtube_url'] %}
@@ -153,7 +153,12 @@
                                         </div>
                                     {% else %}
                                         <div class="text-center py-3">
-                                            <p class="text-muted">Video not available</p>
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <strong>Video URL Issue:</strong> This video needs a valid YouTube URL to be displayed.<br>
+                                                <small>Current URL: {{ video.get('youtube_url', 'None') }}</small>
+                                            </div>
+                                            <p class="text-muted">Please contact admin to fix this video.</p>
                                         </div>
                                     {% endif %}
                                 </div>
