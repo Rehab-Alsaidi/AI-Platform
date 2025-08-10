@@ -105,17 +105,38 @@
             {% if videos %}
                 <div class="row">
                     {% for video in videos %}
-                        <div class="col-md-6 mb-4">
+                        <div class="col-lg-6 mb-4">
                             <div class="card h-100">
                                 <div class="card-body">
                                     <h5 class="card-title">{{ video['title'] }}</h5>
                                     {% if video['description'] %}
-                                        <p class="card-text text-muted">{{ video['description'] }}</p>
+                                        <p class="card-text text-muted mb-3">{{ video['description'] }}</p>
                                     {% endif %}
-                                    <a href="https://www.youtube.com/watch?v={{ video['video_id'] }}" 
-                                       target="_blank" rel="noopener" class="btn btn-primary">
-                                        <i class="fas fa-external-link-alt"></i> Watch on YouTube
-                                    </a>
+                                    
+                                    <!-- Embedded YouTube Video -->
+                                    {% if video['youtube_url'] %}
+                                        <div class="embed-responsive embed-responsive-16by9 mb-3" style="border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                                            <iframe class="embed-responsive-item" 
+                                                    src="{{ video['youtube_url']|youtube_embed_url }}" 
+                                                    frameborder="0" 
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                                    allowfullscreen
+                                                    style="border-radius: 8px;">
+                                            </iframe>
+                                        </div>
+                                        
+                                        <!-- Optional: Keep YouTube link as fallback -->
+                                        <div class="text-center">
+                                            <a href="{{ video['youtube_url']|youtube_watch_url }}" 
+                                               target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                                                <i class="fab fa-youtube"></i> Open in YouTube
+                                            </a>
+                                        </div>
+                                    {% else %}
+                                        <div class="text-center py-3">
+                                            <p class="text-muted">Video not available</p>
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
