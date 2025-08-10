@@ -113,16 +113,6 @@
                                         <p class="card-text text-muted mb-3">{{ video['description'] }}</p>
                                     {% endif %}
                                     
-                                    <!-- DEBUG: Show video data -->
-                                    <div class="alert alert-info small">
-                                        <strong>Debug Info:</strong><br>
-                                        YouTube URL: {{ video.get('youtube_url', 'None') }}<br>
-                                        Video Type: {{ video.get('video_type', 'None') }}<br>
-                                        Embed URL: {{ video['youtube_url']|youtube_embed_url }}<br>
-                                        Watch URL: {{ video['youtube_url']|youtube_watch_url }}<br>
-                                        All fields: {{ video.keys() | list }}
-                                    </div>
-                                    
                                     <!-- Embedded YouTube Video -->
                                     {% if video.get('youtube_url') and (video['youtube_url']|youtube_embed_url) %}
                                         <div class="embed-responsive embed-responsive-16by9 mb-3" style="border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
