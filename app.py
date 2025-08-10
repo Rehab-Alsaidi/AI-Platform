@@ -2716,6 +2716,30 @@ def get_available_tags_grouped() -> Dict[str, List[Dict[str, Any]]]:
             release_db_connection(conn)
 
 
+def get_all_cohorts() -> List[Dict[str, Any]]:
+    """Get all active cohorts."""
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(cursor_factory=RealDictCursor)
+        cursor.execute(
+            """
+            SELECT id, name, bootcamp_type, start_date, end_date, description
+            FROM cohorts 
+            WHERE is_active = TRUE 
+            ORDER BY bootcamp_type, start_date, name
+        """
+        )
+        cohorts = cursor.fetchall()
+        return list(cohorts)
+    except Exception as e:
+        logger.error(f"Error getting cohorts: {str(e)}")
+        return []
+    finally:
+        if conn:
+            release_db_connection(conn)
+
+
 def ensure_default_tags():
     """Ensure default tags exist for the system - FIXED VERSION."""
     conn = None
