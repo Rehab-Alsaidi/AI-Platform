@@ -124,19 +124,10 @@
                                     </div>
                                     
                                     <!-- Embedded YouTube Video -->
-                                    {% if video.get('youtube_url') and ('youtube.com' in video['youtube_url'] or 'youtu.be' in video['youtube_url']) %}
-                                        <!-- Extract video ID from YouTube URL -->
-                                        {% if 'youtube.com' in video['youtube_url'] and 'v=' in video['youtube_url'] %}
-                                            {% set video_id = video['youtube_url'].split('v=')[1].split('&')[0] %}
-                                        {% elif 'youtu.be/' in video['youtube_url'] %}
-                                            {% set video_id = video['youtube_url'].split('youtu.be/')[1].split('?')[0] %}
-                                        {% else %}
-                                            {% set video_id = video['youtube_url'] %}
-                                        {% endif %}
-                                        
+                                    {% if video.get('youtube_url') and (video['youtube_url']|youtube_embed_url) %}
                                         <div class="embed-responsive embed-responsive-16by9 mb-3" style="border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                                             <iframe class="embed-responsive-item" 
-                                                    src="https://www.youtube.com/embed/{{ video_id }}" 
+                                                    src="{{ video['youtube_url']|youtube_embed_url }}" 
                                                     frameborder="0" 
                                                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                                                     allowfullscreen
@@ -146,7 +137,7 @@
                                         
                                         <!-- Optional: Keep YouTube link as fallback -->
                                         <div class="text-center">
-                                            <a href="https://www.youtube.com/watch?v={{ video_id }}" 
+                                            <a href="{{ video['youtube_url']|youtube_watch_url }}" 
                                                target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
                                                 <i class="fab fa-youtube"></i> Open in YouTube
                                             </a>
