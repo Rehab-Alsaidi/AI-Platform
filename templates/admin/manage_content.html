@@ -264,7 +264,7 @@
                                     <td>{{ video.title or 'Untitled' }}</td>
                                     <td>
                                         {% if video.youtube_url %}
-                                            <a href="https://www.youtube.com/watch?v={{ video.youtube_url }}" target="_blank" rel="noopener">{{ video.youtube_url }}</a>
+                                            <a href="{{ video.youtube_url|youtube_watch_url }}" target="_blank" rel="noopener">{{ video.youtube_url|youtube_watch_url }}</a>
                                         {% else %}
                                             <span class="text-muted">No link</span>
                                         {% endif %}

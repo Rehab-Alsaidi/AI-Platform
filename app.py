@@ -6279,16 +6279,41 @@ def admin_add_video() -> Any:
 
             # Handle different video types
             if video_type == "youtube":
-                youtube_url = request.form["youtube_url"]
-                if "youtube.com" in youtube_url or "youtu.be" in youtube_url:
-                    if "v=" in youtube_url:
-                        video_url = youtube_url.split("v=")[1].split("&")[0]
-                    elif "youtu.be/" in youtube_url:
-                        video_url = youtube_url.split("youtu.be/")[1].split("?")[0]
-                    else:
-                        video_url = youtube_url
+                youtube_url = request.form["youtube_url"].strip()
+                if not youtube_url:
+                    flash("Please provide a YouTube URL.", "error")
+                    return render_template(
+                        "admin/add_video.html",
+                        available_tags=available_tags,
+                        available_cohorts=available_cohorts,
+                    )
+                
+                # Extract video ID from various YouTube URL formats
+                if "youtube.com" in youtube_url and "v=" in youtube_url:
+                    video_url = youtube_url.split("v=")[1].split("&")[0]
+                elif "youtu.be/" in youtube_url:
+                    video_url = youtube_url.split("youtu.be/")[1].split("?")[0]
+                elif youtube_url.startswith("http"):
+                    # Unknown YouTube URL format
+                    flash("Invalid YouTube URL format. Please use youtube.com/watch?v= or youtu.be/ format.", "error")
+                    return render_template(
+                        "admin/add_video.html",
+                        available_tags=available_tags,
+                        available_cohorts=available_cohorts,
+                    )
                 else:
+                    # Assume it's just a video ID
                     video_url = youtube_url
+                
+                # Basic validation of video ID (should be 11 characters alphanumeric)
+                import re
+                if not re.match(r'^[a-zA-Z0-9_-]{11}$', video_url):
+                    flash("Invalid YouTube video ID. Please check your URL.", "error")
+                    return render_template(
+                        "admin/add_video.html",
+                        available_tags=available_tags,
+                        available_cohorts=available_cohorts,
+                    )
 
             elif video_type == "lark":
                 lark_url = request.form["lark_url"]
@@ -9634,6 +9659,43 @@ def nl2br_filter(s):
     if s is None:
         return ""
     return s.replace("\n", "<br>")
+
+
+@app.template_filter("youtube_watch_url")
+def youtube_watch_url_filter(video_id):
+    """Convert video ID or URL to proper YouTube watch URL."""
+    if not video_id:
+        return ""
+    
+    # If it's already a full URL, return as is
+    if video_id.startswith("http"):
+        return video_id
+    
+    # If it contains youtube.com, extract the video ID
+    if "youtube.com" in video_id and "v=" in video_id:
+        video_id = video_id.split("v=")[1].split("&")[0]
+    elif "youtu.be/" in video_id:
+        video_id = video_id.split("youtu.be/")[1].split("?")[0]
+    
+    return f"https://www.youtube.com/watch?v={video_id}"
+
+
+@app.template_filter("youtube_embed_url")
+def youtube_embed_url_filter(video_id):
+    """Convert video ID or URL to proper YouTube embed URL."""
+    if not video_id:
+        return ""
+    
+    # If it contains youtube.com, extract the video ID
+    if "youtube.com" in video_id and "v=" in video_id:
+        video_id = video_id.split("v=")[1].split("&")[0]
+    elif "youtu.be/" in video_id:
+        video_id = video_id.split("youtu.be/")[1].split("?")[0]
+    elif video_id.startswith("http"):
+        # If it's some other URL format, return empty to avoid errors
+        return ""
+    
+    return f"https://www.youtube.com/embed/{video_id}"
 
 
 @app.errorhandler(500)

@@ -205,7 +205,7 @@
                             <div id="youtube_preview" class="mt-3">
                                 <label class="form-label">Current Video Preview:</label>
                                 <div class="ratio ratio-16x9">
-                                    <iframe src="https://www.youtube.com/embed/{{ video.youtube_url }}" allowfullscreen></iframe>
+                                    <iframe src="{{ video.youtube_url|youtube_embed_url }}" allowfullscreen></iframe>
                                 </div>
                             </div>
                             {% else %}

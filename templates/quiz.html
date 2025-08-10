@@ -111,9 +111,10 @@
 
 {% block additional_css %}
 <style>
+/* Fixed quiz styles - NO GREEN HIGHLIGHTING */
 .custom-control-input:checked ~ .custom-control-label::before {
-    background-color: var(--accent-color, #007bff);
-    border-color: var(--accent-color, #007bff);
+    background-color: var(--accent-purple); /* Changed from green to purple */
+    border-color: var(--accent-purple);
 }
 
 .custom-radio .custom-control-label::before {
@@ -125,26 +126,29 @@
     border-radius: 8px;
     transition: all 0.3s;
     cursor: pointer;
-    border: 1px solid #e9ecef;
+    border: 1px solid rgba(107, 114, 128, 0.2); /* Dark theme border */
     display: block;
     margin-bottom: 0;
     width: 100%;
+    background: rgba(26, 26, 31, 0.4); /* Dark background */
+    color: var(--text-color); /* Light text */
 }
 
 .custom-control-label:hover {
-    background-color: #f8f9fa;
-    border-color: #007bff;
+    background-color: rgba(32, 33, 43, 0.6); /* Dark hover */
+    border-color: var(--accent-purple); /* Purple border on hover */
 }
 
 .custom-control-input:checked ~ .custom-control-label {
-    background-color: rgba(0, 123, 255, 0.1);
-    border-color: #007bff;
+    background-color: rgba(139, 92, 246, 0.1); /* Subtle purple background when selected */
+    border-color: var(--accent-purple); /* Purple border when selected */
     font-weight: 500;
+    color: var(--text-color); /* Keep text visible */
 }
 
 .option-letter {
     font-weight: bold;
-    color: #007bff;
+    color: var(--accent-purple); /* Purple option letters */
     margin-right: 8px;
 }
 
@@ -153,7 +157,7 @@
 }
 
 .badge-primary {
-    background-color: var(--accent-color, #007bff);
+    background-color: var(--accent-purple);
 }
 
 .motivation-card {
@@ -169,24 +173,28 @@
 
 .quiz-card {
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background: rgba(32, 33, 43, 0.7); /* Dark theme card */
+    border: 1px solid rgba(107, 114, 128, 0.2);
 }
 
 .question-card {
-    border-left: 4px solid var(--accent-color, #007bff);
+    border-left: 4px solid var(--accent-purple); /* Purple instead of blue */
     transition: all 0.3s ease;
+    background: rgba(32, 33, 43, 0.7); /* Dark background */
+    border: 1px solid rgba(107, 114, 128, 0.2);
 }
 
 .question-card.answered {
-    border-left-color: #28a745;
+    border-left-color: var(--accent-purple); /* Keep purple, not green */
 }
 
 .question-card.answered .card-header {
-    background-color: #d4edda !important;
-    color: #155724 !important;
+    background-color: rgba(139, 92, 246, 0.1) !important; /* Subtle purple instead of green */
+    color: var(--text-color) !important; /* Keep text visible */
 }
 
 .progress-bar {
-    background-color: #28a745;
+    background-color: var(--accent-purple); /* Purple progress bar */
     transition: width 0.3s ease;
 }
 
@@ -208,8 +216,8 @@
 
 .custom-control-input:checked ~ .custom-control-label::before {
     color: #fff;
-    border-color: #007bff;
-    background-color: #007bff;
+    border-color: var(--accent-purple);
+    background-color: var(--accent-purple);
 }
 
 .custom-control-label::before {
@@ -221,8 +229,8 @@
     height: 1rem;
     pointer-events: none;
     content: "";
-    background-color: #fff;
-    border: 1px solid #adb5bd;
+    background-color: rgba(32, 33, 43, 0.6); /* Dark background for radio button */
+    border: 1px solid rgba(107, 114, 128, 0.3);
     border-radius: 0.25rem;
 }
 
@@ -243,6 +251,22 @@
 
 .custom-radio .custom-control-input:checked ~ .custom-control-label::after {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+/* Card headers and text colors for dark theme */
+.card-header {
+    background: rgba(51, 65, 85, 0.3) !important;
+    color: white !important;
+    border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.card-body {
+    background: rgba(32, 33, 43, 0.5);
+    color: var(--text-color);
+}
+
+.question-text p {
+    color: var(--text-color);
 }
 
 @media (max-width: 768px) {

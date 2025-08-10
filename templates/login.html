@@ -2,6 +2,145 @@
 
 {% block title %}Login - 51Talk AI Learning{% endblock %}
 
+{% block additional_css %}
+<style>
+/* Fix input visibility issues in dark theme */
+.form-control {
+    background-color: rgba(32, 33, 43, 0.8) !important;
+    border: 1px solid rgba(107, 114, 128, 0.3) !important;
+    color: white !important;
+    border-radius: 8px !important;
+}
+
+.form-control:focus {
+    background-color: rgba(32, 33, 43, 0.9) !important;
+    border-color: var(--accent-purple) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1) !important;
+    color: white !important;
+}
+
+.form-control::placeholder {
+    color: rgba(232, 234, 237, 0.5) !important;
+}
+
+/* Ensure text is visible when typing */
+.form-control:not(:placeholder-shown) {
+    color: white !important;
+}
+
+/* Fix autofill styling */
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px rgba(32, 33, 43, 0.9) inset !important;
+    -webkit-text-fill-color: white !important;
+    background-color: rgba(32, 33, 43, 0.9) !important;
+}
+
+.input-group .btn-outline-secondary {
+    border-left: none;
+    background-color: rgba(32, 33, 43, 0.8) !important;
+    border-color: rgba(107, 114, 128, 0.3) !important;
+    color: rgba(232, 234, 237, 0.8) !important;
+}
+
+.input-group .btn-outline-secondary:hover {
+    background-color: rgba(51, 65, 85, 0.8) !important;
+    border-color: var(--accent-purple) !important;
+    color: white !important;
+}
+
+.input-group .form-control:focus {
+    border-right: none;
+    box-shadow: none;
+}
+
+.input-group .btn-outline-secondary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.25);
+}
+
+/* Card styling for dark theme */
+.card {
+    background: rgba(32, 33, 43, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(107, 114, 128, 0.2);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(107, 114, 128, 0.2);
+}
+
+.card-header h3 {
+    color: white;
+    margin: 0;
+}
+
+/* Button styling */
+.btn-primary {
+    background: var(--gradient-purple);
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    color: white;
+}
+
+/* Label styling */
+label {
+    color: var(--text-color);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Form text styling */
+.form-text {
+    color: var(--accent-gray);
+}
+
+/* Link styling */
+a {
+    color: var(--accent-purple);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--purple-light);
+    text-decoration: none;
+}
+
+/* Alert styling */
+.alert {
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 1rem;
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.alert-success {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -78,19 +217,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordInput = document.getElementById('password');
     const toggleIcon = document.getElementById('togglePasswordIcon');
     
-    togglePassword.addEventListener('click', function() {
-        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        passwordInput.setAttribute('type', type);
-        
-        // Toggle icon
-        if (type === 'password') {
-            toggleIcon.classList.remove('fa-eye-slash');
-            toggleIcon.classList.add('fa-eye');
-        } else {
-            toggleIcon.classList.remove('fa-eye');
-            toggleIcon.classList.add('fa-eye-slash');
-        }
-    });
+    if (togglePassword && passwordInput && toggleIcon) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Toggle icon
+            if (type === 'password') {
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            } else {
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            }
+        });
+    }
     
     // Clear form on authentication error
     const alerts = document.querySelectorAll('.alert-danger');
@@ -108,17 +249,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-
-<style>
-.input-group .btn-outline-secondary {
-    border-left: none;
-}
-.input-group .form-control:focus {
-    border-right: none;
-    box-shadow: none;
-}
-.input-group .btn-outline-secondary:focus {
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-}
-</style>
 {% endblock %}
